@@ -1,0 +1,36 @@
+{
+  "name": "msb-inventory",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "bun --watch src/app/index.ts",
+    "build": "bun build src/app/index.ts --target bun --outdir ./dist",
+    "drizzle": "bun --watch src/testdrizzle.ts",
+    "start": "NODE_ENV=production bun dist/index.js",
+    "test": "bun test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "@elysiajs/cookie": "^0.8.0",
+    "@elysiajs/html": "^1.2.0",
+    "@elysiajs/jwt": "^1.2.0",
+    "@elysiajs/static": "^1.2.0",
+    "@types/bun": "^1.2.6",
+    "@types/jimp": "^0.2.1",
+    "drizzle-orm": "^0.41.0",
+    "elysia": "^1.2.25",
+    "eta": "^3.5.0",
+    "jimp": "^1.6.0",
+    "pg": "^8.14.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.11",
+    "drizzle-kit": "^0.30.6",
+    "tsx": "^4.19.3",
+    "typescript": "^5.5.3"
+  },
+  "private": true,
+  "type": "module"
+}
