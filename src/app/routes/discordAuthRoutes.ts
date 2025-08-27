@@ -1,9 +1,6 @@
 import {Elysia} from "elysia";
 import {db} from "../../db";
 import {UserTable} from "../../drizzle/schema";
-import {eq} from "drizzle-orm";
-import {cookie} from "@elysiajs/cookie";
-import {jwt} from "@elysiajs/jwt";
 
 let accessToken: string | null = null;
 export const discordAuthRoutes = new Elysia();
