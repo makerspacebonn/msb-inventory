@@ -2,7 +2,6 @@ import {Elysia} from "elysia";
 import {db} from "../../db";
 import {UserTable} from "../../drizzle/schema";
 
-let accessToken: string | null = null;
 export const discordAuthRoutes = new Elysia();
 
 discordAuthRoutes
@@ -50,8 +49,7 @@ async function getOauthTokens(code : string) {
             'redirect_uri': process.env.DISCORD_REDIRECT_URI as string,
         })
     });
-    const data = await tokenResponse.json()
-    return data;
+    return await tokenResponse.json();
 }
 
 async function getDiscordUserInfo(oauthTokens : any) {
@@ -60,8 +58,7 @@ async function getDiscordUserInfo(oauthTokens : any) {
             "Authorization": `Bearer ${oauthTokens.access_token}`
         }
     })
-    const user = await userResponse.json()
-    return user;
+    return await userResponse.json();
 }
 
 async function saveUserInfo(user : any, oauthTokens : any) {

@@ -1,11 +1,10 @@
 import {Elysia} from 'elysia'
-import {discordAuthRoutes} from "./routes/discordAuthRoutes";
-import {html, Html} from "@elysiajs/html";
+import {html} from "@elysiajs/html";
 import {staticPlugin} from '@elysiajs/static'
+import {discordAuthRoutes} from "./routes/discordAuthRoutes";
 import {inventorySearchRoutes} from "./routes/inventorySearchRoutes";
 import {projectRoutes} from "./routes/projectRoutes";
 import {migrateDB} from "./migrateDB";
-
 
 try {
     await migrateDB();
