@@ -1,5 +1,6 @@
 import {pgTable, serial, varchar, text, integer, json, AnyPgColumn, timestamp} from "drizzle-orm/pg-core";
 import {InferInsertModel, InferSelectModel} from "drizzle-orm";
+import { uuid } from "drizzle-orm/pg-core";
 
 export const UserTable = pgTable("users", {
     id: serial("id").primaryKey(),
@@ -39,7 +40,11 @@ export type ItemInsert = InferInsertModel<typeof ItemTable>
 
 
 
-
+export const usersTable = pgTable("users", {
+    id: uuid('uuid1').defaultRandom(),
+    name: varchar("name").notNull(),
+    discordId: varchar("discord_id").unique()
+});
 
 export const projectsTable = pgTable("projects", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
