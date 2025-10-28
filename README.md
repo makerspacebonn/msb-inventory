@@ -16,6 +16,7 @@ Und dann auch noch so Tasks und Projekte verwalten, damit man mal sieht, was wir
 - [ ] QR Codes ausdruckbar machen (pdf und Bilddaten) (mini drucker)
 - [ ] Lagerortkette mit bildern (von Makerspace über Raum und Schrank zu Regalplatz und kistenfach)
 - [ ] Items mit Schlagworten versehen.
+- [ ] QR Codes automatisch drucken bei Item Erstellung (wenn man will.)
 
 
 - [ ] Ausleihen können
