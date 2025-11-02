@@ -14,8 +14,7 @@ try {
 }
 
 import { Homepage } from "../pages/Homepage";
-import { Home } from "../pages/Home";
-import { Page } from "../pages/Page";
+import { Layout } from "../pages/layout/Layout";
 
 const app = new Elysia()
   .use(html())
