@@ -9,10 +9,11 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "dev": "docker compose up --build && docker compose logs -f -n 100 -t",
+    "dev": "docker compose up --build -d && docker compose logs -f -n 100 -t",
+    "dev:tests": "docker compose exec app bun --watch --dots test",
+    "dev:stop": "docker compose down",
     "build": "bun build src/app/index.ts --target bun --outdir ./dist",
     "drizzle": "bun --watch src/testdrizzle.ts",
-    "test": "bun test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },
