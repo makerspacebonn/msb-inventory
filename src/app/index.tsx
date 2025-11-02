@@ -13,20 +13,21 @@ try {
   console.log(e);
 }
 
-import { Homepage } from "../pages/Homepage";
 import { Layout } from "../pages/layout/Layout";
+import { Homepage } from "../pages/Homepage";
+import { Item1250 } from "../pages/1250";
 
 export const ZeugApp = new Elysia()
   .use(html())
   .use(staticPlugin({
     prefix: ""
   }))
+  .get("/", () => <Layout title="Home"><Homepage /></Layout>)
   .group("/auth", (app) => app.use(discordAuthRoutes))
   .get("/login", () => `<a href="/auth/discord/login">Login with Discord</a>`)
   .mount("/search", inventorySearchRoutes)
   .mount("/projects", projectRoutes)
-  .get("/", () => <Layout title="MakerSpace Bonn e.V."><Homepage /></Layout>)
-  .get("/i/1250/", () => Bun.file(__dirname + "/../pages/1250.html"))
+  .get("/i/1250/", () => <Layout title="1250"><Item1250 /></Layout>)
   .listen(process.env.PORT || 3000);
 
 console.log(
