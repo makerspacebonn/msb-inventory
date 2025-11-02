@@ -13,7 +13,6 @@
     "dev:tests": "docker compose exec app bun --watch --dots test",
     "dev:stop": "docker compose down",
     "build": "bun build src/app/index.ts --target bun --outdir ./dist",
-    "drizzle": "bun --watch src/testdrizzle.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },

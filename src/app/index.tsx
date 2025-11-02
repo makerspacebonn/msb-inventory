@@ -16,17 +16,19 @@ try {
 import { Homepage } from "../pages/Homepage";
 import { Layout } from "../pages/layout/Layout";
 
-const app = new Elysia()
+export const ZeugApp = new Elysia()
   .use(html())
-  .use(staticPlugin())
+  .use(staticPlugin({
+    prefix: ""
+  }))
   .group("/auth", (app) => app.use(discordAuthRoutes))
   .get("/login", () => `<a href="/auth/discord/login">Login with Discord</a>`)
   .mount("/search", inventorySearchRoutes)
   .mount("/projects", projectRoutes)
-  .get("/", () => <Homepage />)
-    .get("/i/1250/", () => Bun.file(__dirname + "/../pages/1250.html"))
+  .get("/", () => <Layout title="MakerSpace Bonn e.V."><Homepage /></Layout>)
+  .get("/i/1250/", () => Bun.file(__dirname + "/../pages/1250.html"))
   .listen(process.env.PORT || 3000);
 
 console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
+  `🦊 Elysia is running at ${ZeugApp.server?.hostname}:${ZeugApp.server?.port}`,
 );
