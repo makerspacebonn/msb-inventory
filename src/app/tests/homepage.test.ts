@@ -1,8 +1,6 @@
 // test/index.test.ts
 import { describe, expect, it } from 'bun:test'
-import { Elysia } from 'elysia'
 import { ZeugApp } from "../index";
-
 
 describe('Elysia', () => {
     it('returns a response', async () => {
@@ -15,9 +13,8 @@ describe('Elysia', () => {
         expect(html).toContain('MakerSpace Zeug und Aufgaben System')
     })
     it('Item Page', async () => {
-
         const response = await ZeugApp
-            .handle(new Request('http://localhost:3001/i/1250'))
+            .handle(new Request('http://localhost:3001/i/12345'))
         const html = await response.text()
         expect(response.status).toBe(200)
 

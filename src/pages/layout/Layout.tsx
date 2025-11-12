@@ -7,7 +7,7 @@ export const Layout = ({title, children }: LayoutProps) => {
         <>
             <html>
             <head>
-                <title>{ title } | Zeug MakerSpace Bonn e.V.</title>
+                <title safe>{ title } | Zeug MakerSpace Bonn e.V.</title>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <meta name="color-scheme" content="light dark"/>
@@ -35,7 +35,7 @@ export const Layout = ({title, children }: LayoutProps) => {
                 </section>
             </header>
             <main class="container">
-                { children }
+                { children as 'safe' }
             </main>
 
             </body>
