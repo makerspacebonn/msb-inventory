@@ -26,13 +26,16 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      - DEBUG_COLORS=true
+      - TERM=xterm-256color
+      - COLORTERM=truecolor
       - NODE_ENV=development
     env_file:
       - .env
     volumes:
       - ./src:/usr/src
       - ./public:/usr/public
-    entrypoint: "bun run --watch src/app/index.tsx"
+    entrypoint: "bun run --hot src/app/index.tsx"
 
 
 volumes:
