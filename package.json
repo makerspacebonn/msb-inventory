@@ -9,7 +9,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "dev": "docker compose up --build -d && docker compose logs -f -n 100 -t",
+    "dev": "docker compose up --build -d && docker compose logs -f -n 100",
     "dev:tests": "docker compose exec app bun --watch --dots test",
     "dev:stop": "docker compose down",
     "build": "bun build src/app/index.ts --target bun --outdir ./dist",
@@ -23,6 +23,7 @@
     "@elysiajs/static": "^1.2.0",
     "@types/bun": "^1.2.6",
     "@types/jimp": "^0.2.1",
+    "ansis": "^4.2.0",
     "drizzle-orm": "^0.41.0",
     "elysia": "^1.2.25",
     "eta": "^3.5.0",
@@ -31,6 +32,7 @@
     "react": "^19.1.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.3.6",
     "@types/pg": "^8.11.11",
     "@types/react": "^19.1.13",
     "drizzle-kit": "^0.30.6",
