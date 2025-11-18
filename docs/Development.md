@@ -36,3 +36,5 @@ bun dev:stop
 - [Docker](https://www.docker.com/) - to run the app in a container
 - [drizzle](https://drizzle.team/) - the database connector
 - [elysia](https://elysiajs.com/) - as a web framework
+- [biome](https://biomejs.dev) - linter und formatter
+- [alpine.js](https://alpinejs.dev)
