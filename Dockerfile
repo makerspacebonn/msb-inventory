@@ -14,6 +14,8 @@ ENV NODE_ENV=development
 #RUN bun run build
 # Set the timezone
 
+COPY run.sh .
+RUN chmod +x run.sh
 COPY public public
 COPY lib lib
 COPY drizzle.config.ts .

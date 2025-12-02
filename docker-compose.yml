@@ -39,7 +39,7 @@ services:
       - ./src:/usr/src
       - ./public:/usr/public
       - ./public/container/:/usr/public/container/
-    entrypoint: "bun dev"
+    entrypoint: "sh ./run.sh"
 
 
 volumes:
