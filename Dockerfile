@@ -3,6 +3,7 @@
 FROM oven/bun:alpine AS base
 WORKDIR /usr/
 
+COPY bunfig.toml .
 COPY tsconfig.json .
 COPY package.json .
 COPY bun.lock .
@@ -14,11 +15,14 @@ ENV NODE_ENV=development
 # Set the timezone
 
 COPY public public
+COPY lib lib
 COPY drizzle.config.ts .
+COPY vite.config.ts .
+COPY components.json .
+COPY components components
 COPY src src
 
 # run the app
-USER bun
 EXPOSE 80/tcp
-ENTRYPOINT [ "bun", "--watch", "src/app/index.tsx" ]
+ENTRYPOINT [ "bun", "dev" ]
 

@@ -29,13 +29,17 @@ services:
       - DEBUG_COLORS=true
       - TERM=xterm-256color
       - COLORTERM=truecolor
-      - NODE_ENV=development
+      - NODE_ENV=production
+      - SAVE_PATH=/usr/public/container/
+      - DATABASE_URL=postgres://makerspace:makerspacepass@postgres:5432/makerspace_inventory
+
     env_file:
       - .env
     volumes:
       - ./src:/usr/src
       - ./public:/usr/public
-    entrypoint: "bun run --hot src/app/index.tsx"
+      - ./public/container/:/usr/public/container/
+    entrypoint: "bun dev"
 
 
 volumes:

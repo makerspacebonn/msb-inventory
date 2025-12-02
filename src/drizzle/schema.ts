@@ -31,6 +31,7 @@ export const LocationTable = pgTable("locations", {
   parentId: integer("parent_id").references(
     (): AnyPgColumn => LocationTable.id,
   ),
+  parentLocationMarker: json().$type<ParentLocationMarker | null>(),
   imagePath: varchar("image_path"),
   additionalInfo: json(),
 })
@@ -45,6 +46,7 @@ export const ItemTable = pgTable("items", {
   locationId: integer("location_id").references(
     (): AnyPgColumn => LocationTable.id,
   ),
+  parentLocationMarker: json().$type<ParentLocationMarker | null>(),
   imagePath: varchar("image_path"),
   additionalInfo: json().$type<(ParentLocationMarker | Link)[] | null>(),
 })
