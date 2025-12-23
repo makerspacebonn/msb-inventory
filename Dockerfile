@@ -34,10 +34,12 @@ COPY drizzle.config.ts ./
 COPY tsconfig.json ./
 COPY vite.config.ts ./
 COPY server.ts ./
+COPY run.sh ./
+RUN chmod +x run.sh
 
 # Copy drizzle migrations if they exist
 COPY src/drizzle ./src/drizzle
 
 EXPOSE 80
 
-CMD ["bun", "run", "server.ts"]
+CMD ["run.sh"]
