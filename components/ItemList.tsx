@@ -1,33 +1,20 @@
 import type { Item } from "@server/app/types"
-import { Button } from "@/components/ui/button"
+import { ItemCard } from "@/components/ItemCard"
 
-export const ItemList = ({ items }: { items: Item[] }) => {
+export function ItemList({ items }: { items: Item[] }) {
+  if (!items?.length) {
+    return (
+      <p className="text-center text-muted-foreground py-8">No items found.</p>
+    )
+  }
+
   return (
-    <ul className="flex flex-col gap-2">
-      {items?.map((item, _) => {
-        return (
-          <li
-            key={item.id}
-            className="p-4 border-b border-amber-800 flex flex-row"
-          >
-            {item.imagePath && (
-              <img
-                className="h-15"
-                src={`/container/img/items/${item.imagePath}`}
-                alt={item.description || ""}
-              />
-            )}
-            "
-            <a href={`/i/${item.id}`} className="flex-auto">
-              {item.id} - {item.name}
-            </a>{" "}
-            |{" "}
-            <Button variant="outline" size="icon-sm">
-              <a href={`/i/${item.id}/edit`}>Edit</a>
-            </Button>
-          </li>
-        )
-      })}
+    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((item) => (
+        <li key={item.id}>
+          <ItemCard item={item} />
+        </li>
+      ))}
     </ul>
   )
 }
