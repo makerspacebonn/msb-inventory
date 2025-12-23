@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.github
+.idea
+.claude
+.env
+.env.*
+!.env_example
+*.md
+!README.md
+.DS_Store
+*.log
+.tanstack
+container
+count.txt

@@ -1,30 +1,43 @@
-# use the official Bun image
-# see all versions at https://hub.docker.com/r/oven/bun/tags
-FROM oven/bun:alpine AS base
-WORKDIR /usr/
+# Stage 1: Dependencies
+FROM oven/bun:alpine AS deps
+WORKDIR /app
 
-COPY bunfig.toml .
-COPY tsconfig.json .
-COPY package.json .
-COPY bun.lock .
-RUN bun install
+COPY package.json bun.lock bunfig.toml ./
+RUN bun install --frozen-lockfile
 
-# [optional] tests & build
-ENV NODE_ENV=development
-#RUN bun run build
-# Set the timezone
+# Stage 2: Builder
+FROM oven/bun:alpine AS builder
+WORKDIR /app
 
-COPY run.sh .
-RUN chmod +x run.sh
-COPY public public
-COPY lib lib
-COPY drizzle.config.ts .
-COPY vite.config.ts .
-COPY components.json .
-COPY components components
-COPY src src
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
-# run the app
-EXPOSE 80/tcp
-ENTRYPOINT [ "bun", "dev" ]
+ENV NODE_ENV=production
+RUN bun run build
 
+# Stage 3: Production
+FROM oven/bun:alpine AS production
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Install only production dependencies
+COPY package.json bun.lock bunfig.toml ./
+RUN bun install --frozen-lockfile --production
+
+# Copy built assets
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
+
+# Copy necessary config files
+COPY drizzle.config.ts ./
+COPY tsconfig.json ./
+COPY vite.config.ts ./
+COPY server.ts ./
+
+# Copy drizzle migrations if they exist
+COPY src/drizzle ./src/drizzle
+
+EXPOSE 80
+
+CMD ["bun", "run", "server.ts"]
