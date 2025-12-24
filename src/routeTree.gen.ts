@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ItemsIndexRouteImport } from './routes/items/index'
 import { Route as ItemsTesteditRouteImport } from './routes/items/testedit'
 import { Route as ItemsAddRouteImport } from './routes/items/add'
+import { Route as ImgSplatRouteImport } from './routes/img.$'
 import { Route as IItemIdRouteImport } from './routes/i.$itemId'
 import { Route as ApiItemsRouteImport } from './routes/api/items'
 
@@ -42,6 +43,11 @@ const ItemsAddRoute = ItemsAddRouteImport.update({
   path: '/items/add',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImgSplatRoute = ImgSplatRouteImport.update({
+  id: '/img/$',
+  path: '/img/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IItemIdRoute = IItemIdRouteImport.update({
   id: '/i/$itemId',
   path: '/i/$itemId',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
   '/i/$itemId': typeof IItemIdRoute
+  '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items': typeof ItemsIndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
   '/i/$itemId': typeof IItemIdRoute
+  '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items': typeof ItemsIndexRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
   '/i/$itemId': typeof IItemIdRoute
+  '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items/': typeof ItemsIndexRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/test'
     | '/api/items'
     | '/i/$itemId'
+    | '/img/$'
     | '/items/add'
     | '/items/testedit'
     | '/items'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/test'
     | '/api/items'
     | '/i/$itemId'
+    | '/img/$'
     | '/items/add'
     | '/items/testedit'
     | '/items'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/test'
     | '/api/items'
     | '/i/$itemId'
+    | '/img/$'
     | '/items/add'
     | '/items/testedit'
     | '/items/'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   TestRoute: typeof TestRoute
   ApiItemsRoute: typeof ApiItemsRoute
   IItemIdRoute: typeof IItemIdRoute
+  ImgSplatRoute: typeof ImgSplatRoute
   ItemsAddRoute: typeof ItemsAddRoute
   ItemsTesteditRoute: typeof ItemsTesteditRoute
   ItemsIndexRoute: typeof ItemsIndexRoute
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ItemsAddRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/img/$': {
+      id: '/img/$'
+      path: '/img/$'
+      fullPath: '/img/$'
+      preLoaderRoute: typeof ImgSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/i/$itemId': {
       id: '/i/$itemId'
       path: '/i/$itemId'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   TestRoute: TestRoute,
   ApiItemsRoute: ApiItemsRoute,
   IItemIdRoute: IItemIdRoute,
+  ImgSplatRoute: ImgSplatRoute,
   ItemsAddRoute: ItemsAddRoute,
   ItemsTesteditRoute: ItemsTesteditRoute,
   ItemsIndexRoute: ItemsIndexRoute,

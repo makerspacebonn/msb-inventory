@@ -8,7 +8,7 @@ export const ItemDetail = ({
   item: Item
   locations?: Location[] | undefined
 }) => {
-  const imagePath = `/container/img/items/${item.imagePath}`
+  const imagePath = `/img/items/${item.imagePath}`
   let marker = item.parentLocationMarker
 
   return (

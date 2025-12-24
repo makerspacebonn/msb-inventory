@@ -1,6 +1,6 @@
 import type { Item } from "@server/app/types"
-import { Button } from "@/components/ui/button"
 import { Pencil } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export function ItemCard({ item }: { item: Item }) {
   return (
@@ -9,7 +9,7 @@ export function ItemCard({ item }: { item: Item }) {
         {item.imagePath ? (
           <img
             className="h-16 w-16 rounded-md object-cover"
-            src={`/container/img/items/${item.imagePath}`}
+            src={`/img/items/${item.imagePath}`}
             alt={item.description || item.name}
           />
         ) : (

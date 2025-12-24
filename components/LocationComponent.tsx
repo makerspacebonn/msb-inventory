@@ -8,7 +8,7 @@ export const LocationComponent = ({
   location: Location
   marker?: ParentLocationMarker | null
 }) => {
-  const image = `/container/img/locations/${location.imagePath}`
+  const image = `/img/locations/${location.imagePath}`
   return (
     <div className="relative w-1/2 m-2">
       {marker && (
