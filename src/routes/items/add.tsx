@@ -1,7 +1,7 @@
 import { MyCropper } from "@components/form/MyCropper"
 import { Button } from "@components/ui/button"
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import fs from "fs"
 import { toast } from "sonner"
@@ -98,6 +98,7 @@ const { useAppForm } = createFormHook({
 })
 
 function ItemForm() {
+  const navigate = useNavigate()
   const form = useAppForm({
     defaultValues: {
       name: "",
@@ -105,7 +106,6 @@ function ItemForm() {
       image: "",
       imagePath: undefined,
     } as z.infer<typeof itemSchema>,
-
     validators: {
       // Pass a schema or function to validate
       onChange: itemSchema,
@@ -117,9 +117,18 @@ function ItemForm() {
 
       const result = await addItem({ data: parsedInput })
       if (result?.success) {
-        console.log("new Item", result.item)
-        form.reset()
-        toast.success("Item erstellt")
+        if (result.item) {
+          await navigate({
+            to: "/i/$itemId",
+            params: {
+              itemId: result.item?.id.toString(),
+            },
+          })
+        } else {
+          console.log("new Item", result.item)
+          form.reset()
+          toast.success("Item erstellt")
+        }
       } else if (result?.error) {
         toast.error(`Fehler beim erstellen des Items ${result.error}`)
       }
