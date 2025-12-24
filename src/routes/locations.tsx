@@ -1,9 +1,22 @@
+import { MyCropper } from "@components/form/MyCropper"
 import { Button } from "@components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@components/ui/dialog"
 import type { Item, Location } from "@server/app/types"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
-import { ChevronLeftIcon, MapPinIcon, PackageIcon } from "lucide-react"
+import fs from "fs"
+import { ChevronLeftIcon, ImagePlusIcon, MapPinIcon, PackageIcon } from "lucide-react"
 import { useState } from "react"
+import { v7 as uuidv7 } from "uuid"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
@@ -23,6 +36,37 @@ const fetchItemsByLocation = createServerFn()
     return new ItemRepository().findByLocationId(locationId)
   })
 
+function decodeBase64Image(dataString: string) {
+  const matches = dataString.match(/^data:([A-Za-z-+/]+);base64,(.+)$/)
+  if (matches?.length !== 3) {
+    throw new Error("Invalid input string")
+  }
+  return {
+    fileType: matches[1],
+    fileBuffer: Buffer.from(matches[2], "base64"),
+  }
+}
+
+const updateLocationImage = createServerFn({ method: "POST" })
+  .inputValidator((data: { locationId: number; image: string }) => data)
+  .handler(async ({ data }) => {
+    const savePath = `${process.env.SAVE_PATH}locations/`
+    const { fileType, fileBuffer } = decodeBase64Image(data.image)
+    const fileName = uuidv7()
+    const fileExtension = fileType?.split("/")[1]
+    const filePath = `${savePath}${fileName}.${fileExtension}`
+    const fileStream = fs.createWriteStream(filePath)
+    fileStream.write(fileBuffer)
+    fileStream.end()
+    const imagePath = `${fileName}.${fileExtension}`
+
+    const updatedLocation = await new LocationRepository().update(
+      data.locationId,
+      { imagePath },
+    )
+    return { success: true, location: updatedLocation }
+  })
+
 export const Route = createFileRoute("/locations")({
   component: RouteComponent,
   loader: async () => {
@@ -37,6 +81,8 @@ function RouteComponent() {
     useState<Location[]>(rootLocations)
   const [locationPath, setLocationPath] = useState<Location[]>([])
   const [items, setItems] = useState<Item[]>([])
+  const [newImage, setNewImage] = useState("")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleLocationClick = async (location: Location) => {
     const [children, locationItems] = await Promise.all([
@@ -88,6 +134,22 @@ function RouteComponent() {
   const currentLocation =
     locationPath.length > 0 ? locationPath[locationPath.length - 1] : null
 
+  const handleSaveImage = async () => {
+    if (!currentLocation || !newImage) return
+    const result = await updateLocationImage({
+      data: { locationId: currentLocation.id, image: newImage },
+    })
+    if (result.success && result.location) {
+      // Update the location in the path
+      const updatedPath = locationPath.map((loc) =>
+        loc.id === currentLocation.id ? result.location : loc,
+      ) as Location[]
+      setLocationPath(updatedPath)
+      setNewImage("")
+      setIsDialogOpen(false)
+    }
+  }
+
   return (
     <div className="max-w-128 mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Locations</h1>
@@ -136,7 +198,7 @@ function RouteComponent() {
                 <MapPinIcon className="w-8 h-8 text-gray-400" />
               </div>
             )}
-            <div>
+            <div className="flex-1">
               <h2 className="text-xl font-bold">{currentLocation.name}</h2>
               {currentLocation.description && (
                 <p className="text-muted-foreground">
@@ -144,6 +206,33 @@ function RouteComponent() {
                 </p>
               )}
             </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <ImagePlusIcon className="w-4 h-4 mr-1" />
+                  Bild
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Bild hinzufügen</DialogTitle>
+                  <DialogDescription>
+                    Füge ein Bild zu "{currentLocation.name}" hinzu.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <MyCropper onChange={(image) => setNewImage(image)} />
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Abbrechen</Button>
+                  </DialogClose>
+                  <Button onClick={handleSaveImage} disabled={!newImage}>
+                    Speichern
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       )}

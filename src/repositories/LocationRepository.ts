@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm"
 import { db } from "@/src/db"
 import type { Location } from "../app/types"
 import { type LocationInsert, LocationTable } from "../drizzle/schema"
@@ -5,6 +6,18 @@ import { type LocationInsert, LocationTable } from "../drizzle/schema"
 export class LocationRepository {
   async create(location: LocationInsert): Promise<Location> {
     const result = await db.insert(LocationTable).values(location).returning()
+    return result[0]
+  }
+
+  async update(
+    id: number,
+    data: Partial<LocationInsert>,
+  ): Promise<Location | undefined> {
+    const result = await db
+      .update(LocationTable)
+      .set(data)
+      .where(eq(LocationTable.id, id))
+      .returning()
     return result[0]
   }
 
