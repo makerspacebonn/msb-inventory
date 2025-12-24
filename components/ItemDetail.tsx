@@ -1,6 +1,16 @@
 import { LocationComponent } from "@components/LocationComponent"
 import { Button } from "@components/ui/button"
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@components/ui/dialog"
+import {
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -9,9 +19,14 @@ import {
 } from "@components/ui/empty"
 import type { Item } from "@server/app/types"
 import { Link } from "@tanstack/react-router"
-import { MapPinIcon, PencilIcon } from "lucide-react"
+import { MapPinIcon, PencilIcon, TrashIcon } from "lucide-react"
 
-export const ItemDetail = ({ item }: { item: Item }) => {
+type ItemDetailProps = {
+  item: Item
+  onDeleteLocation?: () => void
+}
+
+export const ItemDetail = ({ item, onDeleteLocation }: ItemDetailProps) => {
   const imagePath = `/img/items/${item.imagePath}`
   let marker = item.parentLocationMarker
 
@@ -32,14 +47,42 @@ export const ItemDetail = ({ item }: { item: Item }) => {
       <h3 className="text-xl font-bold p-2 border-2 rounded-2xl bg-gray-600 flex items-center justify-between">
         <span>Wo finde ich es?</span>
         {item?.locationChain && item.locationChain.length > 0 && (
-          <Link
-            to="/items/$itemId/location/add"
-            params={{ itemId: item.id.toString() }}
-          >
-            <Button variant="ghost" size="sm">
-              <PencilIcon className="w-4 h-4" />
-            </Button>
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              to="/items/$itemId/location/add"
+              params={{ itemId: item.id.toString() }}
+            >
+              <Button variant="ghost" size="sm">
+                <PencilIcon className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <TrashIcon className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Ort entfernen?</DialogTitle>
+                  <DialogDescription>
+                    Möchtest du den Ort von diesem Item wirklich entfernen? Das
+                    Item wird danach keinem Ort mehr zugeordnet sein.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Abbrechen</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button variant="destructive" onClick={onDeleteLocation}>
+                      Entfernen
+                    </Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         )}
       </h3>
       {item?.locationChain && item.locationChain.length > 0 ? (

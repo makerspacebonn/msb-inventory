@@ -1,5 +1,5 @@
 import { ItemDetail } from "@components/ItemDetail"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useRouter } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod/v4"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
@@ -22,6 +22,17 @@ const fetchItem = createServerFn()
     return item
   })
 
+const removeItemLocation = createServerFn()
+  .inputValidator(ItemIdSchema)
+  .handler(async ({ data: { itemId } }) => {
+    await new ItemRepository().upsert({
+      id: itemId,
+      locationId: null,
+      parentLocationMarker: null,
+    })
+    return { success: true }
+  })
+
 export const Route = createFileRoute("/i/$itemId")({
   component: RouteComponent,
   loader: async ({ params }) => {
@@ -32,5 +43,13 @@ export const Route = createFileRoute("/i/$itemId")({
 
 function RouteComponent() {
   const item = Route.useLoaderData()
-  return item && <ItemDetail item={item} />
+  const router = useRouter()
+
+  const handleDeleteLocation = async () => {
+    if (!item) return
+    await removeItemLocation({ data: { itemId: item.id } })
+    router.invalidate()
+  }
+
+  return item && <ItemDetail item={item} onDeleteLocation={handleDeleteLocation} />
 }
