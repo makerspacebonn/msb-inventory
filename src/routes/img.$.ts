@@ -8,6 +8,7 @@ export const Route = createFileRoute("/img/$")({
   server: {
     handlers: {
       GET: async ({ params, context }) => {
+        console.log(imageRootPath, params._splat)
         const fileName = imageRootPath + params._splat
         if (await fs.existsSync(fileName)) {
           return new Response(Bun.file(fileName))
