@@ -9,6 +9,7 @@ import {
   CheckIcon,
   ChevronLeftIcon,
   CrosshairIcon,
+  MapPinIcon,
   PlusIcon,
 } from "lucide-react"
 import { type MouseEvent, useRef, useState } from "react"
@@ -292,36 +293,54 @@ function RouteComponent() {
           </Button>
         </div>
 
-        <div className="relative inline-block w-full">
-          <img
-            ref={imageRef}
-            src={`/img/locations/${parentLocation.imagePath}`}
-            alt={parentLocation.name}
-            className="w-full rounded-lg cursor-crosshair"
-            onClick={handleImageClick}
-          />
-          {markerPosition && (
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                left: `${markerPosition.x}%`,
-                top: `${markerPosition.y}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              <CrosshairIcon className="w-8 h-8 text-red-500 drop-shadow-lg" />
-            </div>
-          )}
-        </div>
+        {parentLocation.imagePath ? (
+          <div className="relative inline-block w-full">
+            <img
+              ref={imageRef}
+              src={`/img/locations/${parentLocation.imagePath}`}
+              alt={parentLocation.name}
+              className="w-full rounded-lg cursor-crosshair"
+              onClick={handleImageClick}
+            />
+            {markerPosition && (
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  left: `${markerPosition.x}%`,
+                  top: `${markerPosition.y}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                <CrosshairIcon className="w-8 h-8 text-red-500 drop-shadow-lg" />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="w-full aspect-square rounded-2xl bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
+            <MapPinIcon className="w-24 h-24 text-gray-400" />
+          </div>
+        )}
 
         <div className="mt-4 flex gap-2">
-          <Button onClick={handleConfirmNewLocation} disabled={!markerPosition}>
-            <CheckIcon className="w-4 h-4 mr-1" />
-            Speichern
-          </Button>
-          <Button variant="outline" onClick={handleConfirmNewLocation}>
-            Ohne Markierung speichern
-          </Button>
+          {parentLocation.imagePath ? (
+            <>
+              <Button
+                onClick={handleConfirmNewLocation}
+                disabled={!markerPosition}
+              >
+                <CheckIcon className="w-4 h-4 mr-1" />
+                Speichern
+              </Button>
+              <Button variant="outline" onClick={handleConfirmNewLocation}>
+                Ohne Markierung speichern
+              </Button>
+            </>
+          ) : (
+            <Button onClick={handleConfirmNewLocation}>
+              <CheckIcon className="w-4 h-4 mr-1" />
+              Speichern
+            </Button>
+          )}
         </div>
       </div>
     )
@@ -368,7 +387,6 @@ function RouteComponent() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Bild</label>
             <MyCropper onChange={(image) => setNewLocationImage(image)} />
           </div>
 
@@ -412,36 +430,51 @@ function RouteComponent() {
           </Button>
         </div>
 
-        <div className="relative inline-block w-full">
-          <img
-            ref={imageRef}
-            src={`/img/locations/${selectedLocation.imagePath}`}
-            alt={selectedLocation.name}
-            className="w-full rounded-lg cursor-crosshair"
-            onClick={handleImageClick}
-          />
-          {markerPosition && (
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                left: `${markerPosition.x}%`,
-                top: `${markerPosition.y}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              <CrosshairIcon className="w-8 h-8 text-red-500 drop-shadow-lg" />
-            </div>
-          )}
-        </div>
+        {selectedLocation.imagePath ? (
+          <div className="relative inline-block w-full">
+            <img
+              ref={imageRef}
+              src={`/img/locations/${selectedLocation.imagePath}`}
+              alt={selectedLocation.name}
+              className="w-full rounded-lg cursor-crosshair"
+              onClick={handleImageClick}
+            />
+            {markerPosition && (
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  left: `${markerPosition.x}%`,
+                  top: `${markerPosition.y}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                <CrosshairIcon className="w-8 h-8 text-red-500 drop-shadow-lg" />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="w-full aspect-square rounded-2xl bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
+            <MapPinIcon className="w-24 h-24 text-gray-400" />
+          </div>
+        )}
 
         <div className="mt-4 flex gap-2">
-          <Button onClick={handleConfirmMarker} disabled={!markerPosition}>
-            <CheckIcon className="w-4 h-4 mr-1" />
-            Speichern
-          </Button>
-          <Button variant="outline" onClick={handleConfirmMarker}>
-            Ohne Markierung speichern
-          </Button>
+          {selectedLocation.imagePath ? (
+            <>
+              <Button onClick={handleConfirmMarker} disabled={!markerPosition}>
+                <CheckIcon className="w-4 h-4 mr-1" />
+                Speichern
+              </Button>
+              <Button variant="outline" onClick={handleConfirmMarker}>
+                Ohne Markierung speichern
+              </Button>
+            </>
+          ) : (
+            <Button onClick={handleConfirmMarker}>
+              <CheckIcon className="w-4 h-4 mr-1" />
+              Speichern
+            </Button>
+          )}
         </div>
       </div>
     )
@@ -505,12 +538,16 @@ function RouteComponent() {
               className="w-full flex flex-col items-center gap-2"
               onClick={() => handleLocationClick(location)}
             >
-              {location.imagePath && (
+              {location.imagePath ? (
                 <img
                   src={`/img/locations/${location.imagePath}`}
                   alt={location.name}
                   className="w-full aspect-square object-cover rounded-lg"
                 />
+              ) : (
+                <div className="w-full aspect-square rounded-2xl bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
+                  <MapPinIcon className="w-12 h-12 text-gray-400" />
+                </div>
               )}
               <span className="text-lg font-medium">{location.name}</span>
             </button>

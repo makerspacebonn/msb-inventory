@@ -115,10 +115,10 @@ export function MyCropper({ onChange }: MyCropperProps) {
                 setOpen(!open)
               }}
             >
-              Close
+              Schliessen
             </Button>
           </DialogClose>
-          <Button onClick={(e) => showCroppedImage(e)}>Save</Button>
+          <Button onClick={(e) => showCroppedImage(e)}>Nutzen</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

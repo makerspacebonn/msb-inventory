@@ -86,21 +86,15 @@ export const ItemDetail = ({ item, onDeleteLocation }: ItemDetailProps) => {
         )}
       </h3>
       {item?.locationChain && item.locationChain.length > 0 ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            flexWrap: "wrap",
-            width: "100%",
-            justifyContent: "space-around",
-          }}
-        >
+        <div className="flex flex-col items-center w-full">
           {item.locationChain.map((location) => {
             const currentMarker = marker
             marker = location.parentLocationMarker
             return (
-              <div key={location.id} className="flex flex-col items-center">
+              <div
+                key={location.id}
+                className="flex flex-col items-center w-full"
+              >
                 <LocationComponent location={location} marker={currentMarker} />
               </div>
             )

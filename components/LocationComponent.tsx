@@ -1,5 +1,5 @@
 import type { Location, ParentLocationMarker } from "@server/app/types"
-import { Circle, CircleIcon } from "lucide-react"
+import { CircleIcon, MapPinIcon } from "lucide-react"
 
 export const LocationComponent = ({
   location,
@@ -22,7 +22,13 @@ export const LocationComponent = ({
           />
         </div>
       )}
-      <img className="rounded-2xl" src={image} alt={location.name} />
+      {location.imagePath ? (
+        <img className="rounded-2xl w-full" src={image} alt={location.name} />
+      ) : (
+        <div className="rounded-2xl border-b-gray-700 border-2 w-full aspect-square content-center">
+          <MapPinIcon className="w-16 h-16 text-gray-400 mx-auto" />
+        </div>
+      )}
       <h1 className="absolute bottom-0 left-0 right-0 text-center bg-gray-800 text-white rounded-b-2xl text-sm font-bold">
         {location.name}
       </h1>
