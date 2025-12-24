@@ -33,7 +33,7 @@ export const LocationTable = pgTable("locations", {
   ),
   parentLocationMarker: json().$type<ParentLocationMarker | null>(),
   imagePath: varchar("image_path"),
-  additionalInfo: json(),
+  additionalInfo: json().$type<null>(),
 })
 
 export type LocationSelect = InferSelectModel<typeof LocationTable>

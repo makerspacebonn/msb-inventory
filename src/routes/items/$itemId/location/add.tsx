@@ -1,9 +1,18 @@
+import { MyCropper } from "@components/form/MyCropper"
 import { Button } from "@components/ui/button"
+import { Input } from "@components/ui/input"
 import type { Location, ParentLocationMarker } from "@server/app/types"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
-import { CheckIcon, ChevronLeftIcon, CrosshairIcon } from "lucide-react"
+import fs from "fs"
+import {
+  CheckIcon,
+  ChevronLeftIcon,
+  CrosshairIcon,
+  PlusIcon,
+} from "lucide-react"
 import { type MouseEvent, useRef, useState } from "react"
+import { v7 as uuidv7 } from "uuid"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
@@ -18,7 +27,7 @@ const fetchItem = createServerFn()
   })
 
 const fetchChildLocations = createServerFn()
-  .inputValidator((parentId: number) => parentId)
+  .inputValidator((parentId: number | undefined) => parentId)
   .handler(async ({ data: parentId }) => {
     return new LocationRepository().findByParentId(parentId)
   })
@@ -38,6 +47,48 @@ const setItemLocation = createServerFn()
       parentLocationMarker: data.parentLocationMarker,
     })
     return { success: true }
+  })
+
+function decodeBase64Image(dataString: string) {
+  const matches = dataString.match(/^data:([A-Za-z-+/]+);base64,(.+)$/)
+  if (matches?.length !== 3) {
+    throw new Error("Invalid input string")
+  }
+  return {
+    fileType: matches[1],
+    fileBuffer: Buffer.from(matches[2], "base64"),
+  }
+}
+
+const createLocation = createServerFn({ method: "POST" })
+  .inputValidator(
+    (data: {
+      name: string
+      image?: string
+      parentId: number | null
+      parentLocationMarker: ParentLocationMarker | null
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    let imagePath: string | undefined
+    if (data.image) {
+      const savePath = `${process.env.SAVE_PATH}locations/`
+      const { fileType, fileBuffer } = decodeBase64Image(data.image)
+      const fileName = uuidv7()
+      const fileExtension = fileType?.split("/")[1]
+      const filePath = `${savePath}${fileName}.${fileExtension}`
+      const fileStream = fs.createWriteStream(filePath)
+      fileStream.write(fileBuffer)
+      fileStream.end()
+      imagePath = `${fileName}.${fileExtension}`
+    }
+    const location = await new LocationRepository().create({
+      name: data.name,
+      parentId: data.parentId,
+      parentLocationMarker: data.parentLocationMarker,
+      imagePath,
+    })
+    return { success: true, location }
   })
 
 export const Route = createFileRoute("/items/$itemId/location/add")({
@@ -64,6 +115,15 @@ function RouteComponent() {
   const [markerPosition, setMarkerPosition] = useState<{
     x: number
     y: number
+  } | null>(null)
+
+  // State for creating new location
+  const [isCreatingLocation, setIsCreatingLocation] = useState(false)
+  const [newLocationName, setNewLocationName] = useState("")
+  const [newLocationImage, setNewLocationImage] = useState("")
+  const [pendingNewLocation, setPendingNewLocation] = useState<{
+    name: string
+    image: string
   } | null>(null)
 
   const handleLocationClick = async (location: Location) => {
@@ -130,6 +190,178 @@ function RouteComponent() {
       const children = await fetchChildLocations({ data: targetLocation.id })
       setCurrentLocations(children)
     }
+  }
+
+  const handleStartCreateLocation = () => {
+    setIsCreatingLocation(true)
+    setNewLocationName("")
+    setNewLocationImage("")
+  }
+
+  const handleCancelCreateLocation = () => {
+    setIsCreatingLocation(false)
+    setNewLocationName("")
+    setNewLocationImage("")
+    setPendingNewLocation(null)
+  }
+
+  const handleProceedToMarker = () => {
+    if (!newLocationName.trim()) return
+    setPendingNewLocation({ name: newLocationName, image: newLocationImage })
+    setMarkerPosition(null)
+  }
+
+  const handleConfirmNewLocation = async () => {
+    // Use pendingNewLocation if set, otherwise use form values directly (root level)
+    const name = pendingNewLocation?.name ?? newLocationName
+    const image = pendingNewLocation?.image ?? newLocationImage
+    if (!name.trim()) return
+    const parentLocation =
+      locationPath.length > 0 ? locationPath[locationPath.length - 1] : null
+    const result = await createLocation({
+      data: {
+        name,
+        image: image || undefined,
+        parentId: parentLocation?.id ?? null,
+        parentLocationMarker: markerPosition
+          ? { id: 1, x: markerPosition.x, y: markerPosition.y }
+          : null,
+      },
+    })
+    if (result.success && result.location) {
+      // Add new location to current list and reset state
+      setCurrentLocations([...currentLocations, result.location])
+      setIsCreatingLocation(false)
+      setNewLocationName("")
+      setNewLocationImage("")
+      setPendingNewLocation(null)
+      setMarkerPosition(null)
+    }
+  }
+
+  // View: Place marker on parent for new location
+  if (pendingNewLocation && locationPath.length > 0) {
+    const parentLocation = locationPath[locationPath.length - 1]
+    return (
+      <div className="max-w-128 mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-6">Position markieren</h1>
+        <p className="text-muted-foreground mb-4">
+          Klicke auf das Bild, um die Position von "{pendingNewLocation.name}"
+          in "{parentLocation.name}" zu markieren.
+        </p>
+
+        <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCancelCreateLocation}
+          >
+            <ChevronLeftIcon className="w-4 h-4 mr-1" />
+            Abbrechen
+          </Button>
+        </div>
+
+        <div className="relative inline-block w-full">
+          <img
+            ref={imageRef}
+            src={`/img/locations/${parentLocation.imagePath}`}
+            alt={parentLocation.name}
+            className="w-full rounded-lg cursor-crosshair"
+            onClick={handleImageClick}
+          />
+          {markerPosition && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: `${markerPosition.x}%`,
+                top: `${markerPosition.y}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              <CrosshairIcon className="w-8 h-8 text-red-500 drop-shadow-lg" />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 flex gap-2">
+          <Button onClick={handleConfirmNewLocation} disabled={!markerPosition}>
+            <CheckIcon className="w-4 h-4 mr-1" />
+            Speichern
+          </Button>
+          <Button variant="outline" onClick={handleConfirmNewLocation}>
+            Ohne Markierung speichern
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // View: Create new location form
+  if (isCreatingLocation) {
+    const parentLocation =
+      locationPath.length > 0 ? locationPath[locationPath.length - 1] : null
+    return (
+      <div className="max-w-128 mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-6">Neue Location erstellen</h1>
+        {parentLocation && (
+          <p className="text-muted-foreground mb-4">
+            In: {locationPath.map((loc) => loc.name).join(" → ")}
+          </p>
+        )}
+
+        <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCancelCreateLocation}
+          >
+            <ChevronLeftIcon className="w-4 h-4 mr-1" />
+            Abbrechen
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="locationName"
+              className="block text-sm font-medium mb-1"
+            >
+              Name
+            </label>
+            <Input
+              id="locationName"
+              value={newLocationName}
+              onChange={(e) => setNewLocationName(e.target.value)}
+              placeholder="Name der Location"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Bild</label>
+            <MyCropper onChange={(image) => setNewLocationImage(image)} />
+          </div>
+
+          <div className="flex gap-2">
+            {parentLocation ? (
+              <Button
+                onClick={handleProceedToMarker}
+                disabled={!newLocationName.trim()}
+              >
+                Weiter zur Markierung
+              </Button>
+            ) : (
+              <Button
+                onClick={handleConfirmNewLocation}
+                disabled={!newLocationName.trim()}
+              >
+                <CheckIcon className="w-4 h-4 mr-1" />
+                Erstellen
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Marker selection view
@@ -251,6 +483,13 @@ function RouteComponent() {
             </Button>
           </div>
         ))}
+      </div>
+
+      <div className="mt-6">
+        <Button variant="outline" onClick={handleStartCreateLocation}>
+          <PlusIcon className="w-4 h-4 mr-1" />
+          Neue Location erstellen
+        </Button>
       </div>
     </div>
   )

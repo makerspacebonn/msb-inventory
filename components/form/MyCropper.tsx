@@ -81,49 +81,47 @@ export function MyCropper({ onChange }: MyCropperProps) {
   }
 
   return imageSrc && !croppedImage ? (
-    <>
-      <Dialog open={open}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Share link</DialogTitle>
-            <DialogDescription>
-              Anyone who has this link will be able to view this.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center gap-2 h-[calc(100vh-10rem)]">
-            <div className="flex flex-col h-full w-full">
-              <div className="relative h-[600px] w-full">
-                <Cropper
-                  image={imageSrc}
-                  crop={crop}
-                  rotation={rotation}
-                  zoom={zoom}
-                  aspect={1}
-                  onCropChange={setCrop}
-                  onRotationChange={setRotation}
-                  onCropComplete={onCropComplete}
-                  onZoomChange={setZoom}
-                />
-              </div>
+    <Dialog open={open}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Share link</DialogTitle>
+          <DialogDescription>
+            Anyone who has this link will be able to view this.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center gap-2 h-[calc(100vh-10rem)]">
+          <div className="flex flex-col h-full w-full">
+            <div className="relative h-[600px] w-full">
+              <Cropper
+                image={imageSrc}
+                crop={crop}
+                rotation={rotation}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onRotationChange={setRotation}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+              />
             </div>
           </div>
-          <DialogFooter className="sm:justify-start">
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setOpen(!open)
-                }}
-              >
-                Close
-              </Button>
-            </DialogClose>
-            <Button onClick={(e) => showCroppedImage(e)}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+        <DialogFooter className="sm:justify-start">
+          <DialogClose asChild>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setOpen(!open)
+              }}
+            >
+              Close
+            </Button>
+          </DialogClose>
+          <Button onClick={(e) => showCroppedImage(e)}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   ) : croppedImage ? (
     <div>
       <FieldLabel>Bild</FieldLabel>
