@@ -1,10 +1,8 @@
 import { MyCropper } from "@components/form/MyCropper"
 import { Button } from "@components/ui/button"
 import { Input } from "@components/ui/input"
-import type { Location, ParentLocationMarker } from "@server/app/types"
+import type { Location } from "@server/app/types"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { createServerFn } from "@tanstack/react-start"
-import fs from "fs"
 import {
   CheckIcon,
   ChevronLeftIcon,
@@ -13,93 +11,13 @@ import {
   PlusIcon,
 } from "lucide-react"
 import { type MouseEvent, useRef, useState } from "react"
-import { v7 as uuidv7 } from "uuid"
-import { ItemRepository } from "@/src/repositories/ItemRepository"
-import { LocationRepository } from "@/src/repositories/LocationRepository"
-
-const fetchRootLocations = createServerFn().handler(async () => {
-  return new LocationRepository().findRootLocations()
-})
-
-const fetchLocationChain = createServerFn()
-  .inputValidator((locationId: number) => locationId)
-  .handler(async ({ data: locationId }) => {
-    const chain = await new LocationRepository().findChainForId(locationId)
-    // Chain is returned as [current, parent, grandparent, ...root]
-    // We need it as [root, ..., grandparent, parent] (without current)
-    return chain.slice(1).reverse()
-  })
-
-const fetchItem = createServerFn()
-  .inputValidator((itemId: number) => itemId)
-  .handler(async ({ data: itemId }) => {
-    return new ItemRepository().findById(itemId)
-  })
-
-const fetchChildLocations = createServerFn()
-  .inputValidator((parentId: number | undefined) => parentId)
-  .handler(async ({ data: parentId }) => {
-    return new LocationRepository().findByParentId(parentId)
-  })
-
-const setItemLocation = createServerFn()
-  .inputValidator(
-    (data: {
-      itemId: number
-      locationId: number
-      parentLocationMarker: ParentLocationMarker | null
-    }) => data,
-  )
-  .handler(async ({ data }) => {
-    await new ItemRepository().upsert({
-      id: data.itemId,
-      locationId: data.locationId,
-      parentLocationMarker: data.parentLocationMarker,
-    })
-    return { success: true }
-  })
-
-function decodeBase64Image(dataString: string) {
-  const matches = dataString.match(/^data:([A-Za-z-+/]+);base64,(.+)$/)
-  if (matches?.length !== 3) {
-    throw new Error("Invalid input string")
-  }
-  return {
-    fileType: matches[1],
-    fileBuffer: Buffer.from(matches[2], "base64"),
-  }
-}
-
-const createLocation = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      name: string
-      image?: string
-      parentId: number | null
-      parentLocationMarker: ParentLocationMarker | null
-    }) => data,
-  )
-  .handler(async ({ data }) => {
-    let imagePath: string | undefined
-    if (data.image) {
-      const savePath = `${process.env.SAVE_PATH}locations/`
-      const { fileType, fileBuffer } = decodeBase64Image(data.image)
-      const fileName = uuidv7()
-      const fileExtension = fileType?.split("/")[1]
-      const filePath = `${savePath}${fileName}.${fileExtension}`
-      const fileStream = fs.createWriteStream(filePath)
-      fileStream.write(fileBuffer)
-      fileStream.end()
-      imagePath = `${fileName}.${fileExtension}`
-    }
-    const location = await new LocationRepository().create({
-      name: data.name,
-      parentId: data.parentId,
-      parentLocationMarker: data.parentLocationMarker,
-      imagePath,
-    })
-    return { success: true, location }
-  })
+import { fetchItem, setItemLocation } from "@/src/actions/itemActions"
+import {
+  createLocation,
+  fetchChildLocations,
+  fetchLocationChain,
+  fetchRootLocations,
+} from "@/src/actions/locationActions"
 
 export const Route = createFileRoute("/items/$itemId/location/add")({
   component: RouteComponent,
