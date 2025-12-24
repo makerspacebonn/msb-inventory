@@ -28,4 +28,9 @@ export class ItemRepository {
       orderBy: (items, { desc }) => [desc(items.id)],
     })
   }
+  async findByLocationId(locationId: number): Promise<Item[]> {
+    return db.query.ItemTable.findMany({
+      where: (items, { eq }) => eq(items.locationId, locationId),
+    })
+  }
 }

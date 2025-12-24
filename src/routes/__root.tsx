@@ -77,6 +77,9 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 <li>
                   <Link to="/items">Items</Link>
                 </li>
+                <li>
+                  <Link to="/locations">Locations</Link>
+                </li>
                 <li>Search</li>
               </ul>
             </nav>
