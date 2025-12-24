@@ -2,6 +2,20 @@ import { db } from "@/src/db"
 import type { Location } from "../app/types"
 
 export class LocationRepository {
+  async findRootLocations(): Promise<Location[]> {
+    const locations = await db.query.LocationTable.findMany({
+      where: (locations, { isNull }) => isNull(locations.parentId),
+    })
+    return locations
+  }
+
+  async findByParentId(parentId: number): Promise<Location[]> {
+    const locations = await db.query.LocationTable.findMany({
+      where: (locations, { eq }) => eq(locations.parentId, parentId),
+    })
+    return locations
+  }
+
   async findById(id: number): Promise<Location[] | undefined> {
     const location1: Location = {
       id: 1,

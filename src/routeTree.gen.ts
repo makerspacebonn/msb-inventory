@@ -17,6 +17,7 @@ import { Route as ItemsAddRouteImport } from './routes/items/add'
 import { Route as ImgSplatRouteImport } from './routes/img.$'
 import { Route as IItemIdRouteImport } from './routes/i.$itemId'
 import { Route as ApiItemsRouteImport } from './routes/api/items'
+import { Route as ItemsItemIdLocationAddRouteImport } from './routes/items/$itemId/location/add'
 
 const TestRoute = TestRouteImport.update({
   id: '/test',
@@ -58,6 +59,11 @@ const ApiItemsRoute = ApiItemsRouteImport.update({
   path: '/api/items',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ItemsItemIdLocationAddRoute = ItemsItemIdLocationAddRouteImport.update({
+  id: '/items/$itemId/location/add',
+  path: '/items/$itemId/location/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items': typeof ItemsIndexRoute
+  '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items': typeof ItemsIndexRoute
+  '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items/': typeof ItemsIndexRoute
+  '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/items/add'
     | '/items/testedit'
     | '/items'
+    | '/items/$itemId/location/add'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/items/add'
     | '/items/testedit'
     | '/items'
+    | '/items/$itemId/location/add'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/items/add'
     | '/items/testedit'
     | '/items/'
+    | '/items/$itemId/location/add'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   ItemsAddRoute: typeof ItemsAddRoute
   ItemsTesteditRoute: typeof ItemsTesteditRoute
   ItemsIndexRoute: typeof ItemsIndexRoute
+  ItemsItemIdLocationAddRoute: typeof ItemsItemIdLocationAddRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiItemsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/items/$itemId/location/add': {
+      id: '/items/$itemId/location/add'
+      path: '/items/$itemId/location/add'
+      fullPath: '/items/$itemId/location/add'
+      preLoaderRoute: typeof ItemsItemIdLocationAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +224,7 @@ const rootRouteChildren: RootRouteChildren = {
   ItemsAddRoute: ItemsAddRoute,
   ItemsTesteditRoute: ItemsTesteditRoute,
   ItemsIndexRoute: ItemsIndexRoute,
+  ItemsItemIdLocationAddRoute: ItemsItemIdLocationAddRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

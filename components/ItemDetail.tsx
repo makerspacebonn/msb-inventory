@@ -1,13 +1,17 @@
 import { LocationComponent } from "@components/LocationComponent"
-import type { Item, Location } from "@server/app/types"
+import { Button } from "@components/ui/button"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@components/ui/empty"
+import type { Item } from "@server/app/types"
+import { Link } from "@tanstack/react-router"
+import { MapPinIcon } from "lucide-react"
 
-export const ItemDetail = ({
-  item,
-  locations,
-}: {
-  item: Item
-  locations?: Location[] | undefined
-}) => {
+export const ItemDetail = ({ item }: { item: Item }) => {
   const imagePath = `/img/items/${item.imagePath}`
   let marker = item.parentLocationMarker
 
@@ -28,26 +32,46 @@ export const ItemDetail = ({
       <h3 className="text-xl font-bold p-2 border-2 rounded-2xl bg-gray-600">
         Wo finde ich es?
       </h3>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          flexWrap: "wrap",
-          width: "100%",
-          justifyContent: "space-around",
-        }}
-      >
-        {item?.locationChain?.map((location) => {
-          const currentMarker = marker
-          marker = location.parentLocationMarker
-          return (
-            <div key={location.id} className="flex flex-col items-center">
-              <LocationComponent location={location} marker={currentMarker} />
-            </div>
-          )
-        })}
-      </div>
+      {item?.locationChain && item.locationChain.length > 0 ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            flexWrap: "wrap",
+            width: "100%",
+            justifyContent: "space-around",
+          }}
+        >
+          {item.locationChain.map((location) => {
+            const currentMarker = marker
+            marker = location.parentLocationMarker
+            return (
+              <div key={location.id} className="flex flex-col items-center">
+                <LocationComponent location={location} marker={currentMarker} />
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <Empty className="mt-4">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <MapPinIcon />
+            </EmptyMedia>
+            <EmptyTitle>Kein Ort hinterlegt</EmptyTitle>
+            <EmptyDescription>
+              Diesem Item wurde noch kein Ort zugewiesen.
+            </EmptyDescription>
+          </EmptyHeader>
+          <Link
+            to="/items/$itemId/location/add"
+            params={{ itemId: item.id.toString() }}
+          >
+            <Button>Ort hinzufügen</Button>
+          </Link>
+        </Empty>
+      )}
     </div>
   )
 }
