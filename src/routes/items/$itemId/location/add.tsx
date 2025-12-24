@@ -20,6 +20,15 @@ const fetchRootLocations = createServerFn().handler(async () => {
   return new LocationRepository().findRootLocations()
 })
 
+const fetchLocationChain = createServerFn()
+  .inputValidator((locationId: number) => locationId)
+  .handler(async ({ data: locationId }) => {
+    const chain = await new LocationRepository().findChainForId(locationId)
+    // Chain is returned as [current, parent, grandparent, ...root]
+    // We need it as [root, ..., grandparent, parent] (without current)
+    return chain.slice(1).reverse()
+  })
+
 const fetchItem = createServerFn()
   .inputValidator((itemId: number) => itemId)
   .handler(async ({ data: itemId }) => {
@@ -98,17 +107,41 @@ export const Route = createFileRoute("/items/$itemId/location/add")({
       fetchRootLocations(),
       fetchItem({ data: parseInt(params.itemId, 10) }),
     ])
-    return { locations, item, itemId: params.itemId }
+    // If item has a location, fetch the chain and siblings
+    let initialPath: Location[] = []
+    let initialLocations = locations
+    if (item?.locationId) {
+      const chain = await fetchLocationChain({ data: item.locationId })
+      initialPath = chain
+      // Fetch siblings of the current location (children of parent)
+      if (chain.length > 0) {
+        const parentId = chain[chain.length - 1].id
+        initialLocations = await fetchChildLocations({ data: parentId })
+      }
+    }
+    return {
+      locations,
+      item,
+      itemId: params.itemId,
+      initialPath,
+      initialLocations,
+    }
   },
 })
 
 function RouteComponent() {
-  const { locations: rootLocations, item, itemId } = Route.useLoaderData()
+  const {
+    locations: rootLocations,
+    item,
+    itemId,
+    initialPath,
+    initialLocations,
+  } = Route.useLoaderData()
   const navigate = useNavigate()
   const imageRef = useRef<HTMLImageElement>(null)
   const [currentLocations, setCurrentLocations] =
-    useState<Location[]>(rootLocations)
-  const [locationPath, setLocationPath] = useState<Location[]>([])
+    useState<Location[]>(initialLocations)
+  const [locationPath, setLocationPath] = useState<Location[]>(initialPath)
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(
     null,
   )
@@ -128,10 +161,8 @@ function RouteComponent() {
 
   const handleLocationClick = async (location: Location) => {
     const children = await fetchChildLocations({ data: location.id })
-    if (children.length > 0) {
-      setLocationPath([...locationPath, location])
-      setCurrentLocations(children)
-    }
+    setLocationPath([...locationPath, location])
+    setCurrentLocations(children)
   }
 
   const handleSelect = (location: Location) => {
@@ -416,9 +447,19 @@ function RouteComponent() {
     )
   }
 
+  const handleCancel = () => {
+    navigate({ to: "/i/$itemId", params: { itemId } })
+  }
+
   // Location selection view
   return (
     <div className="max-w-128 mx-auto p-4">
+      <div className="flex items-center gap-2 mb-4">
+        <Button variant="ghost" size="sm" onClick={handleCancel}>
+          <ChevronLeftIcon className="w-4 h-4 mr-1" />
+          Abbrechen
+        </Button>
+      </div>
       <h1 className="text-2xl font-bold mb-6">Ort auswählen</h1>
       <div className="flex items-center gap-3 mb-6 p-3 bg-muted rounded-lg">
         {item?.imagePath && (
@@ -483,13 +524,16 @@ function RouteComponent() {
             </Button>
           </div>
         ))}
-      </div>
-
-      <div className="mt-6">
-        <Button variant="outline" onClick={handleStartCreateLocation}>
-          <PlusIcon className="w-4 h-4 mr-1" />
-          Neue Location erstellen
-        </Button>
+        <button
+          type="button"
+          className="border border-dashed rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+          onClick={handleStartCreateLocation}
+        >
+          <div className="w-full aspect-square flex items-center justify-center">
+            <PlusIcon className="w-12 h-12" />
+          </div>
+          <span className="text-lg font-medium">Neue Location</span>
+        </button>
       </div>
     </div>
   )

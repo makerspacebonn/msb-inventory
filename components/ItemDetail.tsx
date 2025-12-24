@@ -9,7 +9,7 @@ import {
 } from "@components/ui/empty"
 import type { Item } from "@server/app/types"
 import { Link } from "@tanstack/react-router"
-import { MapPinIcon } from "lucide-react"
+import { MapPinIcon, PencilIcon } from "lucide-react"
 
 export const ItemDetail = ({ item }: { item: Item }) => {
   const imagePath = `/img/items/${item.imagePath}`
@@ -29,8 +29,18 @@ export const ItemDetail = ({ item }: { item: Item }) => {
       </div>
       <div className="mb-4">{item.description}</div>
       <div className="font-bold mb-4">ID: {item.id}</div>
-      <h3 className="text-xl font-bold p-2 border-2 rounded-2xl bg-gray-600">
-        Wo finde ich es?
+      <h3 className="text-xl font-bold p-2 border-2 rounded-2xl bg-gray-600 flex items-center justify-between">
+        <span>Wo finde ich es?</span>
+        {item?.locationChain && item.locationChain.length > 0 && (
+          <Link
+            to="/items/$itemId/location/add"
+            params={{ itemId: item.id.toString() }}
+          >
+            <Button variant="ghost" size="sm">
+              <PencilIcon className="w-4 h-4" />
+            </Button>
+          </Link>
+        )}
       </h3>
       {item?.locationChain && item.locationChain.length > 0 ? (
         <div
