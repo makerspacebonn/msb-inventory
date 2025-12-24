@@ -60,7 +60,7 @@ const addItem = createServerFn({ method: "POST" })
       console.log("trying to save")
       if (data?.image) {
         try {
-          const savePath = process.env.SAVE_PATH + "img/items/"
+          const savePath = process.env.SAVE_PATH + "items/"
           const { fileType, fileBuffer } = decodeBase64Image(data.image)
           const fileName = uuidv7()
           const fileExtension = fileType?.split("/")[1]
@@ -120,8 +120,8 @@ function ItemForm() {
         console.log("new Item", result.item)
         form.reset()
         toast.success("Item erstellt")
-      } else {
-        toast.error("Fehler beim erstellen des Items", result?.error)
+      } else if (result?.error) {
+        toast.error(`Fehler beim erstellen des Items ${result.error}`)
       }
     },
   })
@@ -134,9 +134,8 @@ function ItemForm() {
       }}
     >
       <FieldGroup>
-        <form.Field
-          name="name"
-          children={(field) => (
+        <form.Field name="name">
+          {(field) => (
             <>
               <FieldContent>
                 <FieldLabel htmlFor={field.name}>Name</FieldLabel>
@@ -152,10 +151,9 @@ function ItemForm() {
               </FieldContent>
             </>
           )}
-        />
-        <form.Field
-          name="description"
-          children={(field) => (
+        </form.Field>
+        <form.Field name="description">
+          {(field) => (
             <>
               <FieldContent>
                 <FieldLabel htmlFor={field.name}>Beschreibung</FieldLabel>
@@ -171,11 +169,10 @@ function ItemForm() {
               </FieldContent>
             </>
           )}
-        />
+        </form.Field>
 
-        <form.Field
-          name="image"
-          children={(field) => (
+        <form.Field name="image">
+          {(field) => (
             <>
               <Input
                 name={field.name}
@@ -193,7 +190,7 @@ function ItemForm() {
               )}
             </>
           )}
-        />
+        </form.Field>
 
         <Button>Erstellen</Button>
       </FieldGroup>
