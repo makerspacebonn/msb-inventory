@@ -1,6 +1,7 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm"
 import {
   type AnyPgColumn,
+  index,
   integer,
   json,
   pgTable,
@@ -39,17 +40,22 @@ export const LocationTable = pgTable("locations", {
 export type LocationSelect = InferSelectModel<typeof LocationTable>
 export type LocationInsert = InferInsertModel<typeof LocationTable>
 
-export const ItemTable = pgTable("items", {
-  id: serial("id").primaryKey(),
-  name: varchar("name").notNull(),
-  description: text("description"),
-  locationId: integer("location_id").references(
-    (): AnyPgColumn => LocationTable.id,
-  ),
-  parentLocationMarker: json().$type<ParentLocationMarker | null>(),
-  imagePath: varchar("image_path"),
-  additionalInfo: json().$type<(ParentLocationMarker | Link)[] | null>(),
-})
+export const ItemTable = pgTable(
+  "items",
+  {
+    id: serial("id").primaryKey(),
+    name: varchar("name").notNull(),
+    description: text("description"),
+    locationId: integer("location_id").references(
+      (): AnyPgColumn => LocationTable.id,
+    ),
+    parentLocationMarker: json().$type<ParentLocationMarker | null>(),
+    imagePath: varchar("image_path"),
+    additionalInfo: json().$type<(ParentLocationMarker | Link)[] | null>(),
+    tags: varchar("tags").array(),
+  },
+  (table) => [index("items_tags_idx").using("gin", table.tags)],
+)
 
 export type ItemSelect = InferSelectModel<typeof ItemTable>
 export type ItemInsert = InferInsertModel<typeof ItemTable>

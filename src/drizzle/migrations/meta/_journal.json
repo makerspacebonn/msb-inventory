@@ -71,6 +71,13 @@
       "when": 1764693345334,
       "tag": "0009_flashy_ser_duncan",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1766768261687,
+      "tag": "0010_loose_big_bertha",
+      "breakpoints": true
     }
   ]
 }
