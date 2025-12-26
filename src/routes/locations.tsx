@@ -14,7 +14,12 @@ import type { Item, Location } from "@server/app/types"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import fs from "fs"
-import { ChevronLeftIcon, ImagePlusIcon, MapPinIcon, PackageIcon } from "lucide-react"
+import {
+  ChevronLeftIcon,
+  ImagePlusIcon,
+  MapPinIcon,
+  PackageIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { v7 as uuidv7 } from "uuid"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
@@ -185,7 +190,7 @@ function RouteComponent() {
 
       {/* Current location header */}
       {currentLocation && (
-        <div className="mb-6 p-4 bg-muted rounded-lg">
+        <div className="mb-6 p-4 border-2 rounded-lg">
           <div className="flex items-center gap-4">
             {currentLocation.imagePath ? (
               <img
@@ -210,7 +215,6 @@ function RouteComponent() {
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
                   <ImagePlusIcon className="w-4 h-4 mr-1" />
-                  Bild
                 </Button>
               </DialogTrigger>
               <DialogContent>
