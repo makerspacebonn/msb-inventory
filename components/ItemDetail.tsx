@@ -20,7 +20,7 @@ import {
 } from "@components/ui/empty"
 import type { Item } from "@server/app/types"
 import { Link } from "@tanstack/react-router"
-import { MapPinIcon, PencilIcon, TrashIcon } from "lucide-react"
+import { ExternalLinkIcon, MapPinIcon, PencilIcon, TrashIcon } from "lucide-react"
 
 type ItemDetailProps = {
   item: Item
@@ -53,6 +53,67 @@ export const ItemDetail = ({ item, onDeleteLocation }: ItemDetailProps) => {
           ))}
         </div>
       )}
+
+      {(item.manufacturer ||
+        item.model ||
+        item.category ||
+        item.morestuff ||
+        (item.links && item.links.length > 0)) && (
+        <div className="mb-4 space-y-2 border rounded-lg p-4 bg-muted/30">
+          {item.manufacturer && (
+            <div className="flex gap-2 text-sm">
+              <span className="text-muted-foreground font-medium">
+                Hersteller:
+              </span>
+              <span>{item.manufacturer}</span>
+            </div>
+          )}
+          {item.model && (
+            <div className="flex gap-2 text-sm">
+              <span className="text-muted-foreground font-medium">Modell:</span>
+              <span>{item.model}</span>
+            </div>
+          )}
+          {item.category && (
+            <div className="flex gap-2 text-sm">
+              <span className="text-muted-foreground font-medium">
+                Kategorie:
+              </span>
+              <span>{item.category}</span>
+            </div>
+          )}
+          {item.links && item.links.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-sm text-muted-foreground font-medium">
+                Links:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {item.links.map((link) => (
+                  <a
+                    key={link.url}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-blue-500 hover:underline"
+                  >
+                    <ExternalLinkIcon className="w-3 h-3" />
+                    {link.name || link.type || link.url}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          {item.morestuff && (
+            <div className="text-sm">
+              <span className="text-muted-foreground font-medium block mb-1">
+                Weitere Infos:
+              </span>
+              <p className="whitespace-pre-wrap">{item.morestuff}</p>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="font-bold mb-4">ID: {item.id}</div>
       <h3 className="text-xl font-bold p-2 border-2 rounded-2xl bg-gray-600 flex items-center justify-between">
         <span>Wo finde ich es?</span>

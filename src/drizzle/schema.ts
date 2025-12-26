@@ -11,7 +11,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core"
-import type { Link, ParentLocationMarker } from "../app/types"
+import type { ItemLink, ParentLocationMarker } from "../app/types"
 
 export const UserTable = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -51,8 +51,13 @@ export const ItemTable = pgTable(
     ),
     parentLocationMarker: json().$type<ParentLocationMarker | null>(),
     imagePath: varchar("image_path"),
-    additionalInfo: json().$type<(ParentLocationMarker | Link)[] | null>(),
+    additionalInfo: json().$type<(ParentLocationMarker | ItemLink)[] | null>(),
     tags: varchar("tags").array(),
+    manufacturer: varchar("manufacturer"),
+    model: varchar("model"),
+    category: varchar("category"),
+    links: json().$type<ItemLink[] | null>(),
+    morestuff: text("morestuff"),
   },
   (table) => [index("items_tags_idx").using("gin", table.tags)],
 )

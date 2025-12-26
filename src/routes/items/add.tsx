@@ -6,7 +6,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { type Tag, TagInput } from "emblor"
 import fs from "fs"
-import { CheckIcon, Loader2Icon, SparklesIcon, XIcon } from "lucide-react"
+import {
+  CheckIcon,
+  Loader2Icon,
+  PlusIcon,
+  SparklesIcon,
+  TrashIcon,
+  XIcon,
+} from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { v7 as uuidv7 } from "uuid"
@@ -43,12 +50,23 @@ export const Route = createFileRoute("/items/add")({
   component: RouteComponent,
 })
 
+const linkSchema = z.object({
+  url: z.string(),
+  name: z.string(),
+  type: z.string(),
+})
+
 const itemSchema = z.object({
   name: z.string().min(1, "Muss mindestens einen Buchstaben haben!"),
   description: z.string().optional(),
   image: z.string().optional(),
   imagePath: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  manufacturer: z.string().optional(),
+  model: z.string().optional(),
+  category: z.string().optional(),
+  links: z.array(linkSchema).optional(),
+  morestuff: z.string().optional(),
 })
 
 function decodeBase64Image(dataString: string) {
@@ -165,6 +183,11 @@ function ItemForm() {
       image: "",
       imagePath: undefined,
       tags: [],
+      manufacturer: undefined,
+      model: undefined,
+      category: undefined,
+      links: [],
+      morestuff: undefined,
     } as z.infer<typeof itemSchema>,
     validators: {
       // Pass a schema or function to validate
@@ -311,6 +334,229 @@ function ItemForm() {
                     onDismiss={() => dismissSuggestion("tags")}
                   />
                 )}
+            </FieldContent>
+          )}
+        </form.Field>
+
+        <form.Field name="manufacturer">
+          {(field) => (
+            <FieldContent>
+              <FieldLabel htmlFor={field.name}>Hersteller</FieldLabel>
+              <Input
+                name={field.name}
+                value={field.state.value ?? ""}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
+              {aiData?.hersteller &&
+                !dismissedSuggestions.has("manufacturer") && (
+                  <InlineSuggestion
+                    value={aiData.hersteller}
+                    onUse={() => {
+                      field.handleChange(aiData.hersteller ?? "")
+                      dismissSuggestion("manufacturer")
+                    }}
+                    onDismiss={() => dismissSuggestion("manufacturer")}
+                  />
+                )}
+            </FieldContent>
+          )}
+        </form.Field>
+
+        <form.Field name="model">
+          {(field) => (
+            <FieldContent>
+              <FieldLabel htmlFor={field.name}>Modell</FieldLabel>
+              <Input
+                name={field.name}
+                value={field.state.value ?? ""}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
+              {aiData?.modell && !dismissedSuggestions.has("model") && (
+                <InlineSuggestion
+                  value={aiData.modell}
+                  onUse={() => {
+                    field.handleChange(aiData.modell ?? "")
+                    dismissSuggestion("model")
+                  }}
+                  onDismiss={() => dismissSuggestion("model")}
+                />
+              )}
+            </FieldContent>
+          )}
+        </form.Field>
+
+        <form.Field name="category">
+          {(field) => (
+            <FieldContent>
+              <FieldLabel htmlFor={field.name}>Kategorie</FieldLabel>
+              <Input
+                name={field.name}
+                value={field.state.value ?? ""}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
+              {aiData?.kategorie && !dismissedSuggestions.has("category") && (
+                <InlineSuggestion
+                  value={aiData.kategorie}
+                  onUse={() => {
+                    field.handleChange(aiData.kategorie)
+                    dismissSuggestion("category")
+                  }}
+                  onDismiss={() => dismissSuggestion("category")}
+                />
+              )}
+            </FieldContent>
+          )}
+        </form.Field>
+
+        <form.Field name="links">
+          {(field) => (
+            <FieldContent>
+              <FieldLabel>Links</FieldLabel>
+              <div className="space-y-2">
+                {(field.state.value ?? []).map((link, index) => (
+                  <div key={index} className="flex gap-2 items-start">
+                    <div className="flex-1 grid grid-cols-3 gap-2">
+                      <Input
+                        placeholder="Name"
+                        value={link.name}
+                        onChange={(e) => {
+                          const newLinks = [...(field.state.value ?? [])]
+                          newLinks[index] = { ...link, name: e.target.value }
+                          field.handleChange(newLinks)
+                        }}
+                      />
+                      <Input
+                        placeholder="URL"
+                        value={link.url}
+                        onChange={(e) => {
+                          const newLinks = [...(field.state.value ?? [])]
+                          newLinks[index] = { ...link, url: e.target.value }
+                          field.handleChange(newLinks)
+                        }}
+                      />
+                      <Input
+                        placeholder="Typ"
+                        value={link.type}
+                        onChange={(e) => {
+                          const newLinks = [...(field.state.value ?? [])]
+                          newLinks[index] = { ...link, type: e.target.value }
+                          field.handleChange(newLinks)
+                        }}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const newLinks = (field.state.value ?? []).filter(
+                          (_, i) => i !== index,
+                        )
+                        field.handleChange(newLinks)
+                      }}
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    field.handleChange([
+                      ...(field.state.value ?? []),
+                      { name: "", url: "", type: "" },
+                    ])
+                  }}
+                >
+                  <PlusIcon className="w-4 h-4 mr-1" />
+                  Link hinzufügen
+                </Button>
+              </div>
+              {aiData?.bedienungsanleitungen &&
+                aiData.bedienungsanleitungen.length > 0 &&
+                !dismissedSuggestions.has("links") && (
+                  <div className="mt-2 p-2 bg-muted/50 border rounded-md">
+                    <div className="flex items-start gap-2">
+                      <SparklesIcon className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                      <div className="flex-1 space-y-1">
+                        {aiData.bedienungsanleitungen.map((url) => (
+                          <a
+                            key={url}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-500 hover:underline block"
+                          >
+                            {url}
+                          </a>
+                        ))}
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2"
+                          onClick={() => {
+                            const newLinks = aiData.bedienungsanleitungen.map(
+                              (url) => ({
+                                name: "Bedienungsanleitung",
+                                url,
+                                type: "manual",
+                              }),
+                            )
+                            field.handleChange([
+                              ...(field.state.value ?? []),
+                              ...newLinks,
+                            ])
+                            dismissSuggestion("links")
+                          }}
+                        >
+                          <CheckIcon className="w-3 h-3 mr-1" />
+                          Übernehmen
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2"
+                          onClick={() => dismissSuggestion("links")}
+                        >
+                          <XIcon className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+            </FieldContent>
+          )}
+        </form.Field>
+
+        <form.Field name="morestuff">
+          {(field) => (
+            <FieldContent>
+              <FieldLabel htmlFor={field.name}>Weitere Infos</FieldLabel>
+              <Textarea
+                name={field.name}
+                value={field.state.value ?? ""}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
+              {aiData?.zusatzinfos && !dismissedSuggestions.has("morestuff") && (
+                <InlineSuggestion
+                  value={aiData.zusatzinfos}
+                  onUse={() => {
+                    field.handleChange(aiData.zusatzinfos)
+                    dismissSuggestion("morestuff")
+                  }}
+                  onDismiss={() => dismissSuggestion("morestuff")}
+                />
+              )}
             </FieldContent>
           )}
         </form.Field>
