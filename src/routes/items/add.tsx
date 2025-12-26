@@ -1,10 +1,12 @@
 import { MyCropper } from "@components/form/MyCropper"
+import { Badge } from "@components/ui/badge"
 import { Button } from "@components/ui/button"
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { type Tag, TagInput } from "emblor"
 import fs from "fs"
+import { CheckIcon, Loader2Icon, SparklesIcon, XIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { v7 as uuidv7 } from "uuid"
@@ -17,9 +19,23 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { describeImageFn } from "@/src/actions/aiActions"
 import { fetchAutocompleteTags } from "@/src/actions/tagActions"
 import type { Item } from "@/src/app/types"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
+
+type AiData = {
+  bezeichnung: string
+  hersteller: string | null
+  modell: string | null
+  seriennummer: string | null
+  kategorie: string
+  zustand: "neu" | "gut" | "gebraucht" | "defekt"
+  beschreibung_kurz: string
+  schlagworte: string[]
+  bedienungsanleitungen: string[]
+  zusatzinfos: string
+}
 
 const { fieldContext, formContext } = createFormHookContexts()
 
@@ -106,6 +122,12 @@ function ItemForm() {
   const [tags, setTags] = useState<Tag[]>([])
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null)
   const [autocompleteTags, setAutocompleteTags] = useState<Tag[]>([])
+  const [aiData, setAiData] = useState<AiData | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [currentImage, setCurrentImage] = useState<string>("")
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(
+    new Set(),
+  )
 
   // Fetch autocomplete suggestions on mount
   useEffect(() => {
@@ -115,6 +137,26 @@ function ItemForm() {
       )
     })
   }, [])
+
+  const handleAiAnalysis = async () => {
+    if (!currentImage) return
+    setAiLoading(true)
+    setDismissedSuggestions(new Set())
+    try {
+      const result = await describeImageFn({ data: currentImage })
+      setAiData(result)
+      toast.success("KI-Analyse abgeschlossen")
+    } catch (error) {
+      console.error(error)
+      toast.error("Fehler bei der KI-Analyse")
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const dismissSuggestion = (key: string) => {
+    setDismissedSuggestions((prev) => new Set([...prev, key]))
+  }
 
   const form = useAppForm({
     defaultValues: {
@@ -175,6 +217,16 @@ function ItemForm() {
                 {!field.state.meta.isValid && (
                   <FieldError errors={field.state.meta.errors} />
                 )}
+                {aiData?.bezeichnung && !dismissedSuggestions.has("name") && (
+                  <InlineSuggestion
+                    value={aiData.bezeichnung}
+                    onUse={() => {
+                      field.handleChange(aiData.bezeichnung)
+                      dismissSuggestion("name")
+                    }}
+                    onDismiss={() => dismissSuggestion("name")}
+                  />
+                )}
               </FieldContent>
             </>
           )}
@@ -193,6 +245,17 @@ function ItemForm() {
                 {!field.state.meta.isValid && (
                   <FieldError errors={field.state.meta.errors} />
                 )}
+                {aiData?.beschreibung_kurz &&
+                  !dismissedSuggestions.has("description") && (
+                    <InlineSuggestion
+                      value={aiData.beschreibung_kurz}
+                      onUse={() => {
+                        field.handleChange(aiData.beschreibung_kurz)
+                        dismissSuggestion("description")
+                      }}
+                      onDismiss={() => dismissSuggestion("description")}
+                    />
+                  )}
               </FieldContent>
             </>
           )}
@@ -229,6 +292,25 @@ function ItemForm() {
               {!field.state.meta.isValid && (
                 <FieldError errors={field.state.meta.errors} />
               )}
+              {aiData?.schlagworte &&
+                aiData.schlagworte.length > 0 &&
+                !dismissedSuggestions.has("tags") && (
+                  <InlineTagsSuggestion
+                    tags={aiData.schlagworte}
+                    onUse={() => {
+                      const tagObjects = aiData.schlagworte.map(
+                        (text, index) => ({
+                          id: `ai-${index}`,
+                          text,
+                        }),
+                      )
+                      setTags(tagObjects)
+                      field.setValue(aiData.schlagworte)
+                      dismissSuggestion("tags")
+                    }}
+                    onDismiss={() => dismissSuggestion("tags")}
+                  />
+                )}
             </FieldContent>
           )}
         </form.Field>
@@ -245,6 +327,8 @@ function ItemForm() {
                 onChange={(image) => {
                   console.log("image change", image)
                   field.setValue(image)
+                  setCurrentImage(image)
+                  setAiData(null)
                 }}
               />
               {!field.state.meta.isValid && (
@@ -254,8 +338,184 @@ function ItemForm() {
           )}
         </form.Field>
 
+        {currentImage && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAiAnalysis}
+            disabled={aiLoading}
+          >
+            {aiLoading ? (
+              <>
+                <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
+                Analysiere...
+              </>
+            ) : (
+              <>
+                <SparklesIcon className="w-4 h-4 mr-2" />
+                KI-Analyse starten
+              </>
+            )}
+          </Button>
+        )}
+
+        {aiData && <AiResultsSection aiData={aiData} />}
+
         <Button>Erstellen</Button>
       </FieldGroup>
     </form>
+  )
+}
+
+function InlineSuggestion({
+  value,
+  onUse,
+  onDismiss,
+}: {
+  value: string
+  onUse: () => void
+  onDismiss: () => void
+}) {
+  return (
+    <div className="mt-2 p-2 bg-muted/50 border rounded-md">
+      <div className="flex items-start gap-2">
+        <SparklesIcon className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+        <p className="text-sm text-muted-foreground flex-1">{value}</p>
+        <div className="flex gap-1 shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2"
+            onClick={onUse}
+          >
+            <CheckIcon className="w-3 h-3 mr-1" />
+            Übernehmen
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2"
+            onClick={onDismiss}
+          >
+            <XIcon className="w-3 h-3" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function InlineTagsSuggestion({
+  tags,
+  onUse,
+  onDismiss,
+}: {
+  tags: string[]
+  onUse: () => void
+  onDismiss: () => void
+}) {
+  return (
+    <div className="mt-2 p-2 bg-muted/50 border rounded-md">
+      <div className="flex items-start gap-2">
+        <SparklesIcon className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+        <div className="flex flex-wrap gap-1 flex-1">
+          {tags.map((tag) => (
+            <Badge key={tag} variant="secondary">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+        <div className="flex gap-1 shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2"
+            onClick={onUse}
+          >
+            <CheckIcon className="w-3 h-3 mr-1" />
+            Übernehmen
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2"
+            onClick={onDismiss}
+          >
+            <XIcon className="w-3 h-3" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AiResultsSection({ aiData }: { aiData: AiData }) {
+  const hasAdditionalInfo =
+    aiData.hersteller ||
+    aiData.modell ||
+    aiData.seriennummer ||
+    aiData.kategorie ||
+    aiData.zustand ||
+    aiData.zusatzinfos ||
+    (aiData.bedienungsanleitungen && aiData.bedienungsanleitungen.length > 0)
+
+  if (!hasAdditionalInfo) return null
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3 bg-muted/50">
+      <h3 className="font-semibold flex items-center gap-2">
+        <SparklesIcon className="w-4 h-4" />
+        Weitere KI-Informationen
+      </h3>
+
+      {aiData.hersteller && (
+        <AiInfoRow label="Hersteller" value={aiData.hersteller} />
+      )}
+      {aiData.modell && <AiInfoRow label="Modell" value={aiData.modell} />}
+      {aiData.seriennummer && (
+        <AiInfoRow label="Seriennummer" value={aiData.seriennummer} />
+      )}
+      {aiData.kategorie && (
+        <AiInfoRow label="Kategorie" value={aiData.kategorie} />
+      )}
+      {aiData.zustand && <AiInfoRow label="Zustand" value={aiData.zustand} />}
+      {aiData.zusatzinfos && (
+        <AiInfoRow label="Zusatzinfos" value={aiData.zusatzinfos} />
+      )}
+      {aiData.bedienungsanleitungen &&
+        aiData.bedienungsanleitungen.length > 0 && (
+          <div className="space-y-1">
+            <span className="text-sm text-muted-foreground">
+              Bedienungsanleitungen
+            </span>
+            <div className="space-y-1">
+              {aiData.bedienungsanleitungen.map((link) => (
+                <a
+                  key={link}
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-500 hover:underline block"
+                >
+                  {link}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+    </div>
+  )
+}
+
+function AiInfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-2 text-sm">
+      <span className="text-muted-foreground">{label}:</span>
+      <span>{value}</span>
+    </div>
   )
 }
