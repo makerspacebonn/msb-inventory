@@ -46,6 +46,7 @@
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.44.7",
     "elysia": "^1.4.18",
+    "emblor": "^1.4.8",
     "eta": "^4.4.1",
     "jimp": "^1.6.0",
     "lucide-react": "^0.555.0",

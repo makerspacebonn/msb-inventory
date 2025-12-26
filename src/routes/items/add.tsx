@@ -1,9 +1,11 @@
 import { MyCropper } from "@components/form/MyCropper"
 import { Button } from "@components/ui/button"
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
+import { type Tag, TagInput } from "emblor"
 import fs from "fs"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { v7 as uuidv7 } from "uuid"
 import z from "zod/v4"
@@ -15,6 +17,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { fetchAutocompleteTags } from "@/src/actions/tagActions"
 import type { Item } from "@/src/app/types"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 
@@ -29,6 +32,7 @@ const itemSchema = z.object({
   description: z.string().optional(),
   image: z.string().optional(),
   imagePath: z.string().optional(),
+  tags: z.array(z.string()).optional(),
 })
 
 function decodeBase64Image(dataString: string) {
@@ -99,12 +103,26 @@ const { useAppForm } = createFormHook({
 
 function ItemForm() {
   const navigate = useNavigate()
+  const [tags, setTags] = useState<Tag[]>([])
+  const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null)
+  const [autocompleteTags, setAutocompleteTags] = useState<Tag[]>([])
+
+  // Fetch autocomplete suggestions on mount
+  useEffect(() => {
+    fetchAutocompleteTags({ data: undefined }).then((existingTags) => {
+      setAutocompleteTags(
+        existingTags.map((text, index) => ({ id: `suggestion-${index}`, text })),
+      )
+    })
+  }, [])
+
   const form = useAppForm({
     defaultValues: {
       name: "",
       description: undefined,
       image: "",
       imagePath: undefined,
+      tags: [],
     } as z.infer<typeof itemSchema>,
     validators: {
       // Pass a schema or function to validate
@@ -177,6 +195,41 @@ function ItemForm() {
                 )}
               </FieldContent>
             </>
+          )}
+        </form.Field>
+
+        <form.Field name="tags">
+          {(field) => (
+            <FieldContent>
+              <FieldLabel htmlFor={field.name}>Tags</FieldLabel>
+              <TagInput
+                placeholder="Tag eingeben..."
+                tags={tags}
+                setTags={(newTags) => {
+                  const resolvedTags =
+                    typeof newTags === "function" ? newTags(tags) : newTags
+                  setTags(resolvedTags)
+                  field.setValue(resolvedTags.map((t: Tag) => t.text))
+                }}
+                activeTagIndex={activeTagIndex}
+                setActiveTagIndex={setActiveTagIndex}
+                enableAutocomplete
+                autocompleteOptions={autocompleteTags}
+                allowDuplicates={false}
+                restrictTagsToAutocompleteOptions={false}
+                styleClasses={{
+                  input: "w-full",
+                  inlineTagsContainer:
+                    "rounded-md border border-input bg-background px-3 py-2",
+                  tag: {
+                    body: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                  },
+                }}
+              />
+              {!field.state.meta.isValid && (
+                <FieldError errors={field.state.meta.errors} />
+              )}
+            </FieldContent>
           )}
         </form.Field>
 

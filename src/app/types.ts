@@ -7,6 +7,7 @@ export type Item = {
   parentLocationMarker?: ParentLocationMarker | null
   additionalInfo: (ParentLocationMarker | Link)[] | null
   imagePath: string | null
+  tags: string[]
 }
 
 export type Location = {

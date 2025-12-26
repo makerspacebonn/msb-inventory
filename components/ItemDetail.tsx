@@ -1,3 +1,4 @@
+import { Badge } from "@components/ui/badge"
 import { LocationComponent } from "@components/LocationComponent"
 import { Button } from "@components/ui/button"
 import {
@@ -43,6 +44,15 @@ export const ItemDetail = ({ item, onDeleteLocation }: ItemDetailProps) => {
         )}
       </div>
       <div className="mb-4">{item.description}</div>
+      {item.tags && item.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {item.tags.map((tag) => (
+            <Badge key={tag} variant="secondary">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      )}
       <div className="font-bold mb-4">ID: {item.id}</div>
       <h3 className="text-xl font-bold p-2 border-2 rounded-2xl bg-gray-600 flex items-center justify-between">
         <span>Wo finde ich es?</span>
