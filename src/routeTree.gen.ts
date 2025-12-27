@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TestRouteImport } from './routes/test'
 import { Route as LocationsRouteImport } from './routes/locations'
+import { Route as BackupRouteImport } from './routes/backup'
 import { Route as AidescriptionRouteImport } from './routes/aidescription'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ItemsIndexRouteImport } from './routes/items/index'
@@ -19,6 +20,7 @@ import { Route as ItemsAddRouteImport } from './routes/items/add'
 import { Route as ImgSplatRouteImport } from './routes/img.$'
 import { Route as IItemIdRouteImport } from './routes/i.$itemId'
 import { Route as ApiItemsRouteImport } from './routes/api/items'
+import { Route as BackupDownloadSplatRouteImport } from './routes/backup.download.$'
 import { Route as ItemsItemIdLocationAddRouteImport } from './routes/items/$itemId/location/add'
 
 const TestRoute = TestRouteImport.update({
@@ -29,6 +31,11 @@ const TestRoute = TestRouteImport.update({
 const LocationsRoute = LocationsRouteImport.update({
   id: '/locations',
   path: '/locations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BackupRoute = BackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AidescriptionRoute = AidescriptionRouteImport.update({
@@ -71,6 +78,11 @@ const ApiItemsRoute = ApiItemsRouteImport.update({
   path: '/api/items',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BackupDownloadSplatRoute = BackupDownloadSplatRouteImport.update({
+  id: '/download/$',
+  path: '/download/$',
+  getParentRoute: () => BackupRoute,
+} as any)
 const ItemsItemIdLocationAddRoute = ItemsItemIdLocationAddRouteImport.update({
   id: '/items/$itemId/location/add',
   path: '/items/$itemId/location/add',
@@ -80,6 +92,7 @@ const ItemsItemIdLocationAddRoute = ItemsItemIdLocationAddRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aidescription': typeof AidescriptionRoute
+  '/backup': typeof BackupRouteWithChildren
   '/locations': typeof LocationsRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
@@ -88,11 +101,13 @@ export interface FileRoutesByFullPath {
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items': typeof ItemsIndexRoute
+  '/backup/download/$': typeof BackupDownloadSplatRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aidescription': typeof AidescriptionRoute
+  '/backup': typeof BackupRouteWithChildren
   '/locations': typeof LocationsRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
@@ -101,12 +116,14 @@ export interface FileRoutesByTo {
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items': typeof ItemsIndexRoute
+  '/backup/download/$': typeof BackupDownloadSplatRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/aidescription': typeof AidescriptionRoute
+  '/backup': typeof BackupRouteWithChildren
   '/locations': typeof LocationsRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
@@ -115,6 +132,7 @@ export interface FileRoutesById {
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items/': typeof ItemsIndexRoute
+  '/backup/download/$': typeof BackupDownloadSplatRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRouteTypes {
@@ -122,6 +140,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/aidescription'
+    | '/backup'
     | '/locations'
     | '/test'
     | '/api/items'
@@ -130,11 +149,13 @@ export interface FileRouteTypes {
     | '/items/add'
     | '/items/testedit'
     | '/items'
+    | '/backup/download/$'
     | '/items/$itemId/location/add'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/aidescription'
+    | '/backup'
     | '/locations'
     | '/test'
     | '/api/items'
@@ -143,11 +164,13 @@ export interface FileRouteTypes {
     | '/items/add'
     | '/items/testedit'
     | '/items'
+    | '/backup/download/$'
     | '/items/$itemId/location/add'
   id:
     | '__root__'
     | '/'
     | '/aidescription'
+    | '/backup'
     | '/locations'
     | '/test'
     | '/api/items'
@@ -156,12 +179,14 @@ export interface FileRouteTypes {
     | '/items/add'
     | '/items/testedit'
     | '/items/'
+    | '/backup/download/$'
     | '/items/$itemId/location/add'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AidescriptionRoute: typeof AidescriptionRoute
+  BackupRoute: typeof BackupRouteWithChildren
   LocationsRoute: typeof LocationsRoute
   TestRoute: typeof TestRoute
   ApiItemsRoute: typeof ApiItemsRoute
@@ -187,6 +212,13 @@ declare module '@tanstack/react-router' {
       path: '/locations'
       fullPath: '/locations'
       preLoaderRoute: typeof LocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/backup': {
+      id: '/backup'
+      path: '/backup'
+      fullPath: '/backup'
+      preLoaderRoute: typeof BackupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aidescription': {
@@ -245,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiItemsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/backup/download/$': {
+      id: '/backup/download/$'
+      path: '/download/$'
+      fullPath: '/backup/download/$'
+      preLoaderRoute: typeof BackupDownloadSplatRouteImport
+      parentRoute: typeof BackupRoute
+    }
     '/items/$itemId/location/add': {
       id: '/items/$itemId/location/add'
       path: '/items/$itemId/location/add'
@@ -255,9 +294,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BackupRouteChildren {
+  BackupDownloadSplatRoute: typeof BackupDownloadSplatRoute
+}
+
+const BackupRouteChildren: BackupRouteChildren = {
+  BackupDownloadSplatRoute: BackupDownloadSplatRoute,
+}
+
+const BackupRouteWithChildren =
+  BackupRoute._addFileChildren(BackupRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AidescriptionRoute: AidescriptionRoute,
+  BackupRoute: BackupRouteWithChildren,
   LocationsRoute: LocationsRoute,
   TestRoute: TestRoute,
   ApiItemsRoute: ApiItemsRoute,
