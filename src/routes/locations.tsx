@@ -19,6 +19,7 @@ import {
   ImagePlusIcon,
   MapPinIcon,
   PackageIcon,
+  Trash2Icon,
 } from "lucide-react"
 import { useState } from "react"
 import { v7 as uuidv7 } from "uuid"
@@ -100,6 +101,13 @@ const updateLocationImage = createServerFn({ method: "POST" })
     return { success: true, location: updatedLocation }
   })
 
+const deleteLocation = createServerFn({ method: "POST" })
+  .inputValidator((locationId: number) => locationId)
+  .handler(async ({ data: locationId }) => {
+    const deleted = await new LocationRepository().delete(locationId)
+    return { success: deleted }
+  })
+
 type LocationSearch = {
   id?: number
 }
@@ -123,9 +131,13 @@ function RouteComponent() {
   const navigate = useNavigate()
   const [newImage, setNewImage] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   const parentLocation =
     locationPath.length > 1 ? locationPath[locationPath.length - 2] : null
+
+  const canDelete =
+    currentLocation && childLocations.length === 0 && items.length === 0
 
   const handleSaveImage = async () => {
     if (!currentLocation || !newImage) return
@@ -137,6 +149,19 @@ function RouteComponent() {
       setIsDialogOpen(false)
       // Refresh the current route to get updated data
       await navigate({ to: "/locations", search: { id: currentLocation.id } })
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!currentLocation) return
+    const result = await deleteLocation({ data: currentLocation.id })
+    if (result.success) {
+      setIsDeleteDialogOpen(false)
+      // Navigate to parent location or root
+      await navigate({
+        to: "/locations",
+        search: parentLocation ? { id: parentLocation.id } : {},
+      })
     }
   }
 
@@ -201,32 +226,63 @@ function RouteComponent() {
                 </p>
               )}
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <ImagePlusIcon className="w-4 h-4 mr-1" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Bild hinzufügen</DialogTitle>
-                  <DialogDescription>
-                    Füge ein Bild zu "{currentLocation.name}" hinzu.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                  <MyCropper onChange={(image) => setNewImage(image)} />
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Abbrechen</Button>
-                  </DialogClose>
-                  <Button onClick={handleSaveImage} disabled={!newImage}>
-                    Speichern
+            <div className="flex gap-2">
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <ImagePlusIcon className="w-4 h-4" />
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Bild hinzufügen</DialogTitle>
+                    <DialogDescription>
+                      Füge ein Bild zu "{currentLocation.name}" hinzu.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <MyCropper onChange={(image) => setNewImage(image)} />
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Abbrechen</Button>
+                    </DialogClose>
+                    <Button onClick={handleSaveImage} disabled={!newImage}>
+                      Speichern
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              {canDelete && (
+                <Dialog
+                  open={isDeleteDialogOpen}
+                  onOpenChange={setIsDeleteDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Trash2Icon className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Location löschen</DialogTitle>
+                      <DialogDescription>
+                        Möchtest du "{currentLocation.name}" wirklich löschen?
+                        Diese Aktion kann nicht rückgängig gemacht werden.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline">Abbrechen</Button>
+                      </DialogClose>
+                      <Button variant="destructive" onClick={handleDelete}>
+                        Löschen
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
           </div>
         </div>
       )}

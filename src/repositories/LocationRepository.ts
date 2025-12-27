@@ -59,4 +59,12 @@ export class LocationRepository {
     }
     return locations
   }
+
+  async delete(id: number): Promise<boolean> {
+    const result = await db
+      .delete(LocationTable)
+      .where(eq(LocationTable.id, id))
+      .returning()
+    return result.length > 0
+  }
 }
