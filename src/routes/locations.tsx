@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@components/ui/dialog"
 import type { Item, Location } from "@server/app/types"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import fs from "fs"
 import {
@@ -25,20 +25,48 @@ import { v7 as uuidv7 } from "uuid"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
-const fetchRootLocations = createServerFn().handler(async () => {
-  return new LocationRepository().findRootLocations()
-})
-
-const fetchChildLocations = createServerFn()
-  .inputValidator((parentId: number) => parentId)
-  .handler(async ({ data: parentId }) => {
-    return new LocationRepository().findByParentId(parentId)
-  })
-
-const fetchItemsByLocation = createServerFn()
-  .inputValidator((locationId: number) => locationId)
+const fetchLocationData = createServerFn()
+  .inputValidator((locationId: number | undefined) => locationId)
   .handler(async ({ data: locationId }) => {
-    return new ItemRepository().findByLocationId(locationId)
+    const locationRepo = new LocationRepository()
+    const itemRepo = new ItemRepository()
+
+    if (locationId === undefined) {
+      const rootLocations = await locationRepo.findRootLocations()
+      return {
+        currentLocation: null,
+        locationPath: [] as Location[],
+        childLocations: rootLocations,
+        items: [] as Item[],
+      }
+    }
+
+    const currentLocation = await locationRepo.findById(locationId)
+    if (!currentLocation) {
+      const rootLocations = await locationRepo.findRootLocations()
+      return {
+        currentLocation: null,
+        locationPath: [] as Location[],
+        childLocations: rootLocations,
+        items: [] as Item[],
+      }
+    }
+
+    const [locationChain, childLocations, items] = await Promise.all([
+      locationRepo.findChainForId(locationId),
+      locationRepo.findByParentId(locationId),
+      itemRepo.findByLocationId(locationId),
+    ])
+
+    // findChainForId returns [current, parent, grandparent, ...], we need to reverse for breadcrumbs
+    const locationPath = locationChain.reverse()
+
+    return {
+      currentLocation,
+      locationPath,
+      childLocations,
+      items,
+    }
   })
 
 function decodeBase64Image(dataString: string) {
@@ -72,86 +100,43 @@ const updateLocationImage = createServerFn({ method: "POST" })
     return { success: true, location: updatedLocation }
   })
 
+type LocationSearch = {
+  id?: number
+}
+
 export const Route = createFileRoute("/locations")({
   component: RouteComponent,
-  loader: async () => {
-    const locations = await fetchRootLocations()
-    return { locations }
+  validateSearch: (search: Record<string, unknown>): LocationSearch => {
+    return {
+      id: search.id ? Number(search.id) : undefined,
+    }
+  },
+  loaderDeps: ({ search: { id } }) => ({ id }),
+  loader: async ({ deps: { id } }) => {
+    return await fetchLocationData({ data: id })
   },
 })
 
 function RouteComponent() {
-  const { locations: rootLocations } = Route.useLoaderData()
-  const [currentLocations, setCurrentLocations] =
-    useState<Location[]>(rootLocations)
-  const [locationPath, setLocationPath] = useState<Location[]>([])
-  const [items, setItems] = useState<Item[]>([])
+  const { currentLocation, locationPath, childLocations, items } =
+    Route.useLoaderData()
+  const navigate = useNavigate()
   const [newImage, setNewImage] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const handleLocationClick = async (location: Location) => {
-    const [children, locationItems] = await Promise.all([
-      fetchChildLocations({ data: location.id }),
-      fetchItemsByLocation({ data: location.id }),
-    ])
-    setLocationPath([...locationPath, location])
-    setCurrentLocations(children)
-    setItems(locationItems)
-  }
-
-  const handleBack = () => {
-    if (locationPath.length === 1) {
-      setCurrentLocations(rootLocations)
-      setLocationPath([])
-      setItems([])
-    } else if (locationPath.length > 1) {
-      const newPath = locationPath.slice(0, -1)
-      const parentLocation = newPath[newPath.length - 1]
-      setLocationPath(newPath)
-      Promise.all([
-        fetchChildLocations({ data: parentLocation.id }),
-        fetchItemsByLocation({ data: parentLocation.id }),
-      ]).then(([children, locationItems]) => {
-        setCurrentLocations(children)
-        setItems(locationItems)
-      })
-    }
-  }
-
-  const handleBreadcrumbClick = async (index: number) => {
-    if (index === -1) {
-      setCurrentLocations(rootLocations)
-      setLocationPath([])
-      setItems([])
-    } else {
-      const newPath = locationPath.slice(0, index + 1)
-      const targetLocation = newPath[index]
-      setLocationPath(newPath)
-      const [children, locationItems] = await Promise.all([
-        fetchChildLocations({ data: targetLocation.id }),
-        fetchItemsByLocation({ data: targetLocation.id }),
-      ])
-      setCurrentLocations(children)
-      setItems(locationItems)
-    }
-  }
-
-  const currentLocation =
-    locationPath.length > 0 ? locationPath[locationPath.length - 1] : null
+  const parentLocation =
+    locationPath.length > 1 ? locationPath[locationPath.length - 2] : null
 
   const handleSaveImage = async () => {
     if (!currentLocation || !newImage) return
     const result = await updateLocationImage({
       data: { locationId: currentLocation.id, image: newImage },
     })
-    if (result.success && result.location) {
-      // Update the location in the path
-      const updatedPath = locationPath.map((loc) =>
-        loc.id === currentLocation.id ? result.location : loc,
-      ) as Location[]
-      setLocationPath(updatedPath)
+    if (result.success) {
       setNewImage("")
       setIsDialogOpen(false)
+      // Refresh the current route to get updated data
+      await navigate({ to: "/locations", search: { id: currentLocation.id } })
     }
   }
 
@@ -161,29 +146,34 @@ function RouteComponent() {
 
       {/* Breadcrumb navigation */}
       <div className="flex items-center gap-1 mb-4 flex-wrap">
-        {locationPath.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ChevronLeftIcon className="w-4 h-4 mr-1" />
-            Zurück
+        {currentLocation && (
+          <Button variant="ghost" size="sm" asChild>
+            <Link
+              to="/locations"
+              search={parentLocation ? { id: parentLocation.id } : {}}
+            >
+              <ChevronLeftIcon className="w-4 h-4 mr-1" />
+              Zurück
+            </Link>
           </Button>
         )}
-        <button
-          type="button"
+        <Link
+          to="/locations"
+          search={{}}
           className="text-muted-foreground hover:text-foreground hover:underline"
-          onClick={() => handleBreadcrumbClick(-1)}
         >
           Start
-        </button>
-        {locationPath.map((loc, index) => (
+        </Link>
+        {locationPath.map((loc) => (
           <span key={loc.id} className="flex items-center gap-1">
             <span className="text-muted-foreground">→</span>
-            <button
-              type="button"
+            <Link
+              to="/locations"
+              search={{ id: loc.id }}
               className="text-muted-foreground hover:text-foreground hover:underline"
-              onClick={() => handleBreadcrumbClick(index)}
             >
               {loc.name}
-            </button>
+            </Link>
           </span>
         ))}
       </div>
@@ -242,18 +232,18 @@ function RouteComponent() {
       )}
 
       {/* Child locations grid */}
-      {currentLocations.length > 0 && (
+      {childLocations.length > 0 && (
         <>
           <h3 className="text-lg font-semibold mb-3">
             {currentLocation ? "Unterorte" : "Alle Locations"}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-            {currentLocations.map((location) => (
-              <button
+            {childLocations.map((location) => (
+              <Link
                 key={location.id}
-                type="button"
+                to="/locations"
+                search={{ id: location.id }}
                 className="border rounded-lg p-3 flex flex-col items-center gap-2 hover:bg-muted transition-colors"
-                onClick={() => handleLocationClick(location)}
               >
                 {location.imagePath ? (
                   <img
@@ -269,7 +259,7 @@ function RouteComponent() {
                 <span className="text-sm font-medium text-center">
                   {location.name}
                 </span>
-              </button>
+              </Link>
             ))}
           </div>
         </>
@@ -317,7 +307,7 @@ function RouteComponent() {
       )}
 
       {/* Empty state for root */}
-      {!currentLocation && currentLocations.length === 0 && (
+      {!currentLocation && childLocations.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
           <MapPinIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
           <p>Keine Locations vorhanden</p>
