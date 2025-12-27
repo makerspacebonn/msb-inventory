@@ -151,7 +151,10 @@ function ItemForm() {
   useEffect(() => {
     fetchAutocompleteTags({ data: undefined }).then((existingTags) => {
       setAutocompleteTags(
-        existingTags.map((text, index) => ({ id: `suggestion-${index}`, text })),
+        existingTags.map((text, index) => ({
+          id: `suggestion-${index}`,
+          text,
+        })),
       )
     })
   }, [])
@@ -162,7 +165,11 @@ function ItemForm() {
     setDismissedSuggestions(new Set())
     try {
       const result = await describeImageFn({ data: currentImage })
-      setAiData(result)
+      if (Array.isArray(result)) {
+        setAiData(result[0])
+      } else {
+        setAiData(result)
+      }
       toast.success("KI-Analyse abgeschlossen")
     } catch (error) {
       console.error(error)
@@ -226,6 +233,51 @@ function ItemForm() {
       }}
     >
       <FieldGroup>
+        <form.Field name="image">
+          {(field) => (
+            <>
+              <Input
+                name={field.name}
+                type="hidden"
+                value={field.state.value}
+              />
+              <MyCropper
+                onChange={(image) => {
+                  console.log("image change", image)
+                  field.setValue(image)
+                  setCurrentImage(image)
+                  setAiData(null)
+                }}
+              />
+              {!field.state.meta.isValid && (
+                <FieldError errors={field.state.meta.errors} />
+              )}
+            </>
+          )}
+        </form.Field>
+
+        {currentImage && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAiAnalysis}
+            disabled={aiLoading}
+            className="bg-emerald-950"
+          >
+            {aiLoading ? (
+              <>
+                <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
+                Analysiere...
+              </>
+            ) : (
+              <>
+                <SparklesIcon className="w-4 h-4 mr-2" />
+                KI-Analyse starten
+              </>
+            )}
+          </Button>
+        )}
+
         <form.Field name="name">
           {(field) => (
             <>
@@ -547,63 +599,20 @@ function ItemForm() {
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
-              {aiData?.zusatzinfos && !dismissedSuggestions.has("morestuff") && (
-                <InlineSuggestion
-                  value={aiData.zusatzinfos}
-                  onUse={() => {
-                    field.handleChange(aiData.zusatzinfos)
-                    dismissSuggestion("morestuff")
-                  }}
-                  onDismiss={() => dismissSuggestion("morestuff")}
-                />
-              )}
+              {aiData?.zusatzinfos &&
+                !dismissedSuggestions.has("morestuff") && (
+                  <InlineSuggestion
+                    value={aiData.zusatzinfos}
+                    onUse={() => {
+                      field.handleChange(aiData.zusatzinfos)
+                      dismissSuggestion("morestuff")
+                    }}
+                    onDismiss={() => dismissSuggestion("morestuff")}
+                  />
+                )}
             </FieldContent>
           )}
         </form.Field>
-
-        <form.Field name="image">
-          {(field) => (
-            <>
-              <Input
-                name={field.name}
-                type="hidden"
-                value={field.state.value}
-              />
-              <MyCropper
-                onChange={(image) => {
-                  console.log("image change", image)
-                  field.setValue(image)
-                  setCurrentImage(image)
-                  setAiData(null)
-                }}
-              />
-              {!field.state.meta.isValid && (
-                <FieldError errors={field.state.meta.errors} />
-              )}
-            </>
-          )}
-        </form.Field>
-
-        {currentImage && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAiAnalysis}
-            disabled={aiLoading}
-          >
-            {aiLoading ? (
-              <>
-                <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
-                Analysiere...
-              </>
-            ) : (
-              <>
-                <SparklesIcon className="w-4 h-4 mr-2" />
-                KI-Analyse starten
-              </>
-            )}
-          </Button>
-        )}
 
         {aiData && <AiResultsSection aiData={aiData} />}
 
