@@ -1,12 +1,13 @@
 import { Button } from "@components/ui/button"
 import { createFileRoute } from "@tanstack/react-router"
-import { Download, Loader2, Trash2 } from "lucide-react"
+import { Download, Loader2, RotateCcw, Trash2 } from "lucide-react"
 import { useState } from "react"
 import {
   type BackupInfo,
   deleteBackup,
   generateBackup,
   listBackups,
+  restoreBackup,
 } from "@/src/actions/backupActions"
 
 export const Route = createFileRoute("/backup")({
@@ -19,6 +20,8 @@ function BackupPage() {
   const [backups, setBackups] = useState<BackupInfo[]>(initialBackups)
   const [isGenerating, setIsGenerating] = useState(false)
   const [deletingFile, setDeletingFile] = useState<string | null>(null)
+  const [restoringFile, setRestoringFile] = useState<string | null>(null)
+  const [restoreResult, setRestoreResult] = useState<string | null>(null)
 
   const handleGenerate = async () => {
     setIsGenerating(true)
@@ -41,6 +44,25 @@ function BackupPage() {
       console.error("Backup deletion failed:", error)
     } finally {
       setDeletingFile(null)
+    }
+  }
+
+  const handleRestore = async (filename: string) => {
+    if (!confirm(`Backup "${filename}" wiederherstellen? Alle aktuellen Daten werden überschrieben!`)) {
+      return
+    }
+    setRestoringFile(filename)
+    setRestoreResult(null)
+    try {
+      const result = await restoreBackup({ data: filename })
+      setRestoreResult(
+        `Wiederherstellung erfolgreich: ${result.locationsRestored} Standorte, ${result.itemsRestored} Items, ${result.imagesRestored} Bilder`,
+      )
+    } catch (error) {
+      console.error("Restore failed:", error)
+      setRestoreResult("Wiederherstellung fehlgeschlagen")
+    } finally {
+      setRestoringFile(null)
     }
   }
 
@@ -72,6 +94,12 @@ function BackupPage() {
 
       <h2 className="text-xl font-semibold mb-4">Verfügbare Backups</h2>
 
+      {restoreResult && (
+        <div className="mb-4 p-4 bg-muted rounded-lg">
+          <p>{restoreResult}</p>
+        </div>
+      )}
+
       {backups.length === 0 ? (
         <p className="text-muted-foreground">Keine Backups vorhanden.</p>
       ) : (
@@ -93,6 +121,19 @@ function BackupPage() {
                     <Download className="mr-2 h-4 w-4" />
                     Download
                   </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleRestore(backup.filename)}
+                  disabled={restoringFile === backup.filename}
+                >
+                  {restoringFile === backup.filename ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                  )}
+                  Restore
                 </Button>
                 <Button
                   variant="destructive"
