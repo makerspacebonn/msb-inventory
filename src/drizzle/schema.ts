@@ -1,6 +1,12 @@
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm"
+import {
+  type InferInsertModel,
+  type InferSelectModel,
+  type SQL,
+  sql,
+} from "drizzle-orm"
 import {
   type AnyPgColumn,
+  customType,
   index,
   integer,
   json,
@@ -13,6 +19,11 @@ import {
 } from "drizzle-orm/pg-core"
 import type { ItemLink, ParentLocationMarker } from "../app/types"
 
+const tsVector = customType<{ data: string }>({
+  dataType() {
+    return "tsvector"
+  },
+})
 export const UserTable = pgTable("users", {
   id: serial("id").primaryKey(),
   name: varchar("name"),
@@ -58,8 +69,35 @@ export const ItemTable = pgTable(
     category: varchar("category"),
     links: json().$type<ItemLink[] | null>(),
     morestuff: text("morestuff"),
+    searchVector: tsVector("search_vector", {
+      dimensions: 3,
+    }).generatedAlwaysAs(
+      (): SQL => sql`to_tsvector('german',
+           COALESCE(name, '') || ' ' ||
+           COALESCE(description, '') || ' ' ||
+           COALESCE(manufacturer, '') || ' ' ||
+           COALESCE(model, '') || ' ' ||
+           COALESCE(category, '') || ' ' ||
+           COALESCE(morestuff, '')
+       )`,
+    ),
+    searchableText: text("searchable_text").generatedAlwaysAs(
+      (): SQL => sql`COALESCE(name, '') || ' ' ||
+            COALESCE(description, '') || ' ' ||
+            COALESCE(manufacturer, '') || ' ' ||
+            COALESCE(model, '') || ' ' ||
+            COALESCE(category, '') || ' ' ||
+            COALESCE(morestuff, '')`,
+    ),
   },
-  (table) => [index("items_tags_idx").using("gin", table.tags)],
+  (t) => [
+    index("idx_content_search").using("gin", t.searchVector),
+    index("idx_searchable_text").using(
+      "gin",
+      t.searchableText.op("gin_trgm_ops"),
+    ),
+    index("items_tags_idx").using("gin", t.tags),
+  ],
 )
 
 export type ItemSelect = InferSelectModel<typeof ItemTable>
