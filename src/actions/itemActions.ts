@@ -1,6 +1,15 @@
 import type { ParentLocationMarker } from "@server/app/types"
 import { createServerFn } from "@tanstack/react-start"
-import { ItemRepository } from "@/src/repositories/ItemRepository"
+import {
+  ItemRepository,
+  type SearchResult,
+} from "@/src/repositories/ItemRepository"
+
+export const searchItems = createServerFn()
+  .inputValidator((query: string) => query)
+  .handler(async ({ data: query }): Promise<SearchResult[]> => {
+    return new ItemRepository().search(query)
+  })
 
 export const fetchItem = createServerFn()
   .inputValidator((itemId: number) => itemId)
