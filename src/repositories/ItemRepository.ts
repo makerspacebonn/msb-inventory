@@ -39,7 +39,7 @@ export class ItemRepository {
     })
   }
 
-  async search(query: string): Promise<SearchResult[]> {
+  async search(query: string): Promise<Item[]> {
     if (!query || query.trim().length === 0) {
       const items = await this.findLatest()
       return items.map((item) => ({ ...item, rank: 0, similarity: 0 }))
@@ -47,26 +47,41 @@ export class ItemRepository {
 
     const searchText = query.trim()
 
-    const results = await db.execute<SearchResult>(sql`
-      SELECT
-        *,
-        ts_rank(search_vector, plainto_tsquery('german', ${searchText})) as search_rank,
-        similarity(searchable_text, ${searchText}) as similarity_score
-      FROM items
-      WHERE
-        search_vector @@ plainto_tsquery('german', ${searchText})
+    const results = await db
+      .select()
+      .from(ItemTable)
+      .where(sql`search_vector @@ plainto_tsquery('german', ${searchText})
         OR searchable_text % ${searchText}
         OR searchable_text ILIKE ${"%" + searchText + "%"}
         OR EXISTS (
           SELECT 1 FROM unnest(tags) AS tag
           WHERE tag ILIKE ${"%" + searchText + "%"}
-        )
-      ORDER BY
-        (ts_rank(search_vector, plainto_tsquery('german', ${searchText})) * 2
-          + similarity(searchable_text, ${searchText})) DESC,
-        id DESC
-      LIMIT 100;`)
+        )`)
+      .orderBy(sql`(ts_rank(search_vector, plainto_tsquery('german', ${searchText})) * 2
+                       + similarity(searchable_text, ${searchText})) DESC,
+        id DESC`)
+      .limit(100)
 
-    return results.rows
+    // const results = await db.execute(sql`
+    //   SELECT
+    //     *,
+    //     ts_rank(search_vector, plainto_tsquery('german', ${searchText})) as search_rank,
+    //     similarity(searchable_text, ${searchText}) as similarity_score
+    //   FROM items
+    //   WHERE
+    //     search_vector @@ plainto_tsquery('german', ${searchText})
+    //     OR searchable_text % ${searchText}
+    //     OR searchable_text ILIKE ${"%" + searchText + "%"}
+    //     OR EXISTS (
+    //       SELECT 1 FROM unnest(tags) AS tag
+    //       WHERE tag ILIKE ${"%" + searchText + "%"}
+    //     )
+    //   ORDER BY
+    //     (ts_rank(search_vector, plainto_tsquery('german', ${searchText})) * 2
+    //       + similarity(searchable_text, ${searchText})) DESC,
+    //     id DESC
+    //   LIMIT 100;`)
+    console.log(results)
+    return results
   }
 }

@@ -52,6 +52,7 @@ function RouteComponent() {
       setIsSearching(true)
       try {
         const results = await searchItems({ data: debouncedQuery })
+        console.log(results)
         setItems(results)
       } catch (error) {
         console.error("Search failed:", error)
