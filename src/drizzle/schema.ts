@@ -69,6 +69,8 @@ export const ItemTable = pgTable(
     category: varchar("category"),
     links: json().$type<ItemLink[] | null>(),
     morestuff: text("morestuff"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at"),
     searchVector: tsVector("search_vector", {
       dimensions: 3,
     }).generatedAlwaysAs(

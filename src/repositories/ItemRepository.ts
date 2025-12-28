@@ -13,7 +13,7 @@ export class ItemRepository {
     if (item.id) {
       return db
         .update(ItemTable)
-        .set(item)
+        .set({ ...item, updatedAt: new Date() })
         .where(eq(ItemTable.id, item.id))
         .returning()
     }
@@ -31,6 +31,16 @@ export class ItemRepository {
   async findLatest(): Promise<Item[]> {
     return db.query.ItemTable.findMany({
       orderBy: (items, { desc }) => [desc(items.id)],
+    })
+  }
+  async findRecentItems(limit = 50): Promise<Item[]> {
+    const oneMonthAgo = new Date()
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
+
+    return db.query.ItemTable.findMany({
+      where: (items, { gte }) => gte(items.createdAt, oneMonthAgo),
+      orderBy: (items, { desc }) => [desc(items.createdAt)],
+      limit,
     })
   }
   async findByLocationId(locationId: number): Promise<Item[]> {

@@ -10,7 +10,7 @@ import type { Item } from "@/src/app/types"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 
 const itemLoader = createServerFn().handler(async () => {
-  return await new ItemRepository().findLatest()
+  return await new ItemRepository().findRecentItems(50)
 })
 
 export const Route = createFileRoute("/items/")({

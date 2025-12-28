@@ -13,6 +13,8 @@ export type Item = {
   category: string | null
   links: ItemLink[] | null
   morestuff: string | null
+  createdAt: Date
+  updatedAt: Date | null
 }
 
 export type Location = {
