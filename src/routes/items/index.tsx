@@ -3,7 +3,7 @@ import { Button } from "@components/ui/button"
 import { Input } from "@components/ui/input"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
-import { Loader2, Search, X } from "lucide-react"
+import { Loader2, PlusIcon, Search, X } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { searchItems } from "@/src/actions/itemActions"
 import type { Item } from "@/src/app/types"
@@ -71,16 +71,15 @@ function RouteComponent() {
 
   return (
     <>
-      <h1>Items</h1>
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1">
+        <div className="relative flex-1 text-xl">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Suchen nach Name, Beschreibung, Hersteller, Tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9"
+            className="pl-9 pr-9 "
           />
           {searchQuery && (
             <button
@@ -97,7 +96,10 @@ function RouteComponent() {
           )}
         </div>
         <Button variant="outline" asChild>
-          <Link to="/items/add">Add Item</Link>
+          <Link to="/items/add">
+            <PlusIcon />
+            Add Item
+          </Link>
         </Button>
       </div>
       {searchQuery && (

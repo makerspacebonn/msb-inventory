@@ -30,11 +30,6 @@ export function ItemCard({ item }: { item: Item }) {
             </p>
           )}
         </div>
-        <Button variant="outline" size="icon" asChild>
-          <a href={`/i/${item.id}/edit`} aria-label={`Edit ${item.name}`}>
-            <Pencil className="h-4 w-4" />
-          </a>
-        </Button>
       </div>
     </div>
   )
