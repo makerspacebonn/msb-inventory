@@ -1,5 +1,6 @@
 import { ItemDetail } from "@components/ItemDetail"
 import { ItemDeleteButton } from "@components/item/ItemDeleteButton"
+import { ItemQRCode } from "@components/item/ItemQRCode"
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod/v4"
@@ -20,8 +21,8 @@ const fetchItem = createServerFn()
         item.locationId,
       )
     }
-    console.log("Item", item)
-    return item
+    const baseUrl = process.env.BASE_URL! || ""
+    return { item, baseUrl }
   })
 
 const removeItemLocation = createServerFn()
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/i/$itemId")({
 })
 
 function RouteComponent() {
-  const item = Route.useLoaderData()
+  const { item, baseUrl } = Route.useLoaderData()
   const router = useRouter()
   const navigate = useNavigate()
 
@@ -70,6 +71,7 @@ function RouteComponent() {
         <ItemDeleteButton itemName={item.name} onDelete={handleDelete} />
       </div>
       <ItemDetail item={item} onDeleteLocation={handleDeleteLocation} />
+      <ItemQRCode itemId={item.id} itemName={item.name} baseUrl={baseUrl} />
     </div>
   )
 }
