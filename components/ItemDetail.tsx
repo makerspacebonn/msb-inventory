@@ -19,7 +19,7 @@ export const ItemDetail = ({ item, onDeleteLocation }: ItemDetailProps) => {
 
   return (
     <div className="items-center max-w-128 center mx-auto">
-      <h1 className="text-3xl font-bold text-center mb-4">{item.name}</h1>
+      <h1 className="text-3xl font-bold text-center mb-4">{item.name} </h1>
       <div>
         {item.imagePath && (
           <img

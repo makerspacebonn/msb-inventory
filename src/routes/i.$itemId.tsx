@@ -1,7 +1,9 @@
 import { ItemDetail } from "@components/ItemDetail"
-import { createFileRoute, useRouter } from "@tanstack/react-router"
+import { ItemDeleteButton } from "@components/item/ItemDeleteButton"
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod/v4"
+import { deleteItem } from "@/src/actions/itemActions"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
@@ -44,6 +46,7 @@ export const Route = createFileRoute("/i/$itemId")({
 function RouteComponent() {
   const item = Route.useLoaderData()
   const router = useRouter()
+  const navigate = useNavigate()
 
   const handleDeleteLocation = async () => {
     if (!item) return
@@ -51,5 +54,22 @@ function RouteComponent() {
     router.invalidate()
   }
 
-  return item && <ItemDetail item={item} onDeleteLocation={handleDeleteLocation} />
+  const handleDelete = async () => {
+    if (!item) return
+    const result = await deleteItem({ data: item.id })
+    if (result.success) {
+      await navigate({ to: "/items" })
+    }
+  }
+
+  if (!item) return null
+
+  return (
+    <div className="max-w-128 mx-auto p-4">
+      <div className="flex justify-end mb-4">
+        <ItemDeleteButton itemName={item.name} onDelete={handleDelete} />
+      </div>
+      <ItemDetail item={item} onDeleteLocation={handleDeleteLocation} />
+    </div>
+  )
 }

@@ -49,6 +49,21 @@ export class ItemRepository {
     })
   }
 
+  async delete(id: number): Promise<boolean> {
+    const result = await db
+      .delete(ItemTable)
+      .where(eq(ItemTable.id, id))
+      .returning()
+    return result.length > 0
+  }
+
+  async countByImagePath(imagePath: string): Promise<number> {
+    const items = await db.query.ItemTable.findMany({
+      where: (items, { eq }) => eq(items.imagePath, imagePath),
+    })
+    return items.length
+  }
+
   async search(query: string): Promise<Item[]> {
     if (!query || query.trim().length === 0) {
       const items = await this.findLatest()
