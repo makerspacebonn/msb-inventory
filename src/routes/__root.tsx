@@ -1,6 +1,7 @@
 // src/routes/__root.tsx
 /// <reference types="vite/client" />
 
+import { Button } from "@components/ui/button"
 import { Toaster } from "@components/ui/sonner"
 import {
   createRootRoute,
@@ -8,11 +9,19 @@ import {
   Link,
   Outlet,
   Scripts,
+  useRouter,
 } from "@tanstack/react-router"
+import { LogInIcon, LogOutIcon } from "lucide-react"
 import type { ReactNode } from "react"
+import { AuthProvider, useAuth } from "@/src/context/AuthContext"
+import { checkAuth } from "@/src/lib/auth"
 import appCss from "../styles.css?url"
 
 export const Route = createRootRoute({
+  beforeLoad: async () => {
+    const { isLoggedIn } = await checkAuth()
+    return { isLoggedIn }
+  },
   head: () => ({
     meta: [
       {
@@ -39,9 +48,41 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
+    <AuthProvider>
+      <RootDocument>
+        <Outlet />
+      </RootDocument>
+    </AuthProvider>
+  )
+}
+
+function AuthButtons() {
+  const { isLoggedIn, isLoading, logout } = useAuth()
+  const router = useRouter()
+
+  if (isLoading) {
+    return null
+  }
+
+  const handleLogout = async () => {
+    await logout()
+    await router.invalidate()
+  }
+
+  if (isLoggedIn) {
+    return (
+      <Button variant="ghost" size="sm" onClick={handleLogout}>
+        <LogOutIcon className="w-4 h-4" />
+      </Button>
+    )
+  }
+
+  return (
+    <Button variant="ghost" size="sm" asChild>
+      <Link to="/login">
+        <LogInIcon className="w-4 h-4" />
+      </Link>
+    </Button>
   )
 }
 
@@ -70,7 +111,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               <ul className="hidden">
                 <li>MakerSpace Bonn e.V.</li>
               </ul>
-              <ul className="flex flex-row justify-between p-4 mx-4 gap-2">
+              <ul className="flex flex-row justify-between items-center p-4 mx-4 gap-2">
                 <li>
                   <a href="/">Home</a>
                 </li>
@@ -80,7 +121,9 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 <li>
                   <Link to="/locations">Locations</Link>
                 </li>
-                <li>Search</li>
+                <li>
+                  <AuthButtons />
+                </li>
               </ul>
             </nav>
           </header>

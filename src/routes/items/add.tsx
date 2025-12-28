@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { describeImageFn } from "@/src/actions/aiActions"
 import { fetchAutocompleteTags } from "@/src/actions/tagActions"
 import type { Item } from "@/src/app/types"
+import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 
 type AiData = {
@@ -48,6 +49,11 @@ const { fieldContext, formContext } = createFormHookContexts()
 
 export const Route = createFileRoute("/items/add")({
   component: RouteComponent,
+  beforeLoad: ({ context }) => {
+    if (!context.isLoggedIn) {
+      throw new Error("Unauthorized")
+    }
+  },
 })
 
 const linkSchema = z.object({
@@ -90,6 +96,7 @@ function decodeBase64Image(dataString: string) {
 }
 
 const addItem = createServerFn({ method: "POST" })
+  .middleware([authGuardMiddleware])
   .inputValidator(itemSchema)
   .handler(
     async ({

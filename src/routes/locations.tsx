@@ -23,6 +23,8 @@ import {
 } from "lucide-react"
 import { useState } from "react"
 import { v7 as uuidv7 } from "uuid"
+import { useAuth } from "@/src/context/AuthContext"
+import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
@@ -82,6 +84,7 @@ function decodeBase64Image(dataString: string) {
 }
 
 const updateLocationImage = createServerFn({ method: "POST" })
+  .middleware([authGuardMiddleware])
   .inputValidator((data: { locationId: number; image: string }) => data)
   .handler(async ({ data }) => {
     const savePath = `${process.env.SAVE_PATH}locations/`
@@ -102,6 +105,7 @@ const updateLocationImage = createServerFn({ method: "POST" })
   })
 
 const deleteLocation = createServerFn({ method: "POST" })
+  .middleware([authGuardMiddleware])
   .inputValidator((locationId: number) => locationId)
   .handler(async ({ data: locationId }) => {
     const deleted = await new LocationRepository().delete(locationId)
@@ -129,6 +133,7 @@ function RouteComponent() {
   const { currentLocation, locationPath, childLocations, items } =
     Route.useLoaderData()
   const navigate = useNavigate()
+  const { isLoggedIn } = useAuth()
   const [newImage, setNewImage] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -137,7 +142,10 @@ function RouteComponent() {
     locationPath.length > 1 ? locationPath[locationPath.length - 2] : null
 
   const canDelete =
-    currentLocation && childLocations.length === 0 && items.length === 0
+    isLoggedIn &&
+    currentLocation &&
+    childLocations.length === 0 &&
+    items.length === 0
 
   const handleSaveImage = async () => {
     if (!currentLocation || !newImage) return
@@ -226,63 +234,65 @@ function RouteComponent() {
                 </p>
               )}
             </div>
-            <div className="flex gap-2">
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <ImagePlusIcon className="w-4 h-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Bild hinzufügen</DialogTitle>
-                    <DialogDescription>
-                      Füge ein Bild zu "{currentLocation.name}" hinzu.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <MyCropper onChange={(image) => setNewImage(image)} />
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Abbrechen</Button>
-                    </DialogClose>
-                    <Button onClick={handleSaveImage} disabled={!newImage}>
-                      Speichern
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              {canDelete && (
-                <Dialog
-                  open={isDeleteDialogOpen}
-                  onOpenChange={setIsDeleteDialogOpen}
-                >
+            {isLoggedIn && (
+              <div className="flex gap-2">
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">
-                      <Trash2Icon className="w-4 h-4 text-destructive" />
+                      <ImagePlusIcon className="w-4 h-4" />
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Location löschen</DialogTitle>
+                      <DialogTitle>Bild hinzufügen</DialogTitle>
                       <DialogDescription>
-                        Möchtest du "{currentLocation.name}" wirklich löschen?
-                        Diese Aktion kann nicht rückgängig gemacht werden.
+                        Füge ein Bild zu "{currentLocation.name}" hinzu.
                       </DialogDescription>
                     </DialogHeader>
+                    <div className="py-4">
+                      <MyCropper onChange={(image) => setNewImage(image)} />
+                    </div>
                     <DialogFooter>
                       <DialogClose asChild>
                         <Button variant="outline">Abbrechen</Button>
                       </DialogClose>
-                      <Button variant="destructive" onClick={handleDelete}>
-                        Löschen
+                      <Button onClick={handleSaveImage} disabled={!newImage}>
+                        Speichern
                       </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
-              )}
-            </div>
+                  {canDelete && (
+                  <Dialog
+                    open={isDeleteDialogOpen}
+                    onOpenChange={setIsDeleteDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Trash2Icon className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Location löschen</DialogTitle>
+                        <DialogDescription>
+                          Möchtest du "{currentLocation.name}" wirklich löschen?
+                          Diese Aktion kann nicht rückgängig gemacht werden.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button variant="outline">Abbrechen</Button>
+                        </DialogClose>
+                        <Button variant="destructive" onClick={handleDelete}>
+                          Löschen
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

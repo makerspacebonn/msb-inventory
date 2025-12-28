@@ -12,6 +12,11 @@ import {
 
 export const Route = createFileRoute("/backup")({
   component: BackupPage,
+  beforeLoad: ({ context }) => {
+    if (!context.isLoggedIn) {
+      throw new Error("Unauthorized")
+    }
+  },
   loader: () => listBackups(),
 })
 

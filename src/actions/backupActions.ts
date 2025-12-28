@@ -3,6 +3,7 @@ import path from "node:path"
 import { createServerFn } from "@tanstack/react-start"
 import { sql } from "drizzle-orm"
 import PizZip from "pizzip"
+import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { db } from "../db"
 import {
   ItemTable,
@@ -40,8 +41,9 @@ function addImagesToZip(zip: PizZip, dir: string, zipFolder: string): void {
   }
 }
 
-export const generateBackup = createServerFn().handler(
-  async (): Promise<BackupInfo> => {
+export const generateBackup = createServerFn()
+  .middleware([authGuardMiddleware])
+  .handler(async (): Promise<BackupInfo> => {
     // Ensure backups directory exists
     if (!fs.existsSync(BACKUPS_DIR)) {
       fs.mkdirSync(BACKUPS_DIR, { recursive: true })
@@ -121,6 +123,7 @@ export const listBackups = createServerFn().handler(
 )
 
 export const deleteBackup = createServerFn()
+  .middleware([authGuardMiddleware])
   .inputValidator((filename: string) => filename)
   .handler(async ({ data: filename }): Promise<{ success: boolean }> => {
     const filePath = path.join(BACKUPS_DIR, filename)
@@ -146,6 +149,7 @@ export interface RestoreResult {
 }
 
 export const restoreBackup = createServerFn()
+  .middleware([authGuardMiddleware])
   .inputValidator((filename: string) => filename)
   .handler(async ({ data: filename }): Promise<RestoreResult> => {
     const filePath = path.join(BACKUPS_DIR, filename)

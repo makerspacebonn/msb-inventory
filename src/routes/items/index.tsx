@@ -7,6 +7,7 @@ import { Loader2, PlusIcon, Search, X } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { searchItems } from "@/src/actions/itemActions"
 import type { Item } from "@/src/app/types"
+import { useAuth } from "@/src/context/AuthContext"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 
 const itemLoader = createServerFn().handler(async () => {
@@ -36,6 +37,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 function RouteComponent() {
   const initialItems = Route.useLoaderData()
+  const { isLoggedIn } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [items, setItems] = useState<Item[]>(initialItems)
   const [isSearching, setIsSearching] = useState(false)
@@ -95,12 +97,14 @@ function RouteComponent() {
             </button>
           )}
         </div>
-        <Button variant="outline" asChild>
-          <Link to="/items/add">
-            <PlusIcon />
-            Add Item
-          </Link>
-        </Button>
+        {isLoggedIn && (
+          <Button variant="outline" asChild>
+            <Link to="/items/add">
+              <PlusIcon />
+              Add Item
+            </Link>
+          </Button>
+        )}
       </div>
       {searchQuery && (
         <p className="text-sm text-muted-foreground mb-4">

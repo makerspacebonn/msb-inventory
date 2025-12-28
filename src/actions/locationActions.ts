@@ -2,6 +2,7 @@ import type { ParentLocationMarker } from "@server/app/types"
 import { createServerFn } from "@tanstack/react-start"
 import fs from "fs"
 import { v7 as uuidv7 } from "uuid"
+import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
 export const fetchRootLocations = createServerFn().handler(async () => {
@@ -35,6 +36,7 @@ function decodeBase64Image(dataString: string) {
 }
 
 export const createLocation = createServerFn({ method: "POST" })
+  .middleware([authGuardMiddleware])
   .inputValidator(
     (data: {
       name: string

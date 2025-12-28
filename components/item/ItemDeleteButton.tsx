@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from "@components/ui/dialog"
 import { Trash2Icon } from "lucide-react"
+import { useAuth } from "@/src/context/AuthContext"
 
 type ItemDeleteButtonProps = {
   itemName: string
@@ -17,6 +18,12 @@ type ItemDeleteButtonProps = {
 }
 
 export function ItemDeleteButton({ itemName, onDelete }: ItemDeleteButtonProps) {
+  const { isLoggedIn } = useAuth()
+
+  if (!isLoggedIn) {
+    return null
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>

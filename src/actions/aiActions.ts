@@ -1,10 +1,12 @@
 // src/funcs/describeImage.ts
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { createServerFn } from "@tanstack/react-start"
+import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 export const describeImageFn = createServerFn({ method: "POST" })
+  .middleware([authGuardMiddleware])
   .inputValidator((base64Image: string) => base64Image)
   .handler(async ({ data: base64Image }) => {
     //console.log(base64Image)

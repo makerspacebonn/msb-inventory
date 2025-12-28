@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import type { ParentLocationMarker } from "@server/app/types"
 import { createServerFn } from "@tanstack/react-start"
+import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import {
   ItemRepository,
   type SearchResult,
@@ -21,6 +22,7 @@ export const fetchItem = createServerFn()
   })
 
 export const setItemLocation = createServerFn()
+  .middleware([authGuardMiddleware])
   .inputValidator(
     (data: {
       itemId: number
@@ -38,6 +40,7 @@ export const setItemLocation = createServerFn()
   })
 
 export const deleteItem = createServerFn({ method: "POST" })
+  .middleware([authGuardMiddleware])
   .inputValidator((itemId: number) => itemId)
   .handler(async ({ data: itemId }) => {
     const itemRepo = new ItemRepository()

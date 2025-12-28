@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TestRouteImport } from './routes/test'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LocationsRouteImport } from './routes/locations'
 import { Route as BackupRouteImport } from './routes/backup'
 import { Route as AidescriptionRouteImport } from './routes/aidescription'
@@ -26,6 +27,11 @@ import { Route as ItemsItemIdLocationAddRouteImport } from './routes/items/$item
 const TestRoute = TestRouteImport.update({
   id: '/test',
   path: '/test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LocationsRoute = LocationsRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/aidescription': typeof AidescriptionRoute
   '/backup': typeof BackupRouteWithChildren
   '/locations': typeof LocationsRoute
+  '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
   '/i/$itemId': typeof IItemIdRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/aidescription': typeof AidescriptionRoute
   '/backup': typeof BackupRouteWithChildren
   '/locations': typeof LocationsRoute
+  '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
   '/i/$itemId': typeof IItemIdRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/aidescription': typeof AidescriptionRoute
   '/backup': typeof BackupRouteWithChildren
   '/locations': typeof LocationsRoute
+  '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
   '/i/$itemId': typeof IItemIdRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/aidescription'
     | '/backup'
     | '/locations'
+    | '/login'
     | '/test'
     | '/api/items'
     | '/i/$itemId'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/aidescription'
     | '/backup'
     | '/locations'
+    | '/login'
     | '/test'
     | '/api/items'
     | '/i/$itemId'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/aidescription'
     | '/backup'
     | '/locations'
+    | '/login'
     | '/test'
     | '/api/items'
     | '/i/$itemId'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   AidescriptionRoute: typeof AidescriptionRoute
   BackupRoute: typeof BackupRouteWithChildren
   LocationsRoute: typeof LocationsRoute
+  LoginRoute: typeof LoginRoute
   TestRoute: typeof TestRoute
   ApiItemsRoute: typeof ApiItemsRoute
   IItemIdRoute: typeof IItemIdRoute
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       path: '/test'
       fullPath: '/test'
       preLoaderRoute: typeof TestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/locations': {
@@ -310,6 +330,7 @@ const rootRouteChildren: RootRouteChildren = {
   AidescriptionRoute: AidescriptionRoute,
   BackupRoute: BackupRouteWithChildren,
   LocationsRoute: LocationsRoute,
+  LoginRoute: LoginRoute,
   TestRoute: TestRoute,
   ApiItemsRoute: ApiItemsRoute,
   IItemIdRoute: IItemIdRoute,
@@ -324,10 +345,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }
