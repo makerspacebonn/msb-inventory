@@ -32,13 +32,22 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "MSB Inventar",
+      },
+      {
+        name: "theme-color",
+        content: "#0a0a0a",
       },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        type: "image/png",
+        href: "/img/makerspace-bonn-signet.png",
       },
     ],
   }),

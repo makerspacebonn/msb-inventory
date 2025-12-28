@@ -127,6 +127,15 @@ export const Route = createFileRoute("/locations")({
   loader: async ({ deps: { id } }) => {
     return await fetchLocationData({ data: id })
   },
+  head: ({ loaderData }) => ({
+    meta: [
+      {
+        title: loaderData?.currentLocation
+          ? `${loaderData.currentLocation.name} | Locations | MSB Inventar`
+          : "Locations | MSB Inventar",
+      },
+    ],
+  }),
 })
 
 function RouteComponent() {

@@ -42,6 +42,15 @@ export const Route = createFileRoute("/i/$itemId")({
     const itemId = parseInt(params.itemId)
     return fetchItem({ data: { itemId } })
   },
+  head: ({ loaderData }) => ({
+    meta: [
+      {
+        title: loaderData?.item
+          ? `${loaderData.item.name} | MSB Inventar`
+          : "Item | MSB Inventar",
+      },
+    ],
+  }),
 })
 
 function RouteComponent() {

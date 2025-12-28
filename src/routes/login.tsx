@@ -7,6 +7,9 @@ import { login } from "@/src/lib/auth"
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
+  head: () => ({
+    meta: [{ title: "Login | MSB Inventar" }],
+  }),
 })
 
 function LoginPage() {

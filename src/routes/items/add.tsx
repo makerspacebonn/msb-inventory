@@ -54,6 +54,9 @@ export const Route = createFileRoute("/items/add")({
       throw new Error("Unauthorized")
     }
   },
+  head: () => ({
+    meta: [{ title: "Item hinzufügen | MSB Inventar" }],
+  }),
 })
 
 const linkSchema = z.object({

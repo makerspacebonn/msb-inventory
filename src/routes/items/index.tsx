@@ -17,6 +17,9 @@ const itemLoader = createServerFn().handler(async () => {
 export const Route = createFileRoute("/items/")({
   component: RouteComponent,
   loader: () => itemLoader(),
+  head: () => ({
+    meta: [{ title: "Items | MSB Inventar" }],
+  }),
 })
 
 function useDebounce<T>(value: T, delay: number): T {

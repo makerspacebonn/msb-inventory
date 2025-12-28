@@ -18,6 +18,9 @@ export const Route = createFileRoute("/backup")({
     }
   },
   loader: () => listBackups(),
+  head: () => ({
+    meta: [{ title: "Backup | MSB Inventar" }],
+  }),
 })
 
 function BackupPage() {

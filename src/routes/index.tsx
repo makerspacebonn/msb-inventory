@@ -4,7 +4,7 @@ import { ButtonGroup } from "@/components/ui/button-group"
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [{ title: "MakerSpace Bonn e.V." }],
+    meta: [{ title: "Startseite | MSB Inventar" }],
   }),
   component: RouteComponent,
 })
