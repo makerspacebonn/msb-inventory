@@ -210,6 +210,17 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
     })
   }, [])
 
+  // Resize textareas on mount when editing (delay to allow form values to populate)
+  useEffect(() => {
+    if (existingItem) {
+      const timer = setTimeout(() => {
+        resizeTextarea(descriptionRef.current)
+        resizeTextarea(morestuffRef.current)
+      }, 0)
+      return () => clearTimeout(timer)
+    }
+  }, [existingItem, resizeTextarea])
+
   const handleAiAnalysis = async () => {
     setAiLoading(true)
     setDismissedSuggestions(new Set())
