@@ -353,7 +353,7 @@ function LocationSelectionView({
   currentLocations,
   locationPath,
   onLocationClick,
-  onSelect,
+  onSelectCurrent,
   onBreadcrumbClick,
   onStartCreate,
   onCancel,
@@ -362,7 +362,7 @@ function LocationSelectionView({
   currentLocations: Location[]
   locationPath: Location[]
   onLocationClick: (location: Location) => void
-  onSelect: (location: Location) => void
+  onSelectCurrent: () => void
   onBreadcrumbClick: (index: number) => void
   onStartCreate: () => void
   onCancel: () => void
@@ -409,39 +409,36 @@ function LocationSelectionView({
         ))}
       </div>
 
+      {locationPath.length > 0 && (
+        <div className="mb-4">
+          <Button onClick={onSelectCurrent}>
+            <CheckIcon className="w-4 h-4 mr-1" />
+            "{locationPath[locationPath.length - 1].name}" auswählen
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {currentLocations.map((location) => (
-          <div
+          <button
+            type="button"
             key={location.id}
-            className="border rounded-lg p-4 flex flex-col items-center gap-2"
+            className="border rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-muted transition-colors"
+            onClick={() => onLocationClick(location)}
           >
-            <button
-              type="button"
-              className="w-full flex flex-col items-center gap-2"
-              onClick={() => onLocationClick(location)}
-            >
-              {location.imagePath ? (
-                <img
-                  src={`/img/locations/${location.imagePath}`}
-                  alt={location.name}
-                  className="w-full aspect-square object-cover rounded-lg"
-                />
-              ) : (
-                <div className="w-full aspect-square rounded-2xl bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
-                  <MapPinIcon className="w-12 h-12 text-gray-400" />
-                </div>
-              )}
-              <span className="text-lg font-medium">{location.name}</span>
-            </button>
-            <Button
-              size="sm"
-              className="mt-2"
-              onClick={() => onSelect(location)}
-            >
-              <CheckIcon className="w-4 h-4 mr-1" />
-              Auswählen
-            </Button>
-          </div>
+            {location.imagePath ? (
+              <img
+                src={`/img/locations/${location.imagePath}`}
+                alt={location.name}
+                className="w-full aspect-square object-cover rounded-lg"
+              />
+            ) : (
+              <div className="w-full aspect-square rounded-2xl bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
+                <MapPinIcon className="w-12 h-12 text-gray-400" />
+              </div>
+            )}
+            <span className="text-lg font-medium">{location.name}</span>
+          </button>
         ))}
         <button
           type="button"
@@ -646,13 +643,19 @@ function RouteComponent() {
     )
   }
 
+  const handleSelectCurrent = () => {
+    if (locationPath.length > 0) {
+      handleSelect(locationPath[locationPath.length - 1])
+    }
+  }
+
   return (
     <LocationSelectionView
       item={item ?? null}
       currentLocations={currentLocations}
       locationPath={locationPath}
       onLocationClick={navigateToLocation}
-      onSelect={handleSelect}
+      onSelectCurrent={handleSelectCurrent}
       onBreadcrumbClick={navigateToBreadcrumb}
       onStartCreate={handleStartCreate}
       onCancel={handleCancel}
