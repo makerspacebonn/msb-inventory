@@ -208,7 +208,6 @@ function ItemForm() {
     } as z.infer<typeof itemSchema>,
     validators: {
       // Pass a schema or function to validate
-      onChange: itemSchema,
       onSubmit: itemSchema,
     },
     onSubmit: async ({ value }) => {
@@ -542,56 +541,54 @@ function ItemForm() {
               {aiData?.bedienungsanleitungen &&
                 aiData.bedienungsanleitungen.length > 0 &&
                 !dismissedSuggestions.has("links") && (
-                  <div className="mt-2 p-2 bg-muted/50 border rounded-md">
-                    <div className="flex items-start gap-2">
-                      <SparklesIcon className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-                      <div className="flex-1 space-y-1">
-                        {aiData.bedienungsanleitungen.map((url) => (
-                          <a
-                            key={url}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-500 hover:underline block"
-                          >
-                            {url}
-                          </a>
-                        ))}
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2"
-                          onClick={() => {
-                            const newLinks = aiData.bedienungsanleitungen.map(
-                              (url) => ({
-                                name: "Bedienungsanleitung",
-                                url,
-                                type: "manual",
-                              }),
-                            )
-                            field.handleChange([
-                              ...(field.state.value ?? []),
-                              ...newLinks,
-                            ])
-                            dismissSuggestion("links")
-                          }}
+                  <div className="mt-1.5 pl-3 border-l-2 border-emerald-500/40">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                      <SparklesIcon className="w-3 h-3 text-emerald-500" />
+                      <span>KI-Vorschlag</span>
+                    </div>
+                    <div className="space-y-1 mb-2">
+                      {aiData.bedienungsanleitungen.map((url) => (
+                        <a
+                          key={url}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-500 hover:underline block"
                         >
-                          <CheckIcon className="w-3 h-3 mr-1" />
-                          Übernehmen
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2"
-                          onClick={() => dismissSuggestion("links")}
-                        >
-                          <XIcon className="w-3 h-3" />
-                        </Button>
-                      </div>
+                          {url}
+                        </a>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="text-xs text-emerald-600 hover:text-emerald-500 font-medium flex items-center gap-1"
+                        onClick={() => {
+                          const newLinks = aiData.bedienungsanleitungen.map(
+                            (url) => ({
+                              name: "Bedienungsanleitung",
+                              url,
+                              type: "manual",
+                            }),
+                          )
+                          field.handleChange([
+                            ...(field.state.value ?? []),
+                            ...newLinks,
+                          ])
+                          dismissSuggestion("links")
+                        }}
+                      >
+                        <CheckIcon className="w-3 h-3" />
+                        Übernehmen
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                        onClick={() => dismissSuggestion("links")}
+                      >
+                        <XIcon className="w-3 h-3" />
+                        Verwerfen
+                      </button>
                     </div>
                   </div>
                 )}
@@ -642,31 +639,29 @@ function InlineSuggestion({
   onDismiss: () => void
 }) {
   return (
-    <div className="mt-2 p-2 bg-muted/50 border rounded-md">
-      <div className="flex items-start gap-2">
-        <SparklesIcon className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-        <p className="text-sm text-muted-foreground flex-1">{value}</p>
-        <div className="flex gap-1 shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2"
-            onClick={onUse}
-          >
-            <CheckIcon className="w-3 h-3 mr-1" />
-            Übernehmen
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2"
-            onClick={onDismiss}
-          >
-            <XIcon className="w-3 h-3" />
-          </Button>
-        </div>
+    <div className="mt-1.5 pl-3 border-l-2 border-emerald-500/40">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+        <SparklesIcon className="w-3 h-3 text-emerald-500" />
+        <span>KI-Vorschlag</span>
+      </div>
+      <p className="text-sm text-foreground/80 mb-2">{value}</p>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="text-xs text-emerald-600 hover:text-emerald-500 font-medium flex items-center gap-1"
+          onClick={onUse}
+        >
+          <CheckIcon className="w-3 h-3" />
+          Übernehmen
+        </button>
+        <button
+          type="button"
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+          onClick={onDismiss}
+        >
+          <XIcon className="w-3 h-3" />
+          Verwerfen
+        </button>
       </div>
     </div>
   )
@@ -682,37 +677,35 @@ function InlineTagsSuggestion({
   onDismiss: () => void
 }) {
   return (
-    <div className="mt-2 p-2 bg-muted/50 border rounded-md">
-      <div className="flex items-start gap-2">
-        <SparklesIcon className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-        <div className="flex flex-wrap gap-1 flex-1">
-          {tags.map((tag) => (
-            <Badge key={tag} variant="secondary">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-        <div className="flex gap-1 shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2"
-            onClick={onUse}
-          >
-            <CheckIcon className="w-3 h-3 mr-1" />
-            Übernehmen
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2"
-            onClick={onDismiss}
-          >
-            <XIcon className="w-3 h-3" />
-          </Button>
-        </div>
+    <div className="mt-1.5 pl-3 border-l-2 border-emerald-500/40">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+        <SparklesIcon className="w-3 h-3 text-emerald-500" />
+        <span>KI-Vorschlag</span>
+      </div>
+      <div className="flex flex-wrap gap-1 mb-2">
+        {tags.map((tag) => (
+          <Badge key={tag} variant="secondary" className="text-xs">
+            {tag}
+          </Badge>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="text-xs text-emerald-600 hover:text-emerald-500 font-medium flex items-center gap-1"
+          onClick={onUse}
+        >
+          <CheckIcon className="w-3 h-3" />
+          Übernehmen
+        </button>
+        <button
+          type="button"
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+          onClick={onDismiss}
+        >
+          <XIcon className="w-3 h-3" />
+          Verwerfen
+        </button>
       </div>
     </div>
   )
