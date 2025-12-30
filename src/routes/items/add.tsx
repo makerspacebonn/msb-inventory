@@ -245,7 +245,8 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
       toast.success("KI-Analyse abgeschlossen")
     } catch (error) {
       console.error(error)
-      toast.error("Fehler bei der KI-Analyse")
+      const message = error instanceof Error ? error.message : "Fehler bei der KI-Analyse"
+      toast.error(message)
     } finally {
       setAiLoading(false)
     }
