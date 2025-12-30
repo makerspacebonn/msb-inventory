@@ -275,25 +275,26 @@ function ItemForm() {
         </form.Field>
 
         {currentImage && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAiAnalysis}
-            disabled={aiLoading}
-            className="bg-emerald-950"
-          >
-            {aiLoading ? (
-              <>
-                <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
-                Analysiere...
-              </>
-            ) : (
-              <>
-                <SparklesIcon className="w-4 h-4 mr-2" />
-                KI-Analyse starten
-              </>
-            )}
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              onClick={handleAiAnalysis}
+              disabled={aiLoading}
+              className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/25"
+            >
+              {aiLoading ? (
+                <>
+                  <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
+                  Analysiere...
+                </>
+              ) : (
+                <>
+                  <SparklesIcon className="w-4 h-4 mr-2" />
+                  KI-Analyse starten
+                </>
+              )}
+            </Button>
+          </div>
         )}
 
         <form.Field name="name">

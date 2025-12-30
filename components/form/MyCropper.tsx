@@ -123,12 +123,11 @@ export function MyCropper({ onChange }: MyCropperProps) {
       </DialogContent>
     </Dialog>
   ) : croppedImage ? (
-    <div>
-      <FieldLabel>Bild</FieldLabel>
+    <div className="flex flex-col items-center">
       <img
         src={croppedImage}
         alt="cropped"
-        className="rounded-2xl center max-w-64 mb-4"
+        className="rounded-2xl max-w-64"
       />
     </div>
   ) : (
