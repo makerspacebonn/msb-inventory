@@ -642,8 +642,6 @@ function ItemForm() {
           )}
         </form.Field>
 
-        {aiData && <AiResultsSection aiData={aiData} />}
-
         <Button>Erstellen</Button>
       </FieldGroup>
     </form>
@@ -732,69 +730,3 @@ function InlineTagsSuggestion({
   )
 }
 
-function AiResultsSection({ aiData }: { aiData: AiData }) {
-  const hasAdditionalInfo =
-    aiData.hersteller ||
-    aiData.modell ||
-    aiData.seriennummer ||
-    aiData.kategorie ||
-    aiData.zustand ||
-    aiData.zusatzinfos ||
-    (aiData.bedienungsanleitungen && aiData.bedienungsanleitungen.length > 0)
-
-  if (!hasAdditionalInfo) return null
-
-  return (
-    <div className="border rounded-lg p-4 space-y-3 bg-muted/50">
-      <h3 className="font-semibold flex items-center gap-2">
-        <SparklesIcon className="w-4 h-4" />
-        Weitere KI-Informationen
-      </h3>
-
-      {aiData.hersteller && (
-        <AiInfoRow label="Hersteller" value={aiData.hersteller} />
-      )}
-      {aiData.modell && <AiInfoRow label="Modell" value={aiData.modell} />}
-      {aiData.seriennummer && (
-        <AiInfoRow label="Seriennummer" value={aiData.seriennummer} />
-      )}
-      {aiData.kategorie && (
-        <AiInfoRow label="Kategorie" value={aiData.kategorie} />
-      )}
-      {aiData.zustand && <AiInfoRow label="Zustand" value={aiData.zustand} />}
-      {aiData.zusatzinfos && (
-        <AiInfoRow label="Zusatzinfos" value={aiData.zusatzinfos} />
-      )}
-      {aiData.bedienungsanleitungen &&
-        aiData.bedienungsanleitungen.length > 0 && (
-          <div className="space-y-1">
-            <span className="text-sm text-muted-foreground">
-              Bedienungsanleitungen
-            </span>
-            <div className="space-y-1">
-              {aiData.bedienungsanleitungen.map((link) => (
-                <a
-                  key={link}
-                  href={link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-500 hover:underline block"
-                >
-                  {link}
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-    </div>
-  )
-}
-
-function AiInfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex gap-2 text-sm">
-      <span className="text-muted-foreground">{label}:</span>
-      <span>{value}</span>
-    </div>
-  )
-}
