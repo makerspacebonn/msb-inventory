@@ -1,10 +1,13 @@
 import { ItemDetail } from "@components/ItemDetail"
 import { ItemDeleteButton } from "@components/item/ItemDeleteButton"
 import { ItemQRCode } from "@components/item/ItemQRCode"
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
+import { Button } from "@components/ui/button"
+import { Link, createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
+import { PencilIcon } from "lucide-react"
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod/v4"
 import { deleteItem } from "@/src/actions/itemActions"
+import { useAuth } from "@/src/context/AuthContext"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
@@ -57,6 +60,7 @@ function RouteComponent() {
   const { item, baseUrl } = Route.useLoaderData()
   const router = useRouter()
   const navigate = useNavigate()
+  const { isLoggedIn } = useAuth()
 
   const handleDeleteLocation = async () => {
     if (!item) return
@@ -76,9 +80,17 @@ function RouteComponent() {
 
   return (
     <div className="max-w-128 mx-auto p-4">
-      <div className="flex justify-end mb-4">
-        <ItemDeleteButton itemName={item.name} onDelete={handleDelete} />
-      </div>
+      {isLoggedIn && (
+        <div className="flex justify-end gap-2 mb-4">
+          <Button asChild variant="outline">
+            <Link to="/items/add" search={{ itemId: item.id }}>
+              <PencilIcon className="w-4 h-4 mr-2" />
+              Bearbeiten
+            </Link>
+          </Button>
+          <ItemDeleteButton itemName={item.name} onDelete={handleDelete} />
+        </div>
+      )}
       <ItemDetail item={item} onDeleteLocation={handleDeleteLocation} />
       <ItemQRCode itemId={item.id} itemName={item.name} baseUrl={baseUrl} />
     </div>

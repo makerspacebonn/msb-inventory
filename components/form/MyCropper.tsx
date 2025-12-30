@@ -22,16 +22,18 @@ import Cropper from "react-easy-crop"
 import { getCroppedImg, getRotatedImage } from "./-canvasUtils"
 
 interface MyCropperProps {
-  onChange?: (image) => void
+  onChange?: (image: string) => void
+  existingImagePath?: string
 }
 
-export function MyCropper({ onChange }: MyCropperProps) {
-  const [imageSrc, setImageSrc] = useState(null)
+export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
+  const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [rotation, setRotation] = useState(0)
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
-  const [croppedImage, setCroppedImage] = useState(null)
+  const [croppedImage, setCroppedImage] = useState<string | null>(null)
+  const [showExisting, setShowExisting] = useState(!!existingImagePath)
   const [open, setOpen] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -80,57 +82,106 @@ export function MyCropper({ onChange }: MyCropperProps) {
     }
   }
 
-  return imageSrc && !croppedImage ? (
-    <Dialog open={open}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Share link</DialogTitle>
-          <DialogDescription>
-            Anyone who has this link will be able to view this.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex items-center gap-2">
-          <div className="flex flex-col w-full">
-            <div className="relative h-[400px] w-full">
-              <Cropper
-                image={imageSrc}
-                crop={crop}
-                rotation={rotation}
-                zoom={zoom}
-                aspect={1}
-                onCropChange={setCrop}
-                onRotationChange={setRotation}
-                onCropComplete={onCropComplete}
-                onZoomChange={setZoom}
-              />
+  const handleChangeImage = () => {
+    setShowExisting(false)
+    fileInputRef.current?.click()
+  }
+
+  // Show cropper dialog when a new image is selected
+  if (imageSrc && !croppedImage) {
+    return (
+      <Dialog open={open}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bild zuschneiden</DialogTitle>
+            <DialogDescription>
+              Wähle den Bildausschnitt aus.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col w-full">
+              <div className="relative h-[400px] w-full">
+                <Cropper
+                  image={imageSrc}
+                  crop={crop}
+                  rotation={rotation}
+                  zoom={zoom}
+                  aspect={1}
+                  onCropChange={setCrop}
+                  onRotationChange={setRotation}
+                  onCropComplete={onCropComplete}
+                  onZoomChange={setZoom}
+                />
+              </div>
             </div>
           </div>
-        </div>
-        <DialogFooter className="sm:justify-start">
-          <DialogClose asChild>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setOpen(!open)
-              }}
-            >
-              Schliessen
-            </Button>
-          </DialogClose>
-          <Button onClick={(e) => showCroppedImage(e)}>Nutzen</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  ) : croppedImage ? (
-    <div className="flex flex-col items-center">
-      <img
-        src={croppedImage}
-        alt="cropped"
-        className="rounded-2xl max-w-64"
-      />
-    </div>
-  ) : (
+          <DialogFooter className="sm:justify-start">
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setOpen(!open)
+                  setImageSrc(null)
+                  if (existingImagePath) setShowExisting(true)
+                }}
+              >
+                Abbrechen
+              </Button>
+            </DialogClose>
+            <Button onClick={(e) => showCroppedImage(e)}>Nutzen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  // Show cropped image after cropping
+  if (croppedImage) {
+    return (
+      <div className="flex flex-col items-center">
+        <img
+          src={croppedImage}
+          alt="cropped"
+          className="rounded-2xl max-w-64 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={handleChangeImage}
+          title="Klicken um zu ändern"
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          onChange={onFileChange}
+          accept="image/*"
+          className="hidden"
+        />
+      </div>
+    )
+  }
+
+  // Show existing image when editing
+  if (showExisting && existingImagePath) {
+    return (
+      <div className="flex flex-col items-center">
+        <img
+          src={`/img/items/${existingImagePath}`}
+          alt="existing"
+          className="rounded-2xl max-w-64 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={handleChangeImage}
+          title="Klicken um zu ändern"
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          onChange={onFileChange}
+          accept="image/*"
+          className="hidden"
+        />
+      </div>
+    )
+  }
+
+  // Show empty state
+  return (
     <Empty
       className="cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
       onClick={() => fileInputRef.current?.click()}

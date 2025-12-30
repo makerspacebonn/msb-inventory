@@ -1,14 +1,33 @@
 // src/funcs/describeImage.ts
+import fs from "fs"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { createServerFn } from "@tanstack/react-start"
+import z from "zod/v4"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
+const imageInputSchema = z.object({
+  base64Image: z.string().optional(),
+  imagePath: z.string().optional(),
+})
+
 export const describeImageFn = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
-  .inputValidator((base64Image: string) => base64Image)
-  .handler(async ({ data: base64Image }) => {
+  .inputValidator(imageInputSchema)
+  .handler(async ({ data }) => {
+    let base64Image: string
+
+    if (data.base64Image) {
+      base64Image = data.base64Image
+    } else if (data.imagePath) {
+      const fullPath = `${process.env.SAVE_PATH}items/${data.imagePath}`
+      const fileBuffer = fs.readFileSync(fullPath)
+      const mimeType = data.imagePath.endsWith(".png") ? "image/png" : "image/jpeg"
+      base64Image = `data:${mimeType};base64,${fileBuffer.toString("base64")}`
+    } else {
+      throw new Error("Either base64Image or imagePath must be provided")
+    }
     //console.log(base64Image)
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",

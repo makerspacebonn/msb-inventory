@@ -47,15 +47,39 @@ type AiData = {
 
 const { fieldContext, formContext } = createFormHookContexts()
 
+const searchSchema = z.object({
+  itemId: z.coerce.number().optional(),
+})
+
+const fetchItemForEdit = createServerFn()
+  .inputValidator((itemId: number) => itemId)
+  .handler(async ({ data: itemId }) => {
+    return new ItemRepository().findById(itemId)
+  })
+
 export const Route = createFileRoute("/items/add")({
   component: RouteComponent,
+  validateSearch: searchSchema,
   beforeLoad: ({ context }) => {
     if (!context.isLoggedIn) {
       throw new Error("Unauthorized")
     }
   },
-  head: () => ({
-    meta: [{ title: "Item hinzufügen | MSB Inventar" }],
+  loaderDeps: ({ search }) => ({ itemId: search.itemId }),
+  loader: async ({ deps }) => {
+    if (deps.itemId) {
+      return fetchItemForEdit({ data: deps.itemId })
+    }
+    return null
+  },
+  head: ({ loaderData }) => ({
+    meta: [
+      {
+        title: loaderData
+          ? `${loaderData.name} bearbeiten | MSB Inventar`
+          : "Item hinzufügen | MSB Inventar",
+      },
+    ],
   }),
 })
 
@@ -66,6 +90,7 @@ const linkSchema = z.object({
 })
 
 const itemSchema = z.object({
+  id: z.number().optional(),
   name: z.string().min(1, "Muss mindestens einen Buchstaben haben!"),
   description: z.string().optional(),
   image: z.string().optional(),
@@ -131,9 +156,11 @@ const addItem = createServerFn({ method: "POST" })
   )
 
 function RouteComponent() {
+  const existingItem = Route.useLoaderData()
+
   return (
     <div className="container mx-auto px-4 my-6">
-      <ItemForm />
+      <ItemForm existingItem={existingItem} />
     </div>
   )
 }
@@ -145,9 +172,14 @@ const { useAppForm } = createFormHook({
   formContext,
 })
 
-function ItemForm() {
+function ItemForm({ existingItem }: { existingItem: Item | null }) {
   const navigate = useNavigate()
-  const [tags, setTags] = useState<Tag[]>([])
+  const isEditing = !!existingItem
+
+  const [tags, setTags] = useState<Tag[]>(
+    existingItem?.tags?.map((text, index) => ({ id: `tag-${index}`, text })) ??
+      [],
+  )
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null)
   const [autocompleteTags, setAutocompleteTags] = useState<Tag[]>([])
   const [aiData, setAiData] = useState<AiData | null>(null)
@@ -179,11 +211,21 @@ function ItemForm() {
   }, [])
 
   const handleAiAnalysis = async () => {
-    if (!currentImage) return
     setAiLoading(true)
     setDismissedSuggestions(new Set())
     try {
-      const result = await describeImageFn({ data: currentImage })
+      const input = currentImage
+        ? { base64Image: currentImage }
+        : existingItem?.imagePath
+          ? { imagePath: existingItem.imagePath }
+          : null
+
+      if (!input) {
+        toast.error("Kein Bild vorhanden")
+        return
+      }
+
+      const result = await describeImageFn({ data: input })
       if (Array.isArray(result)) {
         setAiData(result[0])
       } else {
@@ -204,23 +246,22 @@ function ItemForm() {
 
   const form = useAppForm({
     defaultValues: {
-      name: "",
-      description: undefined,
+      id: existingItem?.id,
+      name: existingItem?.name ?? "",
+      description: existingItem?.description ?? undefined,
       image: "",
-      imagePath: undefined,
-      tags: [],
-      manufacturer: undefined,
-      model: undefined,
-      category: undefined,
-      links: [],
-      morestuff: undefined,
+      imagePath: existingItem?.imagePath ?? undefined,
+      tags: existingItem?.tags ?? [],
+      manufacturer: existingItem?.manufacturer ?? undefined,
+      model: existingItem?.model ?? undefined,
+      category: existingItem?.category ?? undefined,
+      links: existingItem?.links ?? [],
+      morestuff: existingItem?.morestuff ?? undefined,
     } as z.infer<typeof itemSchema>,
     validators: {
-      // Pass a schema or function to validate
       onSubmit: itemSchema,
     },
     onSubmit: async ({ value }) => {
-      // Do something with form data
       const parsedInput = itemSchema.parse(value)
 
       const result = await addItem({ data: parsedInput })
@@ -232,13 +273,15 @@ function ItemForm() {
               itemId: result.item?.id.toString(),
             },
           })
+          toast.success(isEditing ? "Item aktualisiert" : "Item erstellt")
         } else {
-          console.log("new Item", result.item)
           form.reset()
-          toast.success("Item erstellt")
+          toast.success(isEditing ? "Item aktualisiert" : "Item erstellt")
         }
       } else if (result?.error) {
-        toast.error(`Fehler beim erstellen des Items ${result.error}`)
+        toast.error(
+          `Fehler beim ${isEditing ? "aktualisieren" : "erstellen"} des Items: ${result.error}`,
+        )
       }
     },
   })
@@ -260,6 +303,7 @@ function ItemForm() {
                 value={field.state.value}
               />
               <MyCropper
+                existingImagePath={existingItem?.imagePath ?? undefined}
                 onChange={(image) => {
                   console.log("image change", image)
                   field.setValue(image)
@@ -274,7 +318,7 @@ function ItemForm() {
           )}
         </form.Field>
 
-        {currentImage && (
+        {(currentImage || existingItem?.imagePath) && (
           <div className="flex justify-center">
             <Button
               type="button"
@@ -389,7 +433,7 @@ function ItemForm() {
                     closeButton: "text-emerald-300 hover:text-white ml-1",
                   },
                   autoComplete: {
-                    popover: "bg-card border rounded-md shadow-lg mt-1 p-1 z-50",
+                    popoverContent: "bg-card border rounded-md shadow-lg mt-1 p-1 z-50",
                     commandList: "max-h-48 bg-card",
                     commandGroup: "p-1 bg-card",
                     commandItem:
@@ -651,7 +695,7 @@ function ItemForm() {
           )}
         </form.Field>
 
-        <Button>Erstellen</Button>
+        <Button>{isEditing ? "Speichern" : "Erstellen"}</Button>
       </FieldGroup>
     </form>
   )
