@@ -14,7 +14,7 @@ import {
   TrashIcon,
   XIcon,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { v7 as uuidv7 } from "uuid"
 import z from "zod/v4"
@@ -156,6 +156,15 @@ function ItemForm() {
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(
     new Set(),
   )
+
+  const descriptionRef = useRef<HTMLTextAreaElement>(null)
+  const morestuffRef = useRef<HTMLTextAreaElement>(null)
+
+  const resizeTextarea = useCallback((textarea: HTMLTextAreaElement | null) => {
+    if (!textarea) return
+    textarea.style.height = "auto"
+    textarea.style.height = `${textarea.scrollHeight}px`
+  }, [])
 
   // Fetch autocomplete suggestions on mount
   useEffect(() => {
@@ -321,10 +330,15 @@ function ItemForm() {
               <FieldContent>
                 <FieldLabel htmlFor={field.name}>Beschreibung</FieldLabel>
                 <Textarea
+                  ref={descriptionRef}
                   name={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={(e) => {
+                    field.handleChange(e.target.value)
+                    resizeTextarea(e.target)
+                  }}
+                  className="resize-none overflow-hidden"
                 />
                 {!field.state.meta.isValid && (
                   <FieldError errors={field.state.meta.errors} />
@@ -336,6 +350,7 @@ function ItemForm() {
                       onUse={() => {
                         field.handleChange(aiData.beschreibung_kurz)
                         dismissSuggestion("description")
+                        setTimeout(() => resizeTextarea(descriptionRef.current), 0)
                       }}
                       onDismiss={() => dismissSuggestion("description")}
                     />
@@ -601,10 +616,15 @@ function ItemForm() {
             <FieldContent>
               <FieldLabel htmlFor={field.name}>Weitere Infos</FieldLabel>
               <Textarea
+                ref={morestuffRef}
                 name={field.name}
                 value={field.state.value ?? ""}
                 onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
+                onChange={(e) => {
+                  field.handleChange(e.target.value)
+                  resizeTextarea(e.target)
+                }}
+                className="resize-none overflow-hidden"
               />
               {aiData?.zusatzinfos &&
                 !dismissedSuggestions.has("morestuff") && (
@@ -613,6 +633,7 @@ function ItemForm() {
                     onUse={() => {
                       field.handleChange(aiData.zusatzinfos)
                       dismissSuggestion("morestuff")
+                      setTimeout(() => resizeTextarea(morestuffRef.current), 0)
                     }}
                     onDismiss={() => dismissSuggestion("morestuff")}
                   />
