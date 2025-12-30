@@ -1,5 +1,6 @@
 import type { Location, ParentLocationMarker } from "@server/app/types"
 import { CircleIcon, MapPinIcon } from "lucide-react"
+import { useState } from "react"
 
 export const LocationComponent = ({
   location,
@@ -8,9 +9,14 @@ export const LocationComponent = ({
   location: Location
   marker?: ParentLocationMarker | null
 }) => {
+  const [enlarged, setEnlarged] = useState(false)
   const image = `/img/locations/${location.imagePath}`
+
   return (
-    <div className="relative w-1/2 m-2">
+    <div
+      className={`relative m-2 transition-all duration-300 ${enlarged ? "w-full" : "w-1/2"} ${location.imagePath ? "cursor-pointer" : ""}`}
+      onClick={() => location.imagePath && setEnlarged(!enlarged)}
+    >
       {marker && (
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
           <CircleIcon
