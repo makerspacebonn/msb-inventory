@@ -16,7 +16,7 @@ import {
   EmptyTitle,
 } from "@components/ui/empty"
 import { FieldLabel } from "@components/ui/field"
-import { ImageIcon } from "lucide-react"
+import { ImageIcon, PencilIcon } from "lucide-react"
 import { useRef, useState } from "react"
 import Cropper from "react-easy-crop"
 import { getCroppedImg, getRotatedImage } from "./-canvasUtils"
@@ -52,6 +52,9 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
       const file = e.target.files[0]
       const imageDataUrl = await readFile(file)
 
+      setShowExisting(false)
+      setCroppedImage(null)
+      setOpen(true)
       setImageSrc(imageDataUrl)
     }
   }
@@ -83,7 +86,6 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
   }
 
   const handleChangeImage = () => {
-    setShowExisting(false)
     fileInputRef.current?.click()
   }
 
@@ -140,13 +142,21 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
   if (croppedImage) {
     return (
       <div className="flex flex-col items-center">
-        <img
-          src={croppedImage}
-          alt="cropped"
-          className="rounded-2xl max-w-64 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={handleChangeImage}
-          title="Klicken um zu ändern"
-        />
+        <div className="relative">
+          <img
+            src={croppedImage}
+            alt="cropped"
+            className="rounded-2xl max-w-64"
+          />
+          <button
+            type="button"
+            onClick={handleChangeImage}
+            className="absolute bottom-2 right-2 p-2 bg-black/60 hover:bg-black/80 rounded-full text-white transition-colors"
+            title="Bild ändern"
+          >
+            <PencilIcon className="w-4 h-4" />
+          </button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
@@ -162,13 +172,21 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
   if (showExisting && existingImagePath) {
     return (
       <div className="flex flex-col items-center">
-        <img
-          src={`/img/items/${existingImagePath}`}
-          alt="existing"
-          className="rounded-2xl max-w-64 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={handleChangeImage}
-          title="Klicken um zu ändern"
-        />
+        <div className="relative">
+          <img
+            src={`/img/items/${existingImagePath}`}
+            alt="existing"
+            className="rounded-2xl max-w-64"
+          />
+          <button
+            type="button"
+            onClick={handleChangeImage}
+            className="absolute bottom-2 right-2 p-2 bg-black/60 hover:bg-black/80 rounded-full text-white transition-colors"
+            title="Bild ändern"
+          >
+            <PencilIcon className="w-4 h-4" />
+          </button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
