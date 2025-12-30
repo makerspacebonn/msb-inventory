@@ -10,7 +10,6 @@ import {
 } from "@components/ui/dialog"
 import {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -18,7 +17,7 @@ import {
 } from "@components/ui/empty"
 import { FieldLabel } from "@components/ui/field"
 import { ImageIcon } from "lucide-react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import Cropper from "react-easy-crop"
 import { getCroppedImg, getRotatedImage } from "./-canvasUtils"
 
@@ -34,6 +33,7 @@ export function MyCropper({ onChange }: MyCropperProps) {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [croppedImage, setCroppedImage] = useState(null)
   const [open, setOpen] = useState(true)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const ORIENTATION_TO_ANGLE = {
     "3": 180,
@@ -89,9 +89,9 @@ export function MyCropper({ onChange }: MyCropperProps) {
             Anyone who has this link will be able to view this.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex items-center gap-2 h-[calc(100vh-10rem)]">
-          <div className="flex flex-col h-full w-full">
-            <div className="relative h-[600px] w-full">
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col w-full">
+            <div className="relative h-[400px] w-full">
               <Cropper
                 image={imageSrc}
                 crop={crop}
@@ -132,16 +132,23 @@ export function MyCropper({ onChange }: MyCropperProps) {
       />
     </div>
   ) : (
-    <Empty>
+    <Empty
+      className="cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
+      onClick={() => fileInputRef.current?.click()}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        onChange={onFileChange}
+        accept="image/*"
+        className="hidden"
+      />
       <EmptyHeader>
         <EmptyMedia>
           <ImageIcon />
-        </EmptyMedia>{" "}
-        <EmptyTitle>Kein Bild </EmptyTitle>
-        <EmptyDescription>Es wurden keine Bilder gefunden.</EmptyDescription>
-        <EmptyContent>
-          <input type="file" onChange={onFileChange} accept="image/*" />
-        </EmptyContent>
+        </EmptyMedia>
+        <EmptyTitle>Kein Bild</EmptyTitle>
+        <EmptyDescription>Klicken um ein Bild hochzuladen</EmptyDescription>
       </EmptyHeader>
     </Empty>
   )
