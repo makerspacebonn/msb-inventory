@@ -12,9 +12,10 @@ export class TagsRepository {
   async findUniqueTags(search?: string): Promise<string[]> {
     const now = Date.now()
 
+    // Cache all tags with their counts for filtering
     if (!tagsCache || now - tagsCache.timestamp > CACHE_TTL_MS) {
       const result = await db.execute<{ tag: string }>(
-        sql`SELECT DISTINCT unnest(tags) as tag FROM items WHERE tags IS NOT NULL ORDER BY tag LIMIT 50`,
+        sql`SELECT unnest(tags) as tag, COUNT(*) as count FROM items WHERE tags IS NOT NULL GROUP BY tag ORDER BY count DESC`,
       )
       const tags = result.rows
         .map((row) => row.tag)
@@ -23,12 +24,15 @@ export class TagsRepository {
       tagsCache = { tags, timestamp: now }
     }
 
+    let filteredTags = tagsCache.tags
     if (search) {
-      return tagsCache.tags.filter((tag) =>
+      filteredTags = tagsCache.tags.filter((tag) =>
         tag.toLowerCase().includes(search.toLowerCase()),
       )
     }
-    return tagsCache.tags
+
+    // Return top 10 most relevant (already sorted by count)
+    return filteredTags.slice(0, 10)
   }
 
   invalidateCache(): void {

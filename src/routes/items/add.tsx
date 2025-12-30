@@ -381,11 +381,19 @@ function ItemForm() {
                 allowDuplicates={false}
                 restrictTagsToAutocompleteOptions={false}
                 styleClasses={{
-                  input: "w-full",
+                  input: "w-full sm:max-w-[200px]",
                   inlineTagsContainer:
-                    "rounded-md border border-input bg-background px-3 py-2",
+                    "rounded-md border border-input bg-background px-3 py-2 flex-wrap gap-1.5",
                   tag: {
-                    body: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                    body: "bg-emerald-950 text-emerald-100 hover:bg-emerald-900 rounded-full px-3 py-1 text-sm",
+                    closeButton: "text-emerald-300 hover:text-white ml-1",
+                  },
+                  autoComplete: {
+                    popover: "bg-card border rounded-md shadow-lg mt-1 p-1 z-50",
+                    commandList: "max-h-48 bg-card",
+                    commandGroup: "p-1 bg-card",
+                    commandItem:
+                      "px-3 py-2 rounded-md cursor-pointer hover:bg-muted text-sm bg-card",
                   },
                 }}
               />
