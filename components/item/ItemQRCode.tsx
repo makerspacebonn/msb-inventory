@@ -1,7 +1,20 @@
 import { Button } from "@components/ui/button"
-import { Download } from "lucide-react"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@components/ui/dialog"
+import { Download, Printer } from "lucide-react"
 import { QRCodeCanvas } from "qrcode.react"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
+import { printLabelFn } from "@/src/actions/printActions"
+import { useAuth } from "@/src/context/AuthContext"
 
 type ItemQRCodeProps = {
   itemId: number
@@ -10,6 +23,7 @@ type ItemQRCodeProps = {
 }
 
 export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
+  const { isLoggedIn } = useAuth()
   const url = `${baseUrl}/i/${itemId}`
   const qrRef = useRef<HTMLCanvasElement>(null)
   const outputCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -80,6 +94,33 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
     link.click()
   }
 
+  const [isPrinting, setIsPrinting] = useState(false)
+
+  const handlePrint = async () => {
+    setIsPrinting(true)
+    try {
+      const result = await printLabelFn({
+        data: {
+          link: url,
+          name: itemName,
+          id: itemId.toString(),
+        },
+      })
+
+      if (result.success) {
+        toast.success("Druckauftrag gesendet")
+      } else {
+        toast.error(result.error || "Fehler beim Drucken")
+      }
+    } catch (error) {
+      console.error(error)
+      const message = error instanceof Error ? error.message : "Fehler beim Drucken"
+      toast.error(message)
+    } finally {
+      setIsPrinting(false)
+    }
+  }
+
   return (
     <div className="mt-8 p-4 border rounded-lg flex flex-col items-center gap-4">
       <h3 className="text-lg font-semibold">QR-Code</h3>
@@ -101,10 +142,39 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
         />
       )}
 
-      <Button variant="outline" size="sm" onClick={handleDownload} disabled={!pngUrl}>
-        <Download className="w-4 h-4 mr-2" />
-        PNG herunterladen
-      </Button>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={handleDownload} disabled={!pngUrl}>
+          <Download className="w-4 h-4 mr-2" />
+          PNG herunterladen
+        </Button>
+
+        {isLoggedIn && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={isPrinting}>
+                <Printer className="w-4 h-4 mr-2" />
+                {isPrinting ? "Drucke..." : "Label drucken"}
+              </Button>
+            </DialogTrigger>
+            <DialogContent showCloseButton={false}>
+              <DialogHeader>
+                <DialogTitle>Label drucken?</DialogTitle>
+                <DialogDescription>
+                  Ein QR-Code Label für "{itemName}" (ID: {itemId}) wird an den Labeldrucker gesendet.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Abbrechen</Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button onClick={handlePrint}>Drucken</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
     </div>
   )
 }
