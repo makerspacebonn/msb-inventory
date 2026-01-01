@@ -1,5 +1,6 @@
 import mqtt from "mqtt"
 import { createServerFn } from "@tanstack/react-start"
+import { v4 as uuidv4 } from "uuid"
 import z from "zod/v4"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 
@@ -8,6 +9,12 @@ const printLabelSchema = z.object({
   name: z.string(),
   id: z.string(),
 })
+
+type PrintResult = {
+  printId: string
+  success: boolean
+  error?: string
+}
 
 export const printLabelFn = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
@@ -21,6 +28,8 @@ export const printLabelFn = createServerFn({ method: "POST" })
       throw new Error("MQTT nicht konfiguriert")
     }
 
+    const printId = uuidv4()
+
     return new Promise((resolve) => {
       const client = mqtt.connect(brokerUrl, {
         username,
@@ -31,24 +40,55 @@ export const printLabelFn = createServerFn({ method: "POST" })
 
       const timeout = setTimeout(() => {
         client.end()
-        resolve({ success: false, error: "Verbindungstimeout zum MQTT-Broker" })
-      }, 10000)
+        resolve({ success: false, error: "Zeitüberschreitung beim Warten auf Druckergebnis" })
+      }, 30000)
 
       client.on("connect", () => {
-        const message = JSON.stringify(data)
-
-        client.publish("labelprinter/print", message, { qos: 1 }, (err) => {
-          clearTimeout(timeout)
-          client.end()
-
+        // Subscribe to result topic first
+        client.subscribe("labelprinter/result", { qos: 1 }, (err) => {
           if (err) {
-            console.error("MQTT publish error:", err)
-            resolve({ success: false, error: "Fehler beim Senden an den Drucker" })
-          } else {
-            console.log("Label print message sent:", message)
-            resolve({ success: true })
+            clearTimeout(timeout)
+            client.end()
+            resolve({ success: false, error: "Fehler beim Abonnieren des Ergebnis-Topics" })
+            return
           }
+
+          // Send print message with printId
+          const message = JSON.stringify({ ...data, printId })
+
+          client.publish("labelprinter/print", message, { qos: 1 }, (err) => {
+            if (err) {
+              clearTimeout(timeout)
+              client.end()
+              console.error("MQTT publish error:", err)
+              resolve({ success: false, error: "Fehler beim Senden an den Drucker" })
+            } else {
+              console.log("Label print message sent:", message)
+            }
+          })
         })
+      })
+
+      client.on("message", (topic, payload) => {
+        if (topic === "labelprinter/result") {
+          try {
+            const result: PrintResult = JSON.parse(payload.toString())
+
+            // Only handle result for our printId
+            if (result.printId === printId) {
+              clearTimeout(timeout)
+              client.end()
+
+              if (result.success) {
+                resolve({ success: true })
+              } else {
+                resolve({ success: false, error: result.error || "Druckfehler" })
+              }
+            }
+          } catch (e) {
+            console.error("Failed to parse print result:", e)
+          }
+        }
       })
 
       client.on("error", (err) => {
