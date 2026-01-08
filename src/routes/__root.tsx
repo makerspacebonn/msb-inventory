@@ -1,6 +1,3 @@
-// src/routes/__root.tsx
-/// <reference types="vite/client" />
-
 import { Button } from "@components/ui/button"
 import { Toaster } from "@components/ui/sonner"
 import {
@@ -12,9 +9,10 @@ import {
   useRouter,
 } from "@tanstack/react-router"
 import { LogInIcon, LogOutIcon } from "lucide-react"
-import type { ReactNode } from "react"
+import { type ReactNode, useEffect, useState } from "react"
 import { AuthProvider, useAuth } from "@/src/context/AuthContext"
-import { checkAuth } from "@/src/lib/auth"
+import { checkAuth, getCurrentUser } from "@/src/lib/auth"
+import type { User } from "@/src/drizzle/schema"
 import appCss from "../styles.css?url"
 
 export const Route = createRootRoute({
@@ -68,6 +66,15 @@ function RootComponent() {
 function AuthButtons() {
   const { isLoggedIn, isLoading, logout } = useAuth()
   const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    if (isLoggedIn && !isLoading) {
+      getCurrentUser().then(setUser)
+    } else {
+      setUser(null)
+    }
+  }, [isLoggedIn, isLoading])
 
   if (isLoading) {
     return null
@@ -75,7 +82,27 @@ function AuthButtons() {
 
   const handleLogout = async () => {
     await logout()
+    setUser(null)
     await router.invalidate()
+  }
+
+  if (isLoggedIn && user) {
+    return (
+      <div className="flex items-center gap-2">
+        {user.discordAvatar && (
+          <img
+            src={user.discordAvatar}
+            alt={user.discordName}
+            className="w-8 h-8 rounded-full"
+            title={user.discordName}
+          />
+        )}
+        <span className="text-sm hidden sm:inline">{user.discordName}</span>
+        <Button variant="ghost" size="sm" onClick={handleLogout}>
+          <LogOutIcon className="w-4 h-4" />
+        </Button>
+      </div>
+    )
   }
 
   if (isLoggedIn) {

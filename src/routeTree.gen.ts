@@ -20,6 +20,7 @@ import { Route as ItemsTesteditRouteImport } from './routes/items/testedit'
 import { Route as ItemsAddRouteImport } from './routes/items/add'
 import { Route as ImgSplatRouteImport } from './routes/img.$'
 import { Route as IItemIdRouteImport } from './routes/i.$itemId'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiItemsRouteImport } from './routes/api/items'
 import { Route as BackupDownloadSplatRouteImport } from './routes/backup.download.$'
 import { Route as ItemsItemIdLocationAddRouteImport } from './routes/items/$itemId/location/add'
@@ -79,6 +80,11 @@ const IItemIdRoute = IItemIdRouteImport.update({
   path: '/i/$itemId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiItemsRoute = ApiItemsRouteImport.update({
   id: '/api/items',
   path: '/api/items',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/test'
     | '/api/items'
+    | '/auth/callback'
     | '/i/$itemId'
     | '/img/$'
     | '/items/add'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/test'
     | '/api/items'
+    | '/auth/callback'
     | '/i/$itemId'
     | '/img/$'
     | '/items/add'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/test'
     | '/api/items'
+    | '/auth/callback'
     | '/i/$itemId'
     | '/img/$'
     | '/items/add'
@@ -203,6 +215,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   TestRoute: typeof TestRoute
   ApiItemsRoute: typeof ApiItemsRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   IItemIdRoute: typeof IItemIdRoute
   ImgSplatRoute: typeof ImgSplatRoute
   ItemsAddRoute: typeof ItemsAddRoute
@@ -290,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IItemIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/items': {
       id: '/api/items'
       path: '/api/items'
@@ -333,6 +353,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   TestRoute: TestRoute,
   ApiItemsRoute: ApiItemsRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   IItemIdRoute: IItemIdRoute,
   ImgSplatRoute: ImgSplatRoute,
   ItemsAddRoute: ItemsAddRoute,

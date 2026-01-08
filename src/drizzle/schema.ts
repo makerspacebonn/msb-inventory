@@ -29,8 +29,6 @@ export const UserTable = pgTable("users", {
   name: varchar("name"),
   discordId: varchar("discord_id").notNull().unique(),
   discordName: varchar("discord_name").notNull(),
-  accessToken: varchar("access_token"),
-  refreshToken: varchar("refresh_token"),
 })
 
 export type User = InferSelectModel<typeof UserTable>

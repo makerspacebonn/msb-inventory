@@ -41,6 +41,21 @@ function LoginPage() {
     }
   }
 
+  const handleDiscordLogin = () => {
+    const authentikUrl = import.meta.env.VITE_AUTHENTIK_URL
+    const clientId = import.meta.env.VITE_AUTHENTIK_CLIENT_ID
+    const redirectUri = window.location.origin + "/auth/callback"
+    const scope = "openid profile email goauthentik.io/sources/*"
+
+    const state = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+      .substring(0, 16)
+
+    const authUrl = `${authentikUrl}/application/o/authorize/?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}`
+    window.location.href = authUrl
+  }
+
   return (
     <div className="max-w-md mx-auto mt-20 p-6">
       <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
@@ -59,6 +74,25 @@ function LoginPage() {
         )}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "..." : "Anmelden"}
+        </Button>
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Oder
+            </span>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={handleDiscordLogin}
+          disabled={loading}
+        >
+          Mit Authentik anmelden
         </Button>
       </form>
     </div>
