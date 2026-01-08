@@ -24,6 +24,27 @@ export const fetchChildLocations = createServerFn()
     return new LocationRepository().findByParentId(parentId)
   })
 
+export const searchLocations = createServerFn()
+  .inputValidator((query: string) => query)
+  .handler(async ({ data: query }) => {
+    if (!query.trim()) return []
+    const repo = new LocationRepository()
+    const locations = await repo.search(query)
+    // Get the path for each location
+    const locationsWithPath = await Promise.all(
+      locations.map(async (location) => {
+        const chain = await repo.findChainForId(location.id)
+        // Chain is [current, parent, grandparent, ...root], we want path as string
+        const path = chain
+          .reverse()
+          .map((l) => l.name)
+          .join(" → ")
+        return { ...location, path }
+      }),
+    )
+    return locationsWithPath
+  })
+
 function decodeBase64Image(dataString: string) {
   const matches = dataString.match(/^data:([A-Za-z-+/]+);base64,(.+)$/)
   if (matches?.length !== 3) {

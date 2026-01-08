@@ -9,6 +9,8 @@ import {
   CrosshairIcon,
   MapPinIcon,
   PlusIcon,
+  SearchIcon,
+  XIcon,
 } from "lucide-react"
 import { type MouseEvent, type RefObject, useRef, useState } from "react"
 import { fetchItem, setItemLocation } from "@/src/actions/itemActions"
@@ -17,6 +19,7 @@ import {
   fetchChildLocations,
   fetchLocationChain,
   fetchRootLocations,
+  searchLocations,
 } from "@/src/actions/locationActions"
 
 // Types
@@ -347,6 +350,9 @@ function MarkerSelectionView({
   )
 }
 
+// Type for search results with path
+type LocationWithPath = Location & { path: string }
+
 // View: Browse and select locations
 function LocationSelectionView({
   item,
@@ -367,6 +373,27 @@ function LocationSelectionView({
   onStartCreate: () => void
   onCancel: () => void
 }) {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<LocationWithPath[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query)
+    if (!query.trim()) {
+      setSearchResults([])
+      return
+    }
+    setIsSearching(true)
+    const results = await searchLocations({ data: query })
+    setSearchResults(results)
+    setIsSearching(false)
+  }
+
+  const clearSearch = () => {
+    setSearchQuery("")
+    setSearchResults([])
+  }
+
   return (
     <div className="max-w-128 mx-auto p-4">
       <div className="flex items-center gap-2 mb-4">
@@ -387,70 +414,140 @@ function LocationSelectionView({
         <span className="font-medium">{item?.name}</span>
       </div>
 
-      <div className="flex items-center gap-1 mb-4 flex-wrap">
-        <button
-          type="button"
-          className="text-muted-foreground hover:text-foreground hover:underline"
-          onClick={() => onBreadcrumbClick(-1)}
-        >
-          Start
-        </button>
-        {locationPath.map((loc, index) => (
-          <span key={loc.id} className="flex items-center gap-1">
-            <span className="text-muted-foreground">→</span>
-            <button
-              type="button"
-              className="text-muted-foreground hover:text-foreground hover:underline"
-              onClick={() => onBreadcrumbClick(index)}
-            >
-              {loc.name}
-            </button>
-          </span>
-        ))}
+      {/* Search input */}
+      <div className="relative mb-4">
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => handleSearch(e.target.value)}
+          placeholder="Location suchen..."
+          className="pl-9 pr-9"
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={clearSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <XIcon className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      {locationPath.length > 0 && (
-        <div className="mb-4">
-          <Button onClick={onSelectCurrent}>
-            <CheckIcon className="w-4 h-4 mr-1" />
-            "{locationPath[locationPath.length - 1].name}" auswählen
-          </Button>
+      {/* Search results */}
+      {searchQuery && (
+        <div className="mb-6">
+          {isSearching ? (
+            <p className="text-muted-foreground text-sm">Suche...</p>
+          ) : searchResults.length > 0 ? (
+            <div className="space-y-2">
+              {searchResults.map((location) => (
+                <button
+                  type="button"
+                  key={location.id}
+                  className="w-full border rounded-lg p-3 flex items-center gap-3 hover:bg-muted transition-colors text-left"
+                  onClick={() => {
+                    clearSearch()
+                    onLocationClick(location)
+                  }}
+                >
+                  {location.imagePath ? (
+                    <img
+                      src={`/img/locations/${location.imagePath}`}
+                      alt={location.name}
+                      className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center flex-shrink-0">
+                      <MapPinIcon className="w-6 h-6 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{location.name}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {location.path}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              Keine Ergebnisse gefunden
+            </p>
+          )}
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {currentLocations.map((location) => (
-          <button
-            type="button"
-            key={location.id}
-            className="border rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-muted transition-colors"
-            onClick={() => onLocationClick(location)}
-          >
-            {location.imagePath ? (
-              <img
-                src={`/img/locations/${location.imagePath}`}
-                alt={location.name}
-                className="w-full aspect-square object-cover rounded-lg"
-              />
-            ) : (
-              <div className="w-full aspect-square rounded-2xl bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
-                <MapPinIcon className="w-12 h-12 text-gray-400" />
-              </div>
-            )}
-            <span className="text-lg font-medium">{location.name}</span>
-          </button>
-        ))}
-        <button
-          type="button"
-          className="border border-dashed rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
-          onClick={onStartCreate}
-        >
-          <div className="w-full aspect-square flex items-center justify-center">
-            <PlusIcon className="w-12 h-12" />
+      {/* Browse mode - only show when not searching */}
+      {!searchQuery && (
+        <>
+          <div className="flex items-center gap-1 mb-4 flex-wrap">
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-foreground hover:underline"
+              onClick={() => onBreadcrumbClick(-1)}
+            >
+              Start
+            </button>
+            {locationPath.map((loc, index) => (
+              <span key={loc.id} className="flex items-center gap-1">
+                <span className="text-muted-foreground">→</span>
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground hover:underline"
+                  onClick={() => onBreadcrumbClick(index)}
+                >
+                  {loc.name}
+                </button>
+              </span>
+            ))}
           </div>
-          <span className="text-lg font-medium">Neue Location</span>
-        </button>
-      </div>
+
+          {locationPath.length > 0 && (
+            <div className="mb-4">
+              <Button onClick={onSelectCurrent}>
+                <CheckIcon className="w-4 h-4 mr-1" />"
+                {locationPath[locationPath.length - 1].name}" auswählen
+              </Button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {currentLocations.map((location) => (
+              <button
+                type="button"
+                key={location.id}
+                className="border rounded-lg p-4 flex flex-col items-center gap-2 hover:bg-muted transition-colors"
+                onClick={() => onLocationClick(location)}
+              >
+                {location.imagePath ? (
+                  <img
+                    src={`/img/locations/${location.imagePath}`}
+                    alt={location.name}
+                    className="w-full aspect-square object-cover rounded-lg"
+                  />
+                ) : (
+                  <div className="w-full aspect-square rounded-2xl bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
+                    <MapPinIcon className="w-12 h-12 text-gray-400" />
+                  </div>
+                )}
+                <span className="text-lg font-medium">{location.name}</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              className="border border-dashed rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+              onClick={onStartCreate}
+            >
+              <div className="w-full aspect-square flex items-center justify-center">
+                <PlusIcon className="w-12 h-12" />
+              </div>
+              <span className="text-lg font-medium">Neue Location</span>
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
