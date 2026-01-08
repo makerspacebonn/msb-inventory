@@ -2,21 +2,17 @@ import { ItemList } from "@components/ItemList"
 import { Button } from "@components/ui/button"
 import { Input } from "@components/ui/input"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { createServerFn } from "@tanstack/react-start"
 import { Loader2, PlusIcon, Search, X } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
-import { searchItems } from "@/src/actions/itemActions"
+import { fetchPaginatedItems, searchItems } from "@/src/actions/itemActions"
 import type { Item } from "@/src/app/types"
 import { useAuth } from "@/src/context/AuthContext"
-import { ItemRepository } from "@/src/repositories/ItemRepository"
-
-const itemLoader = createServerFn().handler(async () => {
-  return await new ItemRepository().findRecentItems(50)
-})
 
 export const Route = createFileRoute("/items/")({
   component: RouteComponent,
-  loader: () => itemLoader(),
+  loader: async () => {
+    return fetchPaginatedItems({ data: { page: 1, pageSize: 24 } })
+  },
   head: () => ({
     meta: [{ title: "Items | MSB Inventar" }],
   }),
@@ -39,26 +35,42 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 function RouteComponent() {
-  const initialItems = Route.useLoaderData()
+  const initialData = Route.useLoaderData()
   const { isLoggedIn } = useAuth()
+
   const [searchQuery, setSearchQuery] = useState("")
-  const [items, setItems] = useState<Item[]>(initialItems)
+  const [items, setItems] = useState<Item[]>(initialData.items)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(initialData.page < initialData.totalPages)
+  const [isLoading, setIsLoading] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
+  const [searchResults, setSearchResults] = useState<Item[] | null>(null)
 
   const debouncedQuery = useDebounce(searchQuery, 300)
 
   useEffect(() => {
+    setItems(initialData.items)
+    setPage(1)
+    setHasMore(initialData.page < initialData.totalPages)
+    setSearchResults(null)
+  }, [initialData])
+
+  useEffect(() => {
     const performSearch = async () => {
       if (debouncedQuery.trim() === "") {
-        setItems(initialItems)
+        setSearchResults(null)
+        setItems(initialData.items)
+        setPage(1)
+        setHasMore(initialData.page < initialData.totalPages)
         return
       }
 
       setIsSearching(true)
       try {
         const results = await searchItems({ data: debouncedQuery })
-        console.log(results)
+        setSearchResults(results)
         setItems(results)
+        setHasMore(false)
       } catch (error) {
         console.error("Search failed:", error)
       } finally {
@@ -67,12 +79,34 @@ function RouteComponent() {
     }
 
     performSearch()
-  }, [debouncedQuery, initialItems])
+  }, [debouncedQuery, initialData])
 
   const clearSearch = useCallback(() => {
     setSearchQuery("")
-    setItems(initialItems)
-  }, [initialItems])
+    setSearchResults(null)
+    setItems(initialData.items)
+    setPage(1)
+    setHasMore(initialData.page < initialData.totalPages)
+  }, [initialData])
+
+  const loadMore = useCallback(async () => {
+    if (isLoading || !hasMore) return
+
+    setIsLoading(true)
+    try {
+      const nextPage = page + 1
+      const result = await fetchPaginatedItems({ data: { page: nextPage, pageSize: 24 } })
+      setItems((prev) => [...prev, ...result.items])
+      setPage(nextPage)
+      setHasMore(nextPage < result.totalPages)
+    } catch (error) {
+      console.error("Failed to load more items:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [isLoading, hasMore, page])
+
+  const isShowingSearch = searchResults !== null
 
   return (
     <>
@@ -115,7 +149,18 @@ function RouteComponent() {
           {searchQuery}"
         </p>
       )}
-      <ItemList items={items} />
+      <ItemList
+        items={items}
+        infiniteScroll={
+          isShowingSearch
+            ? undefined
+            : {
+                hasMore,
+                isLoading,
+                onLoadMore: loadMore,
+              }
+        }
+      />
     </>
   )
 }

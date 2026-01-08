@@ -44,3 +44,11 @@ export type ItemLink = {
   name: string
   type: string
 }
+
+export type PaginatedResult<T> = {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}

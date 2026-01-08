@@ -1,5 +1,5 @@
 import fs from "node:fs"
-import type { ParentLocationMarker } from "@server/app/types"
+import type { Item, PaginatedResult, ParentLocationMarker } from "@server/app/types"
 import { createServerFn } from "@tanstack/react-start"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import {
@@ -13,6 +13,12 @@ export const searchItems = createServerFn()
   .inputValidator((query: string) => query)
   .handler(async ({ data: query }): Promise<SearchResult[]> => {
     return new ItemRepository().search(query)
+  })
+
+export const fetchPaginatedItems = createServerFn()
+  .inputValidator((data: { page: number; pageSize?: number }) => data)
+  .handler(async ({ data }): Promise<PaginatedResult<Item>> => {
+    return new ItemRepository().findPaginated(data.page, data.pageSize ?? 24)
   })
 
 export const fetchItem = createServerFn()
