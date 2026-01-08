@@ -1,5 +1,5 @@
-import { eq, sql } from "drizzle-orm"
-import type { Item } from "../app/types"
+import { count, eq, sql } from "drizzle-orm"
+import type { Item, PaginatedResult } from "../app/types"
 import { db } from "../db"
 import { type ItemInsert, ItemTable } from "../drizzle/schema"
 
@@ -32,6 +32,33 @@ export class ItemRepository {
     return db.query.ItemTable.findMany({
       orderBy: (items, { desc }) => [desc(items.id)],
     })
+  }
+
+  async findPaginated(
+    page = 1,
+    pageSize = 24
+  ): Promise<PaginatedResult<Item>> {
+    const offset = (page - 1) * pageSize
+
+    const [items, totalResult] = await Promise.all([
+      db.query.ItemTable.findMany({
+        orderBy: (items, { desc }) => [desc(items.createdAt)],
+        limit: pageSize,
+        offset,
+      }),
+      db.select({ count: count() }).from(ItemTable),
+    ])
+
+    const total = totalResult[0]?.count ?? 0
+    const totalPages = Math.ceil(total / pageSize)
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages,
+    }
   }
   async findRecentItems(limit = 50): Promise<Item[]> {
     const oneMonthAgo = new Date()

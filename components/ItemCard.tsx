@@ -9,7 +9,7 @@ export function ItemCard({ item }: { item: Item }) {
         {item.imagePath ? (
           <img
             className="h-16 w-16 rounded-md object-cover"
-            src={`/img/items/${item.imagePath}`}
+            src={`/img/items/${item.imagePath}?size=s`}
             alt={item.description || item.name}
           />
         ) : (

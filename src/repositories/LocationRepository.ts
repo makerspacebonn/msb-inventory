@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm"
+import { eq, ilike } from "drizzle-orm"
 import { db } from "@/src/db"
 import type { Location } from "../app/types"
 import { type LocationInsert, LocationTable } from "../drizzle/schema"
@@ -66,5 +66,12 @@ export class LocationRepository {
       .where(eq(LocationTable.id, id))
       .returning()
     return result.length > 0
+  }
+
+  async search(query: string, limit = 20): Promise<Location[]> {
+    return await db.query.LocationTable.findMany({
+      where: (locations) => ilike(locations.name, `%${query}%`),
+      limit,
+    })
   }
 }
