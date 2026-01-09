@@ -2,8 +2,9 @@ import { Button } from "@components/ui/button"
 import { Input } from "@components/ui/input"
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
 import { useState } from "react"
+import { useServerFn } from "@tanstack/react-start"
 import { useAuth } from "@/src/context/AuthContext"
-import { login } from "@/src/lib/auth"
+import { login, redirectToOAuth } from "@/src/lib/auth"
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -41,19 +42,17 @@ function LoginPage() {
     }
   }
 
-  const handleDiscordLogin = () => {
-    const authentikUrl = import.meta.env.VITE_AUTHENTIK_URL
-    const clientId = import.meta.env.VITE_AUTHENTIK_CLIENT_ID
-    const redirectUri = window.location.origin + "/auth/callback"
-    const scope = "openid profile email goauthentik.io/sources/*"
+  const handleOAuthRedirect = useServerFn(redirectToOAuth)
 
-    const state = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-      .substring(0, 16)
-
-    const authUrl = `${authentikUrl}/application/o/authorize/?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}`
-    window.location.href = authUrl
+  const handleDiscordLogin = async () => {
+    setLoading(true)
+    setError("")
+    try {
+      await handleOAuthRedirect()
+    } catch {
+      setError("OAuth nicht konfiguriert")
+      setLoading(false)
+    }
   }
 
   return (

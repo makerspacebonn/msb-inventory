@@ -1,3 +1,4 @@
+import { redirect } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { getCookie, setCookie } from "@tanstack/react-start/server"
 import { eq } from "drizzle-orm"
@@ -135,11 +136,33 @@ export const getCurrentUser = createServerFn().handler(async () => {
 })
 
 
+export const redirectToOAuth = createServerFn().handler(async () => {
+  const authentikUrl = process.env.AUTHENTIK_URL?.replace(/\/$/, "")
+  const clientId = process.env.AUTHENTIK_CLIENT_ID
+  const baseUrl = process.env.BASE_URL
+  const redirectUri = baseUrl + "/auth/callback"
+  const scope = "openid profile email goauthentik.io/sources/*"
+
+  if (!authentikUrl || !clientId || !baseUrl) {
+    return { success: false, message: "OAuth nicht konfiguriert" }
+  }
+
+  const state = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .substring(0, 16)
+
+  const authUrl = `${authentikUrl}/application/o/authorize/?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}`
+
+  throw redirect({ href: authUrl })
+})
+
 export const exchangeCodeForToken = createServerFn({ method: "POST" })
   .inputValidator((code: string) => code)
   .handler(async ({ data: code }) => {
     try {
       const authentikUrl = process.env.AUTHENTIK_URL?.replace(/\/$/, '')
+      console.log("authentikUrl", authentikUrl)
       const clientId = process.env.AUTHENTIK_CLIENT_ID
       const clientSecret = process.env.AUTHENTIK_CLIENT_SECRET
       const baseUrl = process.env.BASE_URL
@@ -159,6 +182,8 @@ export const exchangeCodeForToken = createServerFn({ method: "POST" })
         client_secret: clientSecret,
       })
 
+      console.log(requestBody)
+
       const tokenResponse = await fetch(tokenUrl, {
         method: "POST",
         headers: {
@@ -167,6 +192,7 @@ export const exchangeCodeForToken = createServerFn({ method: "POST" })
         body: requestBody,
       })
 
+      console.log("tokenResponse", tokenResponse)
       if (!tokenResponse.ok) {
         return { success: false, message: "Token-Austausch fehlgeschlagen" }
       }
