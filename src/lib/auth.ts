@@ -202,18 +202,22 @@ export const exchangeCodeForToken = createServerFn({ method: "POST" })
       }
 
       const tokenData = await tokenResponse.json()
+
+      console.log("tokenData", tokenData)
       const accessToken = tokenData.access_token
 
       const userInfoResponse = await fetch(`${authentikUrl}/application/o/userinfo/`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
 
+      console.log(userInfoResponse)
       if (!userInfoResponse.ok) {
         return { success: false, message: "Benutzerinformationen konnten nicht abgerufen werden" }
       }
 
       const userInfo = await userInfoResponse.json()
 
+      console.log("userInfo", userInfo)
       const discordUsername = userInfo.username || userInfo.preferred_username || "Unknown"
       const discordAvatar = userInfo.avatar_url || userInfo.picture || `https://cdn.discordapp.com/embed/avatars/${Math.floor(Math.random() * 5)}.png`
 
@@ -233,6 +237,7 @@ export const exchangeCodeForToken = createServerFn({ method: "POST" })
         })
         .returning()
 
+      console.log("user", user)
       const sessionToken = createToken(user.id.toString())
       setCookie(AUTH_COOKIE, sessionToken, {
         httpOnly: true,
@@ -245,9 +250,10 @@ export const exchangeCodeForToken = createServerFn({ method: "POST" })
       storeUserInfo(discordUsername, discordAvatar)
       return { success: true }
     } catch (error) {
+      console.log(error)
       return {
         success: false,
-        message: error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten"
+        message: "Ein unerwarteter Fehler ist aufgetreten"
       }
     }
   })
