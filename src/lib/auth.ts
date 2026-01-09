@@ -10,15 +10,20 @@ const USER_INFO_COOKIE = "user_info"
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 
 function createToken(userId: string): string {
-  const secret = process.env.JWT_SECRET || "dev-secret"
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error("JWT_SECRET must be configured")
+  }
   const data = `${userId}:${secret}:${Date.now()}`
   return Buffer.from(data).toString("base64")
 }
 
 function verifyToken(token: string): { valid: boolean; userId?: string } {
+  const secret = process.env.JWT_SECRET
+  if (!secret) return { valid: false }
+
   try {
     const decoded = Buffer.from(token, "base64").toString()
-    const secret = process.env.JWT_SECRET || "dev-secret"
     const parts = decoded.split(":")
     if (parts.length < 3) return { valid: false }
     if (parts[1] !== secret) return { valid: false }
@@ -104,18 +109,10 @@ export const checkAuth = createServerFn().handler(async () => {
 
 export const getCurrentUser = createServerFn().handler(async () => {
   const token = getCookie(AUTH_COOKIE)
-  if (!token) {
-    return null
-  }
+  if (!token) return null
 
   const { valid, userId } = verifyToken(token)
-  if (!valid || !userId) {
-    return null
-  }
-
-  if (userId === "admin") {
-    return null
-  }
+  if (!valid || !userId || userId === "admin") return null
 
   const [user] = await db
     .select()
@@ -123,12 +120,9 @@ export const getCurrentUser = createServerFn().handler(async () => {
     .where(eq(UserTable.id, Number.parseInt(userId)))
     .limit(1)
 
-  if (!user) {
-    return null
-  }
+  if (!user) return null
 
   const userInfo = getUserInfo()
-
   return {
     ...user,
     discordAvatar: userInfo?.avatarUrl || `https://cdn.discordapp.com/embed/avatars/${Math.floor(Math.random() * 5)}.png`,
@@ -137,11 +131,11 @@ export const getCurrentUser = createServerFn().handler(async () => {
 
 
 export const redirectToOAuth = createServerFn().handler(async () => {
-  const authentikUrl = process.env.AUTHENTIK_URL?.replace(/\/$/, "")
+  const authentikUrl = process.env.AUTHENTIK_URL
   const clientId = process.env.AUTHENTIK_CLIENT_ID
   const baseUrl = process.env.BASE_URL
-  const redirectUri = baseUrl + "/auth/callback"
-  const scope = "openid profile email goauthentik.io/sources/*"
+  const redirectUri = `${baseUrl}/auth/callback`
+  const scope = "openid profile email"
 
   if (!authentikUrl || !clientId || !baseUrl) {
     return { success: false, message: "OAuth nicht konfiguriert" }
@@ -161,18 +155,15 @@ export const exchangeCodeForToken = createServerFn({ method: "POST" })
   .inputValidator((code: string) => code)
   .handler(async ({ data: code }) => {
     try {
-      const authentikUrl = process.env.AUTHENTIK_URL?.replace(/\/$/, '')
-      console.log("authentikUrl", authentikUrl)
+      const authentikUrl = process.env.AUTHENTIK_URL
       const clientId = process.env.AUTHENTIK_CLIENT_ID
       const clientSecret = process.env.AUTHENTIK_CLIENT_SECRET
       const baseUrl = process.env.BASE_URL
-      const redirectUri = baseUrl + "/auth/callback"
+      const redirectUri = `${baseUrl}/auth/callback`
 
       if (!authentikUrl || !clientId || !clientSecret || !baseUrl) {
         return { success: false, message: "Authentik nicht konfiguriert" }
       }
-
-      const tokenUrl = `${authentikUrl}/application/o/token`
 
       const requestBody = new URLSearchParams({
         grant_type: "authorization_code",
@@ -182,28 +173,39 @@ export const exchangeCodeForToken = createServerFn({ method: "POST" })
         client_secret: clientSecret,
       })
 
-      console.log(requestBody)
-
+      const tokenUrl = `${authentikUrl}/application/o/token/`
       const tokenResponse = await fetch(tokenUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json",
         },
-        body: requestBody,
+        body: requestBody.toString(),
       })
 
-      console.log("tokenResponse", tokenResponse)
       if (!tokenResponse.ok) {
-        return { success: false, message: "Token-Austausch fehlgeschlagen" }
+        const errorText = await tokenResponse.text()
+        let errorMessage = "Token-Austausch fehlgeschlagen"
+
+        try {
+          const errorJson = JSON.parse(errorText)
+          if (errorJson.error === "invalid_grant") {
+            errorMessage = "Der Autorisierungscode ist ungültig, abgelaufen oder wurde bereits verwendet. Bitte melden Sie sich erneut an."
+          } else if (errorJson.error_description) {
+            errorMessage = errorJson.error_description
+          }
+        } catch {
+          errorMessage = `Token-Austausch fehlgeschlagen (${tokenResponse.status})`
+        }
+
+        return { success: false, message: errorMessage }
       }
 
       const tokenData = await tokenResponse.json()
       const accessToken = tokenData.access_token
 
       const userInfoResponse = await fetch(`${authentikUrl}/application/o/userinfo/`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
       })
 
       if (!userInfoResponse.ok) {
@@ -241,9 +243,11 @@ export const exchangeCodeForToken = createServerFn({ method: "POST" })
       })
 
       storeUserInfo(discordUsername, discordAvatar)
-
       return { success: true }
     } catch (error) {
-      return { success: false, message: "Ein Fehler ist aufgetreten" }
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten"
+      }
     }
   })
