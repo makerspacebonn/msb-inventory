@@ -172,7 +172,7 @@ export const exchangeCodeForToken = createServerFn({ method: "POST" })
         return { success: false, message: "Authentik nicht konfiguriert" }
       }
 
-      const tokenUrl = `${authentikUrl}/application/o/token/`
+      const tokenUrl = `${authentikUrl}/application/o/token`
 
       const requestBody = new URLSearchParams({
         grant_type: "authorization_code",
