@@ -25,9 +25,9 @@ const tsVector = customType<{ data: string }>({
   },
 })
 export const UserTable = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: varchar().unique().primaryKey(),
   name: varchar("name"),
-  discordId: varchar("discord_id").notNull().unique(),
+  discordId: varchar("discord_id").unique(),
   discordName: varchar("discord_name").unique(),
 })
 

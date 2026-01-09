@@ -107,17 +107,19 @@ export const checkAuth = createServerFn().handler(async () => {
   return { isLoggedIn: valid, userId: userId || null }
 })
 
-export const getCurrentUser = createServerFn().handler(async () => {
+export const getCurrentUser = createServerFn()
+  .handler(async () => {
   const token = getCookie(AUTH_COOKIE)
   if (!token) return null
 
   const { valid, userId } = verifyToken(token)
+    console.log("stuff", valid, userId)
   if (!valid || !userId || userId === "admin") return null
 
   const [user] = await db
     .select()
     .from(UserTable)
-    .where(eq(UserTable.id, Number.parseInt(userId)))
+    .where(eq(UserTable.id, userId))
     .limit(1)
 
   if (!user) return null
@@ -218,18 +220,18 @@ export const exchangeCodeForToken = createServerFn({ method: "POST" })
       const userInfo = await userInfoResponse.json()
 
       console.log("userInfo", userInfo)
-      const discordUsername = userInfo.username || userInfo.preferred_username || "Unknown"
+      const discordUsername = userInfo.username || userInfo.preferred_username || null
       const discordAvatar = userInfo.avatar_url || userInfo.picture || `https://cdn.discordapp.com/embed/avatars/${Math.floor(Math.random() * 5)}.png`
 
       const [user] = await db
         .insert(UserTable)
         .values({
-          discordId: userInfo.sub,
+          id: userInfo.sub,
           discordName: discordUsername,
           name: userInfo.name || discordUsername,
         })
         .onConflictDoUpdate({
-          target: UserTable.discordId,
+          target: UserTable.id,
           set: {
             discordName: discordUsername,
             name: userInfo.name || discordUsername,
