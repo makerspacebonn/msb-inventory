@@ -28,7 +28,7 @@ export const UserTable = pgTable("users", {
   id: serial("id").primaryKey(),
   name: varchar("name"),
   discordId: varchar("discord_id").notNull().unique(),
-  discordName: varchar("discord_name").notNull(),
+  discordName: varchar("discord_name").unique(),
 })
 
 export type User = InferSelectModel<typeof UserTable>
@@ -103,11 +103,6 @@ export const ItemTable = pgTable(
 export type ItemSelect = InferSelectModel<typeof ItemTable>
 export type ItemInsert = InferInsertModel<typeof ItemTable>
 
-export const usersTable = pgTable("users", {
-  id: uuid("uuid1").defaultRandom(),
-  name: varchar("name").notNull(),
-  discordId: varchar("discord_id").unique(),
-})
 
 export const projectsTable = pgTable("projects", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
