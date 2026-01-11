@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 MSB Inventory is a full-stack TypeScript inventory management system for Makerspace Bonn. It tracks items, locations (hierarchical), and projects with features like image upload, AI-powered item description (via Google Gemini), and Discord OAuth.
 
 ## Development Commands
+**Always use bun, not npm.**
 
 ```bash
 bun dev          # Start app + postgres in Docker with hot reload (http://localhost:3000)
@@ -14,8 +15,7 @@ bun dev:stop     # Stop Docker containers
 bun dev:tests    # Run tests in watch mode
 bun test         # Run tests once
 bun build        # Production build
-bun db:generate  # Generate Drizzle migrations
-bun db:migrate   # Run database migrations
+bun db:push      # update the db to the expected drizzle format
 ```
 
 Requires Docker. Create `.env` from `.env_example` before running.
