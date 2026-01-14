@@ -84,6 +84,21 @@ export class ItemRepository {
     return result.length > 0
   }
 
+  /**
+   * Restore a deleted item with its original ID.
+   * Uses raw SQL INSERT to bypass the auto-increment behavior.
+   */
+  async restore(item: Partial<Item> & { id: number }): Promise<Item | null> {
+    const result = await db
+      .insert(ItemTable)
+      .values({
+        ...item,
+        createdAt: item.createdAt ?? new Date(),
+      } as ItemInsert)
+      .returning()
+    return result[0] ?? null
+  }
+
   async countByImagePath(imagePath: string): Promise<number> {
     const items = await db.query.ItemTable.findMany({
       where: (items, { eq }) => eq(items.imagePath, imagePath),

@@ -120,3 +120,25 @@ export const projectsTable = pgTable("projects", {
 
 export type Project = typeof projectsTable.$inferSelect
 export type InsertProject = InferInsertModel<typeof projectsTable>
+
+export const ChangelogTable = pgTable(
+  "changelog",
+  {
+    id: serial("id").primaryKey(),
+    entityType: varchar("entity_type", { length: 20 }).notNull(), // 'item' | 'location'
+    entityId: integer("entity_id").notNull(),
+    changeType: varchar("change_type", { length: 20 }).notNull(), // 'create' | 'update' | 'delete'
+    userId: varchar("user_id"), // No FK constraint - allows "admin" for password login
+    changedAt: timestamp("changed_at").defaultNow().notNull(),
+    beforeValues: json("before_values").$type<Record<string, unknown> | null>(),
+    afterValues: json("after_values").$type<Record<string, unknown> | null>(),
+    changedFields: varchar("changed_fields").array(),
+  },
+  (t) => [
+    index("idx_changelog_entity").on(t.entityType, t.entityId),
+    index("idx_changelog_changed_at").on(t.changedAt),
+  ],
+)
+
+export type ChangelogSelect = InferSelectModel<typeof ChangelogTable>
+export type ChangelogInsert = InferInsertModel<typeof ChangelogTable>

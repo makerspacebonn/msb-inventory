@@ -30,6 +30,7 @@ import { describeImageFn } from "@/src/actions/aiActions"
 import { fetchAutocompleteTags } from "@/src/actions/tagActions"
 import type { Item } from "@/src/app/types"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
+import { ChangelogRepository } from "@/src/repositories/ChangelogRepository"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 
 type AiData = {
@@ -129,8 +130,21 @@ const addItem = createServerFn({ method: "POST" })
   .handler(
     async ({
       data,
+      context,
     }): Promise<{ success: boolean; item?: Item; error?: string }> => {
       console.log("trying to save")
+      const itemRepo = new ItemRepository()
+      const isUpdate = !!data.id
+      let beforeItem: Item | undefined
+
+      // Fetch before state if updating
+      if (isUpdate) {
+        beforeItem = await itemRepo.findById(data.id!)
+        if (!beforeItem) {
+          return { success: false, error: "Item not found" }
+        }
+      }
+
       if (data?.image) {
         try {
           const savePath = process.env.SAVE_PATH + "items/"
@@ -146,8 +160,47 @@ const addItem = createServerFn({ method: "POST" })
           console.error(e)
         }
       }
-      const newItem = await new ItemRepository().upsert(data)
+      const newItem = await itemRepo.upsert(data)
       console.log("new Item", newItem)
+
+      // Log to changelog
+      if (newItem && newItem[0]) {
+        const savedItem = newItem[0]
+
+        if (isUpdate && beforeItem) {
+          // Determine which fields changed
+          const changedFields = Object.keys(data).filter((key) => {
+            if (key === "image") return false // Don't track the base64 image string
+            const oldValue = beforeItem[key as keyof Item]
+            const newValue = savedItem[key as keyof Item]
+            return JSON.stringify(oldValue) !== JSON.stringify(newValue)
+          })
+
+          if (changedFields.length > 0) {
+            await new ChangelogRepository().create({
+              entityType: "item",
+              entityId: savedItem.id,
+              changeType: "update",
+              userId: context.userId,
+              beforeValues: beforeItem as unknown as Record<string, unknown>,
+              afterValues: savedItem as unknown as Record<string, unknown>,
+              changedFields,
+            })
+          }
+        } else {
+          // New item
+          await new ChangelogRepository().create({
+            entityType: "item",
+            entityId: savedItem.id,
+            changeType: "create",
+            userId: context.userId,
+            beforeValues: null,
+            afterValues: savedItem as unknown as Record<string, unknown>,
+            changedFields: Object.keys(data).filter((k) => k !== "image"),
+          })
+        }
+      }
+
       return {
         success: true,
         item: newItem ? newItem[0] : undefined,

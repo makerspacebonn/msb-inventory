@@ -1,4 +1,4 @@
-import { eq, ilike } from "drizzle-orm"
+import { eq, ilike, sql } from "drizzle-orm"
 import { db } from "@/src/db"
 import type { Location } from "../app/types"
 import { type LocationInsert, LocationTable } from "../drizzle/schema"
@@ -66,6 +66,28 @@ export class LocationRepository {
       .where(eq(LocationTable.id, id))
       .returning()
     return result.length > 0
+  }
+
+  /**
+   * Restore a deleted location with its original ID.
+   * Uses OVERRIDING SYSTEM VALUE since LocationTable uses generatedAlwaysAsIdentity.
+   */
+  async restore(location: Partial<Location> & { id: number }): Promise<Location | null> {
+    const result = await db.execute(sql`
+      INSERT INTO locations (id, name, description, parent_id, "parentLocationMarker", image_path, "additionalInfo")
+      OVERRIDING SYSTEM VALUE
+      VALUES (
+        ${location.id},
+        ${location.name},
+        ${location.description ?? null},
+        ${location.parentId ?? null},
+        ${location.parentLocationMarker ? JSON.stringify(location.parentLocationMarker) : null}::json,
+        ${location.imagePath ?? null},
+        ${location.additionalInfo ? JSON.stringify(location.additionalInfo) : null}::json
+      )
+      RETURNING *
+    `)
+    return (result.rows[0] as Location) ?? null
   }
 
   async search(query: string, limit = 20): Promise<Location[]> {

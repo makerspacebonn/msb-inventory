@@ -52,3 +52,31 @@ export type PaginatedResult<T> = {
   pageSize: number
   totalPages: number
 }
+
+export type EntityType = "item" | "location"
+export type ChangeType = "create" | "update" | "delete"
+
+export type ChangelogEntry = {
+  readonly id: number
+  entityType: EntityType
+  entityId: number
+  changeType: ChangeType
+  userId: string | null
+  changedAt: Date
+  beforeValues: Record<string, unknown> | null
+  afterValues: Record<string, unknown> | null
+  changedFields: string[] | null
+}
+
+export type ChangelogEntryWithUser = ChangelogEntry & {
+  user: { name: string | null; discordName: string | null } | null
+  entityName: string | null
+}
+
+export type UndoResult = {
+  success: boolean
+  action?: "deleted" | "restored"
+  error?: string
+  conflictId?: number
+  newId?: number
+}
