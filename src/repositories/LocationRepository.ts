@@ -28,18 +28,18 @@ export class LocationRepository {
   async findByParentId(
     parentId: number | undefined | null,
   ): Promise<Location[]> {
-    if (typeof parentId === "undefined" || parentId === null) {
-      return await db.query.LocationTable.findMany({
+    if (parentId == null) {
+      return db.query.LocationTable.findMany({
         where: (locations, { isNull }) => isNull(locations.parentId),
       })
-    } else
-      return await db.query.LocationTable.findMany({
-        where: (locations, { eq }) => eq(locations.parentId, parentId),
-      })
+    }
+    return db.query.LocationTable.findMany({
+      where: (locations, { eq }) => eq(locations.parentId, parentId),
+    })
   }
 
   async findById(id: number): Promise<Location | undefined> {
-    return await db.query.LocationTable.findFirst({
+    return db.query.LocationTable.findFirst({
       where: (locations, { eq }) => eq(locations.id, id),
     })
   }
@@ -91,7 +91,7 @@ export class LocationRepository {
   }
 
   async search(query: string, limit = 20): Promise<Location[]> {
-    return await db.query.LocationTable.findMany({
+    return db.query.LocationTable.findMany({
       where: (locations) => ilike(locations.name, `%${query}%`),
       limit,
     })

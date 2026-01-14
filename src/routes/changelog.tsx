@@ -31,11 +31,6 @@ import {
 } from "@/src/actions/changelogActions"
 import type { ChangelogEntryWithUser, ChangeType, EntityType } from "@/src/app/types"
 
-const searchSchema = {
-  page: 1,
-  highlight: undefined as number | undefined,
-}
-
 export const Route = createFileRoute("/changelog")({
   component: ChangelogPage,
   validateSearch: (search: Record<string, unknown>) => ({

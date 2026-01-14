@@ -129,26 +129,6 @@ export class ItemRepository {
         id DESC`)
       .limit(100)
 
-    // const results = await db.execute(sql`
-    //   SELECT
-    //     *,
-    //     ts_rank(search_vector, plainto_tsquery('german', ${searchText})) as search_rank,
-    //     similarity(searchable_text, ${searchText}) as similarity_score
-    //   FROM items
-    //   WHERE
-    //     search_vector @@ plainto_tsquery('german', ${searchText})
-    //     OR searchable_text % ${searchText}
-    //     OR searchable_text ILIKE ${"%" + searchText + "%"}
-    //     OR EXISTS (
-    //       SELECT 1 FROM unnest(tags) AS tag
-    //       WHERE tag ILIKE ${"%" + searchText + "%"}
-    //     )
-    //   ORDER BY
-    //     (ts_rank(search_vector, plainto_tsquery('german', ${searchText})) * 2
-    //       + similarity(searchable_text, ${searchText})) DESC,
-    //     id DESC
-    //   LIMIT 100;`)
-    console.log(results)
     return results
   }
 }

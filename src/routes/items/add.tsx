@@ -132,7 +132,6 @@ const addItem = createServerFn({ method: "POST" })
       data,
       context,
     }): Promise<{ success: boolean; item?: Item; error?: string }> => {
-      console.log("trying to save")
       const itemRepo = new ItemRepository()
       const isUpdate = !!data.id
       let beforeItem: Item | undefined
@@ -161,7 +160,6 @@ const addItem = createServerFn({ method: "POST" })
         }
       }
       const newItem = await itemRepo.upsert(data)
-      console.log("new Item", newItem)
 
       // Log to changelog
       if (newItem && newItem[0]) {
@@ -370,7 +368,6 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
               <MyCropper
                 existingImagePath={existingItem?.imagePath ?? undefined}
                 onChange={(image) => {
-                  console.log("image change", image)
                   field.setValue(image)
                   setCurrentImage(image)
                   setAiData(null)

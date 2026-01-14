@@ -26,8 +26,7 @@ export const fetchChangelogEntry = createServerFn()
   .middleware([authGuardMiddleware])
   .inputValidator((changelogId: number) => changelogId)
   .handler(async ({ data: changelogId }): Promise<ChangelogEntry | null> => {
-    const entry = await new ChangelogRepository().findById(changelogId)
-    return entry ?? null
+    return (await new ChangelogRepository().findById(changelogId)) ?? null
   })
 
 export const checkUndoConflict = createServerFn()
