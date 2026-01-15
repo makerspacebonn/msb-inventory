@@ -1,0 +1,87 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and start app containers
+        run: |
+          docker compose -f docker-compose.e2e.yml up -d --build
+
+          # Wait for containers to be healthy
+          echo "Waiting for app to be healthy..."
+          docker compose -f docker-compose.e2e.yml up -d --wait || true
+
+          # Additional health check
+          for i in {1..30}; do
+            if docker compose -f docker-compose.e2e.yml exec -T app-e2e wget -q --spider http://localhost:3000/ 2>/dev/null; then
+              echo "App is ready!"
+              break
+            fi
+            echo -n "."
+            sleep 2
+          done
+
+      - name: Seed test database
+        run: |
+          docker compose -f docker-compose.e2e.yml exec -T app-e2e \
+            bun run /usr/src/scripts/seed-e2e-data.ts
+
+      - name: Run E2E tests
+        run: |
+          docker compose -f docker-compose.e2e.yml run --rm \
+            -e E2E_BASE_URL=http://app-e2e:3000 \
+            -e CI=true \
+            playwright bash -c "
+              bun install --frozen-lockfile
+              bun playwright test --config=e2e/playwright.config.ts
+            "
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            e2e/test-results/
+            e2e/playwright-report/
+          retention-days: 7
+
+      - name: Upload JUnit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-results
+          path: e2e/test-results/junit.xml
+
+      - name: Publish Test Summary
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: "E2E Tests"
+          path: "e2e/test-results/junit.xml"
+          reporter: "java-junit"
+
+      - name: Show container logs on failure
+        if: failure()
+        run: |
+          echo "=== App Container Logs ==="
+          docker compose -f docker-compose.e2e.yml logs app-e2e --tail=100
+
+          echo "=== Database Container Logs ==="
+          docker compose -f docker-compose.e2e.yml logs postgres-e2e --tail=50
+
+      - name: Stop E2E environment
+        if: always()
+        run: docker compose -f docker-compose.e2e.yml --profile test down -v --remove-orphans
