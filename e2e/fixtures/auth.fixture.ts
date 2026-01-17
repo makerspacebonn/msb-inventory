@@ -1,15 +1,9 @@
 import { test as base, expect, type Page } from "@playwright/test"
 
-const E2E_JWT_SECRET = "e2e-test-secret-key-12345"
-const E2E_PASSWORD = "e2e-test-password"
-
-/**
- * Creates an auth token in the same format as src/lib/auth.ts
- * Format: Base64(userId:JWT_SECRET:timestamp)
- */
-function createAuthToken(userId: string, secret: string = E2E_JWT_SECRET): string {
-  const data = `${userId}:${secret}:${Date.now()}`
-  return Buffer.from(data).toString("base64")
+export const TEST_USER = {
+  email: "e2e-test@example.com",
+  password: "e2e-test-password-123",
+  name: "E2E Test User",
 }
 
 export type TestFixtures = {
@@ -17,33 +11,44 @@ export type TestFixtures = {
 }
 
 export const test = base.extend<TestFixtures>({
-  authenticatedPage: async ({ page, context }, use) => {
-    const baseURL = process.env.E2E_BASE_URL || "http://localhost:3001"
-    const domain = new URL(baseURL).hostname
-
-    await context.addCookies([
-      {
-        name: "auth_token",
-        value: createAuthToken("admin"),
-        domain,
-        path: "/",
-        httpOnly: true,
-        secure: false,
-        sameSite: "Lax",
-      },
-    ])
+  authenticatedPage: async ({ page }, use) => {
+    await registerAndLoginViaUI(page)
     await use(page)
   },
 })
 
 /**
- * Login via the UI (for testing the login flow itself)
+ * Register a new user and login via the UI
  */
-export async function loginViaUI(page: Page, password: string = E2E_PASSWORD): Promise<void> {
+export async function registerAndLoginViaUI(page: Page): Promise<void> {
   await page.goto("/login")
+
+  // Click "Noch kein Konto? Registrieren" to switch to signup mode
+  await page.locator("text=Noch kein Konto?").click()
+
+  // Fill in registration form
+  await page.locator('input[placeholder="Name"]').fill(TEST_USER.name)
+  await page.locator('input[placeholder="E-Mail"]').fill(TEST_USER.email)
+  await page.locator('input[placeholder="Passwort"]').fill(TEST_USER.password)
+  await page.locator('button[type="submit"]').click()
+
+  // Wait for redirect to home
+  await page.waitForURL("/", { timeout: 10000 })
+}
+
+/**
+ * Login via the UI with existing credentials
+ */
+export async function loginViaUI(
+  page: Page,
+  email: string = TEST_USER.email,
+  password: string = TEST_USER.password,
+): Promise<void> {
+  await page.goto("/login")
+  await page.locator('input[placeholder="E-Mail"]').fill(email)
   await page.locator('input[placeholder="Passwort"]').fill(password)
   await page.locator('button[type="submit"]').click()
-  await page.waitForURL("/")
+  await page.waitForURL("/", { timeout: 10000 })
 }
 
 /**

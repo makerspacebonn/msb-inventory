@@ -2,9 +2,8 @@ import { Button } from "@components/ui/button"
 import { Input } from "@components/ui/input"
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
 import { useState } from "react"
-import { useServerFn } from "@tanstack/react-start"
 import { useAuth } from "@/src/context/AuthContext"
-import { login, redirectToOAuth } from "@/src/lib/auth"
+import { signIn, signUp } from "@/src/lib/auth-client"
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -14,9 +13,12 @@ export const Route = createFileRoute("/login")({
 })
 
 function LoginPage() {
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(false)
   const navigate = useNavigate()
   const router = useRouter()
   const { refresh } = useAuth()
@@ -27,72 +29,94 @@ function LoginPage() {
     setLoading(true)
 
     try {
-      const result = await login({ data: password })
-      if (result.success) {
-        await refresh()
-        await router.invalidate()
-        await navigate({ to: "/" })
+      if (isSignUp) {
+        const result = await signUp.email({
+          email,
+          password,
+          name: name || email.split("@")[0],
+        })
+        if (result.error) {
+          setError(result.error.message || "Registrierung fehlgeschlagen")
+          setLoading(false)
+          return
+        }
       } else {
-        setError(result.message || "Login fehlgeschlagen")
+        const result = await signIn.email({
+          email,
+          password,
+        })
+        if (result.error) {
+          setError(result.error.message || "Login fehlgeschlagen")
+          setLoading(false)
+          return
+        }
       }
+
+      await refresh()
+      await router.invalidate()
+      await navigate({ to: "/" })
     } catch {
       setError("Ein Fehler ist aufgetreten")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleOAuthRedirect = useServerFn(redirectToOAuth)
-
-  const handleDiscordLogin = async () => {
-    setLoading(true)
-    setError("")
-    try {
-      await handleOAuthRedirect()
-    } catch {
-      setError("OAuth nicht konfiguriert")
       setLoading(false)
     }
   }
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6">
-      <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">
+        {isSignUp ? "Registrieren" : "Anmelden"}
+      </h1>
       <form onSubmit={handleSubmit} className="space-y-4">
+        {isSignUp && (
+          <div>
+            <Input
+              type="text"
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+        )}
+        <div>
+          <Input
+            type="email"
+            placeholder="E-Mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoFocus
+            required
+          />
+        </div>
         <div>
           <Input
             type="password"
             placeholder="Passwort"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            autoFocus
+            required
+            minLength={8}
           />
         </div>
         {error && (
           <p className="text-sm text-destructive text-center">{error}</p>
         )}
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "..." : "Anmelden"}
+          {loading ? "..." : isSignUp ? "Registrieren" : "Anmelden"}
         </Button>
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Oder
-            </span>
-          </div>
+        <div className="text-center">
+          <button
+            type="button"
+            className="text-sm text-muted-foreground hover:underline"
+            onClick={() => {
+              setIsSignUp(!isSignUp)
+              setError("")
+            }}
+          >
+            {isSignUp
+              ? "Bereits registriert? Anmelden"
+              : "Noch kein Konto? Registrieren"}
+          </button>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={handleDiscordLogin}
-          disabled={loading}
-        >
-          Mit Authentik anmelden
-        </Button>
       </form>
     </div>
   )

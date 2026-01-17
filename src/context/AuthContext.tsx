@@ -1,15 +1,15 @@
 import {
   createContext,
   useContext,
-  useEffect,
-  useState,
   type ReactNode,
 } from "react"
-import { checkAuth, logout as logoutFn } from "@/src/lib/auth"
+import { useSession, signOut } from "@/src/lib/auth-client"
+import type { User } from "@/src/drizzle/schema"
 
 type AuthContextType = {
   isLoggedIn: boolean
   isLoading: boolean
+  user: User | null
   logout: () => Promise<void>
   refresh: () => Promise<void>
 }
@@ -17,31 +17,30 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: session, isPending, refetch } = useSession()
 
-  const refresh = async () => {
-    try {
-      const result = await checkAuth()
-      setIsLoggedIn(result.isLoggedIn)
-    } catch {
-      setIsLoggedIn(false)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const isLoggedIn = !!session?.user
+  const user = session?.user as User | null
 
   const logout = async () => {
-    await logoutFn()
-    setIsLoggedIn(false)
+    await signOut()
+    await refetch()
   }
 
-  useEffect(() => {
-    refresh()
-  }, [])
+  const refresh = async () => {
+    await refetch()
+  }
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, logout, refresh }}>
+    <AuthContext.Provider
+      value={{
+        isLoggedIn,
+        isLoading: isPending,
+        user,
+        logout,
+        refresh,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

@@ -21,9 +21,9 @@ import { Route as ItemsTesteditRouteImport } from './routes/items/testedit'
 import { Route as ItemsAddRouteImport } from './routes/items/add'
 import { Route as ImgSplatRouteImport } from './routes/img.$'
 import { Route as IItemIdRouteImport } from './routes/i.$itemId'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiItemsRouteImport } from './routes/api/items'
 import { Route as BackupDownloadSplatRouteImport } from './routes/backup.download.$'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ItemsItemIdLocationAddRouteImport } from './routes/items/$itemId/location/add'
 
 const TestRoute = TestRouteImport.update({
@@ -86,11 +86,6 @@ const IItemIdRoute = IItemIdRouteImport.update({
   path: '/i/$itemId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiItemsRoute = ApiItemsRouteImport.update({
   id: '/api/items',
   path: '/api/items',
@@ -100,6 +95,11 @@ const BackupDownloadSplatRoute = BackupDownloadSplatRouteImport.update({
   id: '/download/$',
   path: '/download/$',
   getParentRoute: () => BackupRoute,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ItemsItemIdLocationAddRoute = ItemsItemIdLocationAddRouteImport.update({
   id: '/items/$itemId/location/add',
@@ -116,12 +116,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items': typeof ItemsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/backup/download/$': typeof BackupDownloadSplatRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
@@ -134,12 +134,12 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items': typeof ItemsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/backup/download/$': typeof BackupDownloadSplatRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
@@ -153,12 +153,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/api/items': typeof ApiItemsRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
   '/items/': typeof ItemsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/backup/download/$': typeof BackupDownloadSplatRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
@@ -173,12 +173,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/test'
     | '/api/items'
-    | '/auth/callback'
     | '/i/$itemId'
     | '/img/$'
     | '/items/add'
     | '/items/testedit'
     | '/items'
+    | '/api/auth/$'
     | '/backup/download/$'
     | '/items/$itemId/location/add'
   fileRoutesByTo: FileRoutesByTo
@@ -191,12 +191,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/test'
     | '/api/items'
-    | '/auth/callback'
     | '/i/$itemId'
     | '/img/$'
     | '/items/add'
     | '/items/testedit'
     | '/items'
+    | '/api/auth/$'
     | '/backup/download/$'
     | '/items/$itemId/location/add'
   id:
@@ -209,12 +209,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/test'
     | '/api/items'
-    | '/auth/callback'
     | '/i/$itemId'
     | '/img/$'
     | '/items/add'
     | '/items/testedit'
     | '/items/'
+    | '/api/auth/$'
     | '/backup/download/$'
     | '/items/$itemId/location/add'
   fileRoutesById: FileRoutesById
@@ -228,12 +228,12 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   TestRoute: typeof TestRoute
   ApiItemsRoute: typeof ApiItemsRoute
-  AuthCallbackRoute: typeof AuthCallbackRoute
   IItemIdRoute: typeof IItemIdRoute
   ImgSplatRoute: typeof ImgSplatRoute
   ItemsAddRoute: typeof ItemsAddRoute
   ItemsTesteditRoute: typeof ItemsTesteditRoute
   ItemsIndexRoute: typeof ItemsIndexRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ItemsItemIdLocationAddRoute: typeof ItemsItemIdLocationAddRoute
 }
 
@@ -323,13 +323,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IItemIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/items': {
       id: '/api/items'
       path: '/api/items'
@@ -343,6 +336,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/backup/download/$'
       preLoaderRoute: typeof BackupDownloadSplatRouteImport
       parentRoute: typeof BackupRoute
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/items/$itemId/location/add': {
       id: '/items/$itemId/location/add'
@@ -374,12 +374,12 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   TestRoute: TestRoute,
   ApiItemsRoute: ApiItemsRoute,
-  AuthCallbackRoute: AuthCallbackRoute,
   IItemIdRoute: IItemIdRoute,
   ImgSplatRoute: ImgSplatRoute,
   ItemsAddRoute: ItemsAddRoute,
   ItemsTesteditRoute: ItemsTesteditRoute,
   ItemsIndexRoute: ItemsIndexRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
   ItemsItemIdLocationAddRoute: ItemsItemIdLocationAddRoute,
 }
 export const routeTree = rootRouteImport

@@ -9,17 +9,11 @@ import {
   useRouter,
 } from "@tanstack/react-router"
 import { LogInIcon, LogOutIcon } from "lucide-react"
-import { type ReactNode, useEffect, useState } from "react"
+import type { ReactNode } from "react"
 import { AuthProvider, useAuth } from "@/src/context/AuthContext"
-import { checkAuth, getCurrentUser } from "@/src/lib/auth"
-import type { User } from "@/src/drizzle/schema"
 import appCss from "../styles.css?url"
 
 export const Route = createRootRoute({
-  beforeLoad: async () => {
-    const { isLoggedIn } = await checkAuth()
-    return { isLoggedIn }
-  },
   head: () => ({
     meta: [
       {
@@ -64,17 +58,8 @@ function RootComponent() {
 }
 
 function AuthButtons() {
-  const { isLoggedIn, isLoading, logout } = useAuth()
+  const { isLoggedIn, isLoading, user, logout } = useAuth()
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
-
-  useEffect(() => {
-    if (isLoggedIn && !isLoading) {
-      getCurrentUser().then(setUser)
-    } else {
-      setUser(null)
-    }
-  }, [isLoggedIn, isLoading])
 
   if (isLoading) {
     return null
@@ -82,22 +67,21 @@ function AuthButtons() {
 
   const handleLogout = async () => {
     await logout()
-    setUser(null)
     await router.invalidate()
   }
 
   if (isLoggedIn && user) {
     return (
       <div className="flex items-center gap-2">
-        {user.discordAvatar && (
+        {user.image && (
           <img
-            src={user.discordAvatar}
-            alt={user.discordName}
+            src={user.image}
+            alt={user.name || "User"}
             className="w-8 h-8 rounded-full"
-            title={user.discordName}
+            title={user.name || undefined}
           />
         )}
-        <span className="text-sm hidden sm:inline">{user.discordName}</span>
+        <span className="text-sm hidden sm:inline">{user.name || user.email}</span>
         <Button variant="ghost" size="sm" onClick={handleLogout}>
           <LogOutIcon className="w-4 h-4" />
         </Button>
