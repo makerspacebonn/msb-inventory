@@ -8,23 +8,11 @@ import {
   Scripts,
   useRouter,
 } from "@tanstack/react-router"
-import { createServerFn } from "@tanstack/react-start"
 import { LogInIcon, LogOutIcon } from "lucide-react"
 import type { ReactNode } from "react"
+import { getAuthContext } from "@/src/actions/authActions"
 import { AuthProvider, useAuth } from "@/src/context/AuthContext"
 import appCss from "../styles.css?url"
-
-// Server function to get auth context - uses dynamic imports to avoid client bundling issues
-const getAuthContext = createServerFn().handler(async () => {
-  const { getRequest } = await import("@tanstack/react-start/server")
-  const { auth } = await import("@/src/lib/auth")
-  const request = getRequest()
-  const session = await auth.api.getSession({ headers: request.headers })
-  return {
-    isLoggedIn: !!session?.user,
-    userId: session?.user?.id ?? null,
-  }
-})
 
 // Define the router context type
 type RouterContext = {
