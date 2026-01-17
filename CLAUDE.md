@@ -18,7 +18,7 @@ bun build        # Production build
 bun db:push      # update the db to the expected drizzle format
 ```
 
-Requires Docker. Create `.env` from `.env_example` before running.
+Requires Docker. Create `.env` from `.env_exampl   e` before running.
 
 ## Architecture
 
@@ -52,10 +52,17 @@ Requires Docker. Create `.env` from `.env_example` before running.
 **Database:** PostgreSQL with Drizzle ORM
 - `ItemTable` - Inventory items with location references
 - `LocationTable` - Hierarchical locations (self-referencing parentId)
-- `UserTable` - Discord OAuth users
+- `UserTable` - better-auth users with role-based access control
+- `SessionTable` - better-auth session management
+- `AccountTable` - OAuth providers and credentials
+- `VerificationTable` - Email verification and password reset tokens
 - `ProjectsTable` - Project management
 
 **Image Handling:** Client-side compression (`browser-image-compression`) + cropping (`react-easy-crop`) before upload as base64.
+
+## Development Rules
+**Rules:**
+- use biome to chack and autoformat the code
 
 ## Commit Messages
 
@@ -64,6 +71,7 @@ Use conventional commits format: `type(scope): description`
 **Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `revert`
 
 **Rules:**
+- ONLY COMMIT, WHEN REQUESTED BY USER OR YOU HAVE ASKED FOR PERMISSION
 - Use imperative mood ("add" not "added")
 - Keep first line under 72 characters
 - Scope is optional but recommended
@@ -73,3 +81,20 @@ Use conventional commits format: `type(scope): description`
 - `feat(items): add image upload functionality`
 - `fix(locations): correct sorting order`
 - `chore(deps): update dependencies`
+
+## Session Learnings
+
+### 2026-01-17 - better-auth Migration Setup
+- **drizzle-kit push:** Use `bun db:push --force` for non-interactive schema updates (interactive prompts don't accept piped input)
+- **better-auth schema:** Requires 4 tables - `users`, `sessions`, `accounts`, `verifications` with specific column names
+- **Cascade deletes:** Sessions and accounts have FK to users with `ON DELETE CASCADE` - cleanup is automatic
+- **Admin plugin fields:** Include `role`, `banned`, `banReason`, `banExpires` in users table for future RBAC (AUTH-005)
+
+### 2026-01-17 - better-auth Implementation Patterns
+- **API route pattern:** TanStack Start uses `createFileRoute` with `server.handlers` for API routes, NOT `createAPIFileRoute`. Export must be `Route`, not `APIRoute`
+- **Catch-all auth route:** `src/routes/api/auth/$.ts` handles all `/api/auth/*` endpoints via `auth.handler(request)`
+- **Client plugins:** When using `genericOAuth` on server, add `genericOAuthClient()` to client plugins for `signIn.oauth2()` method
+- **Conditional plugins:** Check env vars and conditionally add plugins: `plugins: authentikConfigured ? [genericOAuth({...})] : []`
+- **useSession hook:** better-auth's `useSession` returns `{ data: session, isPending, refetch }` - replaces all manual JWT/cookie logic
+- **OIDC discovery:** `discoveryUrl` auto-configures authorization, token, and userinfo endpoints from `.well-known/openid-configuration`
+- **E2E auth testing:** Use unique timestamped emails (e.g., `test-${Date.now()}@example.com`) to avoid conflicts between test runs
