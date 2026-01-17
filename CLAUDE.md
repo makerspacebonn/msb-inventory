@@ -137,3 +137,7 @@ Use conventional commits format: `type(scope): description`
   ```
 - **Root route auth context:** Use `createRootRouteWithContext<RouterContext>()` with `beforeLoad` calling a server function to provide auth state to child routes
 - **OAuth email workaround:** When OAuth provider doesn't return email, generate synthetic: `email: profile.email || \`\${profile.sub}@authentik.local\``
+
+### 2026-01-17 - Post-Migration Cleanup
+- **Schema migration side effects:** After migrating auth systems, audit codebase for references to removed schema fields. Example: `discordName` was removed from UserTable but `ChangelogRepository` still selected it, breaking the `/changelog` route.
+- **Inline types vs schema types:** Inline type definitions like `{ name: string; discordName: string }` don't track schema changes. Consider deriving types from actual schema to catch mismatches at compile time.

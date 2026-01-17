@@ -70,3 +70,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `src/routes/__root.tsx` - Uses `createRootRouteWithContext` with server function for auth context
 - `src/routes/backup.download.$.ts` - Dynamic import for auth module
 - `src/lib/auth.ts` - Plugin array restructured with `tanstackStartCookies()` as last plugin
+
+## 2026-01-17 (Session 3)
+
+### Fixed
+- **Critical:** `/changelog` route broken after better-auth migration - removed references to non-existent `discordName` field from `ChangelogRepository`, `ChangelogEntryWithUser` type, and `changelog.tsx`
+
+### Changed
+- `src/repositories/ChangelogRepository.ts` - User display now uses only `name` field
+- `src/app/types.ts` - Simplified `ChangelogEntryWithUser.user` type
+- `src/routes/changelog.tsx` - Removed unused imports, applied biome formatting
+
+### Technical
+- Added `/logs/*` to `.gitignore` for dev server log files
