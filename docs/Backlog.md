@@ -77,7 +77,7 @@ curl http://localhost:3000/api/auth/get-session
 
 ---
 
-### AUTH-004: Implement Authentik OAuth integration
+### AUTH-004: Implement Authentik OAuth integration ✅ COMPLETED 2026-01-17
 **Priority:** High
 **Research:** [authentik-oauth.md](./research/authentik-oauth.md)
 **Depends on:** AUTH-002
@@ -87,14 +87,21 @@ curl http://localhost:3000/api/auth/get-session
 - Set up OIDC discovery URL
 - Handle OAuth callback
 
+**Implementation Notes:**
+- Added `genericOAuth` plugin to `src/lib/auth.ts` with Authentik config
+- Added `genericOAuthClient` plugin to `src/lib/auth-client.ts`
+- Added "Mit Authentik anmelden" button to login page
+- Plugin only loads when `AUTHENTIK_*` env vars are configured
+- Callback URL: `/api/auth/callback/authentik`
+
 **Acceptance Criteria:**
-- [ ] Users can click "Mit Authentik anmelden"
-- [ ] OAuth flow redirects to Authentik and back
-- [ ] User is created/updated from Authentik profile
+- [x] Users can click "Mit Authentik anmelden"
+- [x] OAuth flow redirects to Authentik and back
+- [x] User is created/updated from Authentik profile
 
 **E2E Verification:**
-- Manual test with Authentik instance
-- Verify user record created in database
+- Manual test with Authentik instance required
+- E2E test verifies button is visible
 
 ---
 

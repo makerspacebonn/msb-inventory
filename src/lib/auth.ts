@@ -1,7 +1,14 @@
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
+import { genericOAuth } from "better-auth/plugins"
 import { db } from "@/src/db"
 import * as schema from "@/src/drizzle/schema"
+
+// Check if Authentik is configured
+const authentikConfigured =
+  process.env.AUTHENTIK_CLIENT_ID &&
+  process.env.AUTHENTIK_CLIENT_SECRET &&
+  process.env.AUTHENTIK_URL
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -28,6 +35,27 @@ export const auth = betterAuth({
   trustedOrigins: process.env.BETTER_AUTH_URL
     ? [process.env.BETTER_AUTH_URL]
     : ["http://localhost:3000"],
+  plugins: authentikConfigured
+    ? [
+        genericOAuth({
+          config: [
+            {
+              providerId: "authentik",
+              clientId: process.env.AUTHENTIK_CLIENT_ID!,
+              clientSecret: process.env.AUTHENTIK_CLIENT_SECRET!,
+              discoveryUrl: `${process.env.AUTHENTIK_URL}/application/o/msb-inventory/.well-known/openid-configuration`,
+              scopes: ["openid", "profile", "email"],
+              mapProfileToUser: (profile) => ({
+                name: profile.name || profile.preferred_username,
+                email: profile.email,
+                image: profile.picture,
+              }),
+              overrideUserInfo: true,
+            },
+          ],
+        }),
+      ]
+    : [],
 })
 
 export type Session = typeof auth.$Infer.Session

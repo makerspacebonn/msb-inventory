@@ -61,6 +61,20 @@ function LoginPage() {
     }
   }
 
+  const handleAuthentikLogin = async () => {
+    setLoading(true)
+    setError("")
+    try {
+      await signIn.oauth2({
+        providerId: "authentik",
+        callbackURL: "/",
+      })
+    } catch {
+      setError("Authentik Login fehlgeschlagen")
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="max-w-md mx-auto mt-20 p-6">
       <h1 className="text-2xl font-bold mb-6 text-center">
@@ -118,6 +132,25 @@ function LoginPage() {
           </button>
         </div>
       </form>
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">Oder</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={handleAuthentikLogin}
+        disabled={loading}
+      >
+        Mit Authentik anmelden
+      </Button>
     </div>
   )
 }

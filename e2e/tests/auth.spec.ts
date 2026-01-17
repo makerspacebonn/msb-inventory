@@ -19,6 +19,13 @@ test.describe("Authentication", () => {
       await expect(page.locator('button[type="submit"]')).toBeVisible()
     })
 
+    test("should display Authentik OAuth button", async ({ page }) => {
+      await page.goto("/login")
+
+      // Should show Authentik OAuth button
+      await expect(page.locator("text=Mit Authentik anmelden")).toBeVisible()
+    })
+
     test("should toggle between login and signup modes", async ({ page }) => {
       await page.goto("/login")
 
