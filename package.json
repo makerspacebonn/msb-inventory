@@ -11,6 +11,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "bun --hot --bun vite dev --port 3000 --host 0.0.0.0",
+    "dev:bg": "pkill -f 'bun.*vite.*dev' 2>/dev/null || true; mkdir -p logs && nohup bun run dev > logs/dev.log 2>&1 & echo \"Dev server started (PID: $!) - logs at logs/dev.log\"",
+    "dev:logs": "tail -f logs/dev.log",
     "build": "bun --bun vite build",
     "serve": "bun --bun vite preview",
     "test": "vitest run",
@@ -48,6 +50,7 @@
     "@types/jimp": "^0.2.28",
     "@types/sharp": "^0.32.0",
     "ansis": "^4.2.0",
+    "better-auth": "^1.4.14",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

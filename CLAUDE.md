@@ -16,6 +16,8 @@ bun dev:tests    # Run tests in watch mode
 bun test         # Run tests once
 bun build        # Production build
 bun db:push      # update the db to the expected drizzle format
+bun dev:bg       # Restart dev server in background with logging (logs/dev.log)
+bun dev:logs     # Tail the dev server log file
 ```
 
 Requires Docker. Create `.env` from `.env_exampl   e` before running.
@@ -64,6 +66,9 @@ Requires Docker. Create `.env` from `.env_exampl   e` before running.
 **Rules:**
 - use biome to chack and autoformat the code
 
+**Commands:**
+- ```bun dev``` starts the dev server.
+
 ## Commit Messages
 
 Use conventional commits format: `type(scope): description`
@@ -98,3 +103,37 @@ Use conventional commits format: `type(scope): description`
 - **useSession hook:** better-auth's `useSession` returns `{ data: session, isPending, refetch }` - replaces all manual JWT/cookie logic
 - **OIDC discovery:** `discoveryUrl` auto-configures authorization, token, and userinfo endpoints from `.well-known/openid-configuration`
 - **E2E auth testing:** Use unique timestamped emails (e.g., `test-${Date.now()}@example.com`) to avoid conflicts between test runs
+
+### 2026-01-17 - OAuth Configuration & Server Code Bundling
+- **Server code in client:** Importing server-only code (like `auth.ts` with `process.env`) directly into client components causes "Buffer is not defined" errors. Use `createServerFn` with dynamic imports instead:
+  ```typescript
+  const getAuthConfig = createServerFn().handler(async () => {
+    const { authentikConfigured } = await import("@/src/lib/auth")
+    return { authentikConfigured }
+  })
+  ```
+- **OAuth redirect URIs:** better-auth's `genericOAuth` plugin uses callback pattern `/api/auth/oauth2/callback/{providerId}`. This exact URI must be whitelisted in the OAuth provider (e.g., Authentik)
+- **Configurable app slugs:** Use env vars like `AUTHENTIK_APP_SLUG` for provider-specific paths: `discoveryUrl: \`\${AUTHENTIK_URL}/application/o/\${AUTHENTIK_APP_SLUG}/.well-known/openid-configuration\``
+- **Dev server logging:** Use `bun run dev:bg` to restart dev server in background with logging to `logs/dev.log`
+
+### 2026-01-17 - TanStack Start Server/Client Boundary & Authorization
+- **getRequest() not getWebRequest():** In TanStack Start v1.150+, the function is `getRequest()` from `@tanstack/react-start/server`, NOT `getWebRequest()`. Research docs may be outdated.
+- **Dynamic imports in route files:** Route files are bundled for both server and client. Use dynamic `await import()` inside server function handlers for server-only modules:
+  ```typescript
+  const getAuthContext = createServerFn().handler(async () => {
+    const { getRequest } = await import("@tanstack/react-start/server")
+    const { auth } = await import("@/src/lib/auth")
+    const request = getRequest()
+    const session = await auth.api.getSession({ headers: request.headers })
+    return { isLoggedIn: !!session?.user, userId: session?.user?.id ?? null }
+  })
+  ```
+- **tanstackStartCookies plugin:** Required for TanStack Start cookie handling - MUST be the LAST plugin in the array:
+  ```typescript
+  plugins: [
+    ...(authentikConfigured ? [genericOAuth({...})] : []),
+    tanstackStartCookies(), // MUST be last
+  ]
+  ```
+- **Root route auth context:** Use `createRootRouteWithContext<RouterContext>()` with `beforeLoad` calling a server function to provide auth state to child routes
+- **OAuth email workaround:** When OAuth provider doesn't return email, generate synthetic: `email: profile.email || \`\${profile.sub}@authentik.local\``

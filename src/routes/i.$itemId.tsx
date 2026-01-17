@@ -8,6 +8,7 @@ import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod/v4"
 import { deleteItem } from "@/src/actions/itemActions"
 import { useAuth } from "@/src/context/AuthContext"
+import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
@@ -29,6 +30,7 @@ const fetchItem = createServerFn()
   })
 
 const removeItemLocation = createServerFn()
+  .middleware([authGuardMiddleware])
   .inputValidator(ItemIdSchema)
   .handler(async ({ data: { itemId } }) => {
     await new ItemRepository().upsert({

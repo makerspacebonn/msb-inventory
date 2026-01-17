@@ -1,18 +1,30 @@
 import { Button } from "@components/ui/button"
 import { Input } from "@components/ui/input"
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
+import { createServerFn } from "@tanstack/react-start"
 import { useState } from "react"
 import { useAuth } from "@/src/context/AuthContext"
 import { signIn, signUp } from "@/src/lib/auth-client"
+
+const getAuthConfig = createServerFn().handler(async () => {
+  // Import dynamically to avoid bundling server code in client
+  const { authentikConfigured } = await import("@/src/lib/auth")
+  return { authentikConfigured }
+})
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
   head: () => ({
     meta: [{ title: "Login | MSB Inventar" }],
   }),
+  loader: async () => {
+    const config = await getAuthConfig()
+    return { showAuthentik: config.authentikConfigured }
+  },
 })
 
 function LoginPage() {
+  const { showAuthentik } = Route.useLoaderData()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
@@ -65,12 +77,18 @@ function LoginPage() {
     setLoading(true)
     setError("")
     try {
-      await signIn.oauth2({
+      const result = await signIn.oauth2({
         providerId: "authentik",
         callbackURL: "/",
       })
-    } catch {
-      setError("Authentik Login fehlgeschlagen")
+      // If we get here without redirect, there was an error
+      if (result?.error) {
+        setError(result.error.message || "Authentik Login fehlgeschlagen")
+        setLoading(false)
+      }
+    } catch (err) {
+      console.error("Authentik OAuth error:", err)
+      setError(err instanceof Error ? err.message : "Authentik Login fehlgeschlagen")
       setLoading(false)
     }
   }
@@ -133,24 +151,28 @@ function LoginPage() {
         </div>
       </form>
 
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Oder</span>
-        </div>
-      </div>
+      {showAuthentik && (
+        <>
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Oder</span>
+            </div>
+          </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={handleAuthentikLogin}
-        disabled={loading}
-      >
-        Mit Authentik anmelden
-      </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleAuthentikLogin}
+            disabled={loading}
+          >
+            Mit Authentik anmelden
+          </Button>
+        </>
+      )}
     </div>
   )
 }

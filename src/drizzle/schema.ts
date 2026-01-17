@@ -6,6 +6,7 @@ import {
 } from "drizzle-orm"
 import {
   type AnyPgColumn,
+  boolean,
   customType,
   index,
   integer,
@@ -24,15 +25,77 @@ const tsVector = customType<{ data: string }>({
     return "tsvector"
   },
 })
+// better-auth required user table with admin plugin fields
 export const UserTable = pgTable("users", {
-  id: varchar().unique().primaryKey(),
+  id: varchar("id").primaryKey(),
   name: varchar("name"),
-  discordId: varchar("discord_id").unique(),
-  discordName: varchar("discord_name").unique(),
+  email: varchar("email").unique(),
+  emailVerified: boolean("email_verified").default(false),
+  image: varchar("image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  // Admin plugin fields for role-based access control
+  role: varchar("role").default("user"),
+  banned: boolean("banned").default(false),
+  banReason: varchar("ban_reason"),
+  banExpires: timestamp("ban_expires"),
 })
 
 export type User = InferSelectModel<typeof UserTable>
 export type UserInsert = InferInsertModel<typeof UserTable>
+
+// better-auth session management table
+export const SessionTable = pgTable("sessions", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  token: varchar("token").unique().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  ipAddress: varchar("ip_address"),
+  userAgent: varchar("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  impersonatedBy: varchar("impersonated_by"),
+})
+
+export type Session = InferSelectModel<typeof SessionTable>
+export type SessionInsert = InferInsertModel<typeof SessionTable>
+
+// better-auth accounts table for OAuth providers and credentials
+export const AccountTable = pgTable("accounts", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  accountId: varchar("account_id").notNull(),
+  providerId: varchar("provider_id").notNull(), // "authentik", "credential", etc.
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: varchar("scope"),
+  idToken: text("id_token"),
+  password: varchar("password"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+export type Account = InferSelectModel<typeof AccountTable>
+export type AccountInsert = InferInsertModel<typeof AccountTable>
+
+// better-auth verifications table for email verification, password reset tokens
+export const VerificationTable = pgTable("verifications", {
+  id: varchar("id").primaryKey(),
+  identifier: varchar("identifier").notNull(),
+  value: varchar("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+export type Verification = InferSelectModel<typeof VerificationTable>
+export type VerificationInsert = InferInsertModel<typeof VerificationTable>
 
 export const LocationTable = pgTable("locations", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),

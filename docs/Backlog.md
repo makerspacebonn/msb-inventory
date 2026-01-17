@@ -90,9 +90,10 @@ curl http://localhost:3000/api/auth/get-session
 **Implementation Notes:**
 - Added `genericOAuth` plugin to `src/lib/auth.ts` with Authentik config
 - Added `genericOAuthClient` plugin to `src/lib/auth-client.ts`
-- Added "Mit Authentik anmelden" button to login page
+- Added "Mit Authentik anmelden" button to login page (conditionally displayed via `createServerFn`)
 - Plugin only loads when `AUTHENTIK_*` env vars are configured
-- Callback URL: `/api/auth/callback/authentik`
+- Callback URL: `/api/auth/oauth2/callback/authentik` (must be whitelisted in Authentik)
+- App slug configurable via `AUTHENTIK_APP_SLUG` env var (default: `msb-inventory`)
 
 **Acceptance Criteria:**
 - [x] Users can click "Mit Authentik anmelden"

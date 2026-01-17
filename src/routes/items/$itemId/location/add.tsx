@@ -555,6 +555,11 @@ function LocationSelectionView({
 // Route definition
 export const Route = createFileRoute("/items/$itemId/location/add")({
   component: RouteComponent,
+  beforeLoad: ({ context }) => {
+    if (!context.isLoggedIn) {
+      throw new Error("Unauthorized")
+    }
+  },
   loader: async ({ params }) => {
     const [locations, item] = await Promise.all([
       fetchRootLocations(),

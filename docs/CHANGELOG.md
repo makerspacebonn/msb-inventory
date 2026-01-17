@@ -32,6 +32,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Discord OAuth configuration from `.env_example`
 - `JWT_SECRET` environment variable
 
+### Fixed
+- Authentik OAuth button conditional display (prevents server code bundling in client)
+- OAuth callback URL pattern in `.env_example` (`/api/auth/oauth2/callback/authentik`)
+- Made Authentik app slug configurable via `AUTHENTIK_APP_SLUG` env var
+
 ### Technical
 - Completed AUTH-001: Install better-auth and configure database schema
 - Completed AUTH-002: Implement better-auth core configuration
@@ -39,3 +44,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Completed AUTH-004: Implement Authentik OAuth integration
 - Completed AUTH-007: Update middleware and context
 - Completed AUTH-009: Cleanup legacy code
+
+### Pending Configuration
+- Authentik OAuth requires redirect URI configuration: `{BASE_URL}/api/auth/oauth2/callback/authentik`
+
+## 2026-01-17 (Session 2)
+
+### Added
+- `tanstackStartCookies` plugin for proper TanStack Start cookie handling
+- Root route auth context via `createRootRouteWithContext` for route-level auth guards
+- `dev:bg` command to restart dev server in background with logging
+- `dev:logs` command to tail the dev server log file
+- Synthetic email generation for OAuth providers that don't return email
+
+### Fixed
+- **Critical:** `getWebRequest is not a function` error - API changed to `getRequest()` in TanStack Start v1.150+
+- **Critical:** Server-only code bundled in client - use dynamic imports inside server function handlers
+- **Security:** `removeItemLocation` now requires authentication via `authGuardMiddleware`
+- **Security:** Backup download route now requires authentication
+- **Security:** Location add route now has `beforeLoad` auth check
+- **Security:** `authMiddleware` migrated from legacy JWT to better-auth session API
+
+### Changed
+- `src/middleware/authMiddleware.ts` - Uses better-auth `getRequest()` with dynamic imports
+- `src/routes/__root.tsx` - Uses `createRootRouteWithContext` with server function for auth context
+- `src/routes/backup.download.$.ts` - Dynamic import for auth module
+- `src/lib/auth.ts` - Plugin array restructured with `tanstackStartCookies()` as last plugin

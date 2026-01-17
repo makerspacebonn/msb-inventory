@@ -8,11 +8,23 @@ const BACKUPS_DIR = path.join(SAVE_PATH, "backups")
 export const Route = createFileRoute("/backup/download/$")({
   server: {
     handlers: {
-      GET: async ({ params }) => {
+      GET: async ({ params, request }) => {
+        // Auth check - only authenticated users can download backups
+        // Dynamic import to avoid bundling server code in client
+        const { auth } = await import("@/src/lib/auth")
+        const session = await auth.api.getSession({ headers: request.headers })
+        if (!session?.user) {
+          return new Response("Unauthorized", { status: 401 })
+        }
+
         const filename = params._splat
 
         // Security: only allow .zip files and prevent directory traversal
-        if (!filename || !filename.endsWith(".zip") || filename.includes("..")) {
+        if (
+          !filename ||
+          !filename.endsWith(".zip") ||
+          filename.includes("..")
+        ) {
           return new Response("Invalid filename", { status: 400 })
         }
 

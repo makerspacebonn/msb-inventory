@@ -1,43 +1,28 @@
 import { createMiddleware } from "@tanstack/react-start"
-import { getCookie } from "@tanstack/react-start/server"
-
-const AUTH_COOKIE = "auth_token"
-
-type TokenVerificationResult = {
-  valid: boolean
-  userId: string | null
-}
-
-function verifyToken(token: string): TokenVerificationResult {
-  try {
-    const decoded = Buffer.from(token, "base64").toString()
-    const secret = process.env.JWT_SECRET || "dev-secret"
-    const parts = decoded.split(":")
-    if (parts.length < 3) return { valid: false, userId: null }
-    if (parts[1] !== secret) return { valid: false, userId: null }
-    return { valid: true, userId: parts[0] }
-  } catch {
-    return { valid: false, userId: null }
-  }
-}
 
 /**
  * Auth middleware that provides isLoggedIn and userId context to server functions.
+ * Uses better-auth session validation.
  * This middleware does NOT block requests - it only provides auth state.
  * Use authGuardMiddleware for protected routes that require authentication.
+ *
+ * Note: Uses dynamic imports to avoid bundling server-only code in client.
  */
 export const authMiddleware = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
-    const token = getCookie(AUTH_COOKIE)
-    const result = token ? verifyToken(token) : { valid: false, userId: null }
+    const { getRequest } = await import("@tanstack/react-start/server")
+    const { auth } = await import("@/src/lib/auth")
+    const request = getRequest()
+    const session = await auth.api.getSession({ headers: request.headers })
 
     return next({
       context: {
-        isLoggedIn: result.valid,
-        userId: result.userId,
+        isLoggedIn: !!session?.user,
+        userId: session?.user?.id ?? null,
+        user: session?.user ?? null,
       },
       sendContext: {
-        isLoggedIn: result.valid,
+        isLoggedIn: !!session?.user,
       },
     })
   },

@@ -1,19 +1,43 @@
 import { Button } from "@components/ui/button"
 import { Toaster } from "@components/ui/sonner"
 import {
-  createRootRoute,
+  createRootRouteWithContext,
   HeadContent,
   Link,
   Outlet,
   Scripts,
   useRouter,
 } from "@tanstack/react-router"
+import { createServerFn } from "@tanstack/react-start"
 import { LogInIcon, LogOutIcon } from "lucide-react"
 import type { ReactNode } from "react"
 import { AuthProvider, useAuth } from "@/src/context/AuthContext"
 import appCss from "../styles.css?url"
 
-export const Route = createRootRoute({
+// Server function to get auth context - uses dynamic imports to avoid client bundling issues
+const getAuthContext = createServerFn().handler(async () => {
+  const { getRequest } = await import("@tanstack/react-start/server")
+  const { auth } = await import("@/src/lib/auth")
+  const request = getRequest()
+  const session = await auth.api.getSession({ headers: request.headers })
+  return {
+    isLoggedIn: !!session?.user,
+    userId: session?.user?.id ?? null,
+  }
+})
+
+// Define the router context type
+type RouterContext = {
+  isLoggedIn: boolean
+  userId: string | null
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
+  // beforeLoad fetches auth and provides context to child routes
+  beforeLoad: async () => {
+    const authContext = await getAuthContext()
+    return authContext
+  },
   head: () => ({
     meta: [
       {
@@ -81,7 +105,9 @@ function AuthButtons() {
             title={user.name || undefined}
           />
         )}
-        <span className="text-sm hidden sm:inline">{user.name || user.email}</span>
+        <span className="text-sm hidden sm:inline">
+          {user.name || user.email}
+        </span>
         <Button variant="ghost" size="sm" onClick={handleLogout}>
           <LogOutIcon className="w-4 h-4" />
         </Button>
