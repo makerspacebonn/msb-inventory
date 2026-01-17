@@ -1,6 +1,5 @@
 import { Badge } from "@components/ui/badge"
 import { Button } from "@components/ui/button"
-import { Card, CardContent } from "@components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -15,7 +14,6 @@ import {
   ArrowRightIcon,
   BoxIcon,
   ChevronDownIcon,
-  ChevronUpIcon,
   Loader2Icon,
   MapPinIcon,
   MinusIcon,
@@ -29,7 +27,11 @@ import {
   fetchChangelogPaginated,
   undoChange,
 } from "@/src/actions/changelogActions"
-import type { ChangelogEntryWithUser, ChangeType, EntityType } from "@/src/app/types"
+import type {
+  ChangelogEntryWithUser,
+  ChangeType,
+  EntityType,
+} from "@/src/app/types"
 
 export const Route = createFileRoute("/changelog")({
   component: ChangelogPage,
@@ -155,7 +157,7 @@ function ChangelogEntryCard({
       toast.success(
         result.action === "deleted"
           ? "Eintrag gelöscht"
-          : "Änderung rückgängig gemacht"
+          : "Änderung rückgängig gemacht",
       )
       router.invalidate()
     } else {
@@ -215,9 +217,7 @@ function ChangelogEntryCard({
 
           <span className="text-xs text-muted-foreground ml-auto shrink-0">
             {formattedDate}, {formattedTime}
-            {entry.user && (
-              <> · {entry.user.discordName || entry.user.name || "?"}</>
-            )}
+            {entry.user && <> · {entry.user.name || "?"}</>}
             {!entry.user && entry.userId === "admin" && <> · Admin</>}
             {!entry.user && entry.userId && entry.userId !== "admin" && (
               <span title={entry.userId}> · {entry.userId.slice(0, 6)}…</span>
@@ -225,7 +225,9 @@ function ChangelogEntryCard({
           </span>
 
           {hasDiffData && (
-            <ChevronDownIcon className={`w-3 h-3 text-muted-foreground transition-transform ${showDiff ? "rotate-180" : ""}`} />
+            <ChevronDownIcon
+              className={`w-3 h-3 text-muted-foreground transition-transform ${showDiff ? "rotate-180" : ""}`}
+            />
           )}
         </div>
 
@@ -274,7 +276,10 @@ function ChangelogEntryCard({
             <DialogDescription>{getUndoDescription()}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+            >
               Abbrechen
             </Button>
             <Button variant="destructive" onClick={handleConfirmUndo}>
@@ -291,15 +296,18 @@ function ChangeTypeBadge({ type }: { type: ChangeType }) {
   const config = {
     create: {
       label: "+",
-      className: "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30",
+      className:
+        "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30",
     },
     update: {
       label: "~",
-      className: "bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30",
+      className:
+        "bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30",
     },
     delete: {
       label: "−",
-      className: "bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30",
+      className:
+        "bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30",
     },
   }
 
@@ -309,7 +317,10 @@ function ChangeTypeBadge({ type }: { type: ChangeType }) {
   }
 
   return (
-    <Badge variant="outline" className={`${className} px-1.5 py-0 text-xs font-mono`}>
+    <Badge
+      variant="outline"
+      className={`${className} px-1.5 py-0 text-xs font-mono`}
+    >
       {label}
     </Badge>
   )
@@ -374,7 +385,7 @@ function ValueDiff({
   // For create: show all afterValues as additions
   if (changeType === "create" && afterValues) {
     const fields = Object.keys(afterValues).filter(
-      (f) => !EXCLUDED_FIELDS.includes(f) && afterValues[f] != null
+      (f) => !EXCLUDED_FIELDS.includes(f) && afterValues[f] != null,
     )
     return (
       <div className="space-y-2">
@@ -397,7 +408,7 @@ function ValueDiff({
   // For delete: show all beforeValues as removals
   if (changeType === "delete" && beforeValues) {
     const fields = Object.keys(beforeValues).filter(
-      (f) => !EXCLUDED_FIELDS.includes(f) && beforeValues[f] != null
+      (f) => !EXCLUDED_FIELDS.includes(f) && beforeValues[f] != null,
     )
     return (
       <div className="space-y-2">
@@ -457,7 +468,9 @@ function DiffRow({
     if (typeof value === "string") return value || "(leer)"
     if (Array.isArray(value)) {
       if (value.length === 0) return "(leer)"
-      return value.map((v) => (typeof v === "object" ? JSON.stringify(v) : String(v))).join(", ")
+      return value
+        .map((v) => (typeof v === "object" ? JSON.stringify(v) : String(v)))
+        .join(", ")
     }
     if (typeof value === "object") return JSON.stringify(value, null, 2)
     return String(value)
@@ -481,9 +494,15 @@ function DiffRow({
     const beforeSet = new Set((before as (string | number)[]).map(String))
     const afterSet = new Set((after as (string | number)[]).map(String))
 
-    const removed = (before as (string | number)[]).filter((v) => !afterSet.has(String(v)))
-    const added = (after as (string | number)[]).filter((v) => !beforeSet.has(String(v)))
-    const unchanged = (after as (string | number)[]).filter((v) => beforeSet.has(String(v)))
+    const removed = (before as (string | number)[]).filter(
+      (v) => !afterSet.has(String(v)),
+    )
+    const added = (after as (string | number)[]).filter(
+      (v) => !beforeSet.has(String(v)),
+    )
+    const unchanged = (after as (string | number)[]).filter((v) =>
+      beforeSet.has(String(v)),
+    )
 
     return (
       <div className="text-sm rounded-md overflow-hidden border">

@@ -50,7 +50,7 @@ export class ChangelogRepository {
 
   async findPaginated(
     page = 1,
-    pageSize = 50
+    pageSize = 50,
   ): Promise<PaginatedResult<ChangelogEntryWithUser>> {
     const offset = (page - 1) * pageSize
 
@@ -67,7 +67,6 @@ export class ChangelogRepository {
           afterValues: ChangelogTable.afterValues,
           changedFields: ChangelogTable.changedFields,
           userName: UserTable.name,
-          userDiscordName: UserTable.discordName,
         })
         .from(ChangelogTable)
         .leftJoin(UserTable, eq(ChangelogTable.userId, UserTable.id))
@@ -93,7 +92,7 @@ export class ChangelogRepository {
     entryId: number,
     entityType: string,
     entityId: number,
-    changedFields: string[]
+    changedFields: string[],
   ): Promise<ChangelogEntry | null> {
     const entry = await this.findById(entryId)
     if (!entry) return null
@@ -107,8 +106,8 @@ export class ChangelogRepository {
           eq(ChangelogTable.entityType, entityType),
           eq(ChangelogTable.entityId, entityId),
           gt(ChangelogTable.changedAt, entry.changedAt),
-          ne(ChangelogTable.id, entryId) // Exclude current entry to avoid self-conflict
-        )
+          ne(ChangelogTable.id, entryId), // Exclude current entry to avoid self-conflict
+        ),
       )
       .orderBy(desc(ChangelogTable.changedAt))
 
@@ -135,7 +134,7 @@ export class ChangelogRepository {
 
   async findByEntity(
     entityType: EntityType,
-    entityId: number
+    entityId: number,
   ): Promise<ChangelogEntry[]> {
     const results = await db
       .select()
@@ -143,8 +142,8 @@ export class ChangelogRepository {
       .where(
         and(
           eq(ChangelogTable.entityType, entityType),
-          eq(ChangelogTable.entityId, entityId)
-        )
+          eq(ChangelogTable.entityId, entityId),
+        ),
       )
       .orderBy(desc(ChangelogTable.changedAt))
 
@@ -163,18 +162,19 @@ export class ChangelogRepository {
       afterValues: Record<string, unknown> | null
       changedFields: string[] | null
       userName: string | null
-      userDiscordName: string | null
-    }>
+    }>,
   ): Promise<ChangelogEntryWithUser[]> {
     // Collect unique entity IDs by type
     const itemIds = [
       ...new Set(
-        entries.filter((e) => e.entityType === "item").map((e) => e.entityId)
+        entries.filter((e) => e.entityType === "item").map((e) => e.entityId),
       ),
     ]
     const locationIds = [
       ...new Set(
-        entries.filter((e) => e.entityType === "location").map((e) => e.entityId)
+        entries
+          .filter((e) => e.entityType === "location")
+          .map((e) => e.entityId),
       ),
     ]
 
@@ -216,10 +216,7 @@ export class ChangelogRepository {
         beforeValues: e.beforeValues,
         afterValues: e.afterValues,
         changedFields: e.changedFields,
-        user:
-          e.userName || e.userDiscordName
-            ? { name: e.userName, discordName: e.userDiscordName }
-            : null,
+        user: e.userName ? { name: e.userName } : null,
         entityName,
       }
     })

@@ -24,3 +24,4 @@ experiment*
 /e2e/playwright-report/
 /playwright-report/
 /test-results/
+/logs/*

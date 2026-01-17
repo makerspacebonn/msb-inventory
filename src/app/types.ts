@@ -69,7 +69,7 @@ export type ChangelogEntry = {
 }
 
 export type ChangelogEntryWithUser = ChangelogEntry & {
-  user: { name: string | null; discordName: string | null } | null
+  user: { name: string | null } | null
   entityName: string | null
 }
 
