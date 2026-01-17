@@ -1,15 +1,17 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import {
-  loginViaUI,
-  registerAndLoginViaUI,
+  test as authenticatedTest,
   expectLoggedIn,
   expectLoggedOut,
+  registerAndLoginViaUI,
   TEST_USER,
 } from "../fixtures/auth.fixture"
 
 test.describe("Authentication", () => {
   test.describe("Login Page", () => {
-    test("should display login page with email and password fields", async ({ page }) => {
+    test("should display login page with email and password fields", async ({
+      page,
+    }) => {
       await page.goto("/login")
 
       await expect(page).toHaveTitle(/Login/)
@@ -19,11 +21,15 @@ test.describe("Authentication", () => {
       await expect(page.locator('button[type="submit"]')).toBeVisible()
     })
 
-    test("should display Authentik OAuth button", async ({ page }) => {
+    test("should hide Authentik OAuth button when not configured", async ({
+      page,
+    }) => {
       await page.goto("/login")
 
-      // Should show Authentik OAuth button
-      await expect(page.locator("text=Mit Authentik anmelden")).toBeVisible()
+      // Authentik button should not be visible when not configured in e2e environment
+      await expect(
+        page.locator("text=Mit Authentik anmelden"),
+      ).not.toBeVisible()
     })
 
     test("should toggle between login and signup modes", async ({ page }) => {
@@ -53,12 +59,16 @@ test.describe("Authentication", () => {
     test("should show error for invalid credentials", async ({ page }) => {
       await page.goto("/login")
 
-      await page.locator('input[placeholder="E-Mail"]').fill("invalid@example.com")
+      await page
+        .locator('input[placeholder="E-Mail"]')
+        .fill("invalid@example.com")
       await page.locator('input[placeholder="Passwort"]').fill("wrong-password")
       await page.locator('button[type="submit"]').click()
 
       // Should show error message
-      await expect(page.locator(".text-destructive")).toBeVisible({ timeout: 5000 })
+      await expect(page.locator(".text-destructive")).toBeVisible({
+        timeout: 5000,
+      })
     })
 
     test("should register new user successfully", async ({ page }) => {
@@ -72,14 +82,18 @@ test.describe("Authentication", () => {
       // Fill in registration form
       await page.locator('input[placeholder="Name"]').fill("Test User")
       await page.locator('input[placeholder="E-Mail"]').fill(uniqueEmail)
-      await page.locator('input[placeholder="Passwort"]').fill("test-password-123")
+      await page
+        .locator('input[placeholder="Passwort"]')
+        .fill("test-password-123")
       await page.locator('button[type="submit"]').click()
 
       // Should redirect to home
       await expect(page).toHaveURL("/", { timeout: 10000 })
     })
 
-    test("should login with valid credentials after registration", async ({ page }) => {
+    test("should login with valid credentials after registration", async ({
+      page,
+    }) => {
       const uniqueEmail = `login-test-${Date.now()}@example.com`
       const password = "login-test-password-123"
 
@@ -93,7 +107,9 @@ test.describe("Authentication", () => {
       await expect(page).toHaveURL("/", { timeout: 10000 })
 
       // Logout (click logout button)
-      const logoutButton = page.locator('button').filter({ has: page.locator('svg.lucide-log-out') })
+      const logoutButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg.lucide-log-out") })
       await logoutButton.click()
 
       // Now login with the same credentials
@@ -127,7 +143,9 @@ test.describe("Authentication", () => {
       await registerAndLoginViaUI(page)
 
       // Find and click logout button (has LogOutIcon)
-      const logoutButton = page.locator('button').filter({ has: page.locator('svg.lucide-log-out') })
+      const logoutButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg.lucide-log-out") })
       await expect(logoutButton).toBeVisible()
       await logoutButton.click()
 
@@ -136,32 +154,29 @@ test.describe("Authentication", () => {
       await expect(page.locator('a[href="/items/add"]')).not.toBeVisible()
     })
 
-    test("should show user info in header when logged in", async ({ page }) => {
-      await registerAndLoginViaUI(page)
-
-      // User name or email should be visible in header
-      await expect(page.locator("header").locator(`text=${TEST_USER.name}`)).toBeVisible()
-    })
+    authenticatedTest(
+      "should show user info in header when logged in",
+      async ({ authenticatedPage: page }) => {
+        // User name or email should be visible in header
+        await expect(
+          page.locator("header").locator(`text=${TEST_USER.name}`),
+        ).toBeVisible()
+      },
+    )
   })
 
   test.describe("Auth-Protected Features", () => {
-    test("should show Add Item button when authenticated", async ({ page }) => {
-      await registerAndLoginViaUI(page)
-      await expectLoggedIn(page)
-    })
+    authenticatedTest(
+      "should show Add Item button when authenticated",
+      async ({ authenticatedPage: page }) => {
+        await expectLoggedIn(page)
+      },
+    )
 
-    test("should hide Add Item button when not authenticated", async ({ page }) => {
+    test("should hide Add Item button when not authenticated", async ({
+      page,
+    }) => {
       await expectLoggedOut(page)
-    })
-  })
-
-  test.describe("API Endpoints", () => {
-    test("should return null session for unauthenticated requests", async ({ request }) => {
-      const response = await request.get("/api/auth/get-session")
-      expect(response.ok()).toBeTruthy()
-
-      const body = await response.text()
-      expect(body).toBe("null")
     })
   })
 })

@@ -141,3 +141,15 @@ Use conventional commits format: `type(scope): description`
 ### 2026-01-17 - Post-Migration Cleanup
 - **Schema migration side effects:** After migrating auth systems, audit codebase for references to removed schema fields. Example: `discordName` was removed from UserTable but `ChangelogRepository` still selected it, breaking the `/changelog` route.
 - **Inline types vs schema types:** Inline type definitions like `{ name: string; discordName: string }` don't track schema changes. Consider deriving types from actual schema to catch mismatches at compile time.
+
+### 2026-01-17 - E2E Testing with better-auth
+- **Session tokens must be signed:** better-auth validates cookies using HMAC-SHA256. Token format: `{token}.{base64Signature}` signed with `BETTER_AUTH_SECRET`:
+  ```typescript
+  const signature = crypto.createHmac("sha256", BETTER_AUTH_SECRET).update(token).digest("base64")
+  const signedToken = `${token}.${signature}`
+  ```
+- **Cookie settings for E2E:** Set `secure: false` for HTTP test environments, URL-encode the signed token value
+- **Pre-seed sessions for fast auth:** Insert user + session in seed script (`scripts/seed-e2e-data.ts`), then set cookie in Playwright fixture - much faster than UI login
+- **Port mapping for local debugging:** Add `ports: "3001:3000"` to `docker-compose.e2e.yml` to access app from host during debugging
+- **Auth verification:** Check for user name in header (`text=${TEST_USER.name}`) instead of feature-specific buttons that may not exist on all pages
+- **Test commands:** Use `bun run test` (Vitest) for unit tests, `bun run e2e` (Playwright) for E2E tests. Note: `bun test` uses Bun's native runner which conflicts with Playwright

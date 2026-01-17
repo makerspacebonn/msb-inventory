@@ -9,16 +9,39 @@ import { sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import pg from "pg"
 
-const DATABASE_URL = process.env.DATABASE_URL || "postgres://e2e_user:e2e_password@postgres-e2e:5432/msb_e2e"
+const DATABASE_URL =
+  process.env.DATABASE_URL ||
+  "postgres://e2e_user:e2e_password@postgres-e2e:5432/msb_e2e"
 
 const pool = new pg.Pool({ connectionString: DATABASE_URL })
 const db = drizzle(pool)
 
-// Test Users
+// Test Users (better-auth schema)
 const TEST_USERS = [
-  { id: "e2e-admin", name: "E2E Admin", discordId: "e2e-admin-discord", discordName: "e2e_admin" },
-  { id: "e2e-user", name: "E2E User", discordId: "e2e-user-discord", discordName: "e2e_user" },
+  {
+    id: "e2e-admin",
+    name: "E2E Admin",
+    email: "e2e-admin@example.com",
+    role: "admin",
+  },
+  {
+    id: "e2e-user",
+    name: "E2E Test User",
+    email: "e2e-user@example.com",
+    role: "user",
+  },
 ]
+
+// Pre-created session for e2e tests - use this token in Playwright to skip login
+// This is a fixed token that the auth fixture will use
+export const E2E_SESSION_TOKEN = "e2e-test-session-token-12345"
+const TEST_SESSION = {
+  id: "e2e-session-id",
+  userId: "e2e-user",
+  token: E2E_SESSION_TOKEN,
+  // Session expires in 30 days
+  expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+}
 
 // Hierarchical Locations (3 levels deep)
 const TEST_LOCATIONS = [
@@ -34,8 +57,18 @@ const TEST_LOCATIONS = [
   { id: 21, name: "Regal B", description: "Zweites Regal", parentId: 2 },
 
   // Third Level (IDs 100-201)
-  { id: 100, name: "Schublade 1", description: "Erste Schublade", parentId: 10 },
-  { id: 101, name: "Schublade 2", description: "Zweite Schublade", parentId: 10 },
+  {
+    id: 100,
+    name: "Schublade 1",
+    description: "Erste Schublade",
+    parentId: 10,
+  },
+  {
+    id: 101,
+    name: "Schublade 2",
+    description: "Zweite Schublade",
+    parentId: 10,
+  },
   { id: 200, name: "Fach A1", description: "Oberes Fach", parentId: 20 },
   { id: 201, name: "Fach A2", description: "Unteres Fach", parentId: 20 },
 ]
@@ -146,7 +179,13 @@ const TEST_ITEMS = [
 
 // Generate additional items for pagination testing
 for (let i = 11; i <= 35; i++) {
-  const categories = ["Werkzeug", "Elektronik", "Material", "Fertigung", "Messtechnik"]
+  const categories = [
+    "Werkzeug",
+    "Elektronik",
+    "Material",
+    "Fertigung",
+    "Messtechnik",
+  ]
   const locations = [100, 101, 200, 201, 10, 11, 20, 21]
 
   TEST_ITEMS.push({
@@ -196,19 +235,36 @@ async function seed() {
   console.log("Starting E2E database seed...")
 
   try {
-    // 1. Truncate all tables (respecting FK order)
+    // 1. Truncate all tables (respecting FK order - sessions/accounts have FK to users)
     console.log("Truncating tables...")
-    await db.execute(sql`TRUNCATE TABLE changelog, items, locations, users, projects RESTART IDENTITY CASCADE`)
+    await db.execute(
+      sql`TRUNCATE TABLE changelog, items, locations, sessions, accounts, verifications, users, projects RESTART IDENTITY CASCADE`,
+    )
 
-    // 2. Insert users
+    // 2. Insert users (better-auth schema)
     console.log("Inserting users...")
     for (const user of TEST_USERS) {
       await db.execute(sql`
-        INSERT INTO users (id, name, discord_id, discord_name)
-        VALUES (${user.id}, ${user.name}, ${user.discordId}, ${user.discordName})
+        INSERT INTO users (id, name, email, email_verified, role, created_at, updated_at)
+        VALUES (${user.id}, ${user.name}, ${user.email}, true, ${user.role}, NOW(), NOW())
       `)
     }
     console.log(`  Inserted ${TEST_USERS.length} users`)
+
+    // 2.5 Insert pre-created session for e2e-user (for fast auth in tests)
+    console.log("Inserting test session...")
+    await db.execute(sql`
+      INSERT INTO sessions (id, user_id, token, expires_at, created_at, updated_at)
+      VALUES (
+        ${TEST_SESSION.id},
+        ${TEST_SESSION.userId},
+        ${TEST_SESSION.token},
+        ${TEST_SESSION.expiresAt},
+        NOW(),
+        NOW()
+      )
+    `)
+    console.log(`  Inserted 1 session for e2e-user`)
 
     // 3. Insert locations (with explicit IDs using OVERRIDING SYSTEM VALUE)
     console.log("Inserting locations...")
@@ -222,7 +278,9 @@ async function seed() {
     console.log(`  Inserted ${TEST_LOCATIONS.length} locations`)
 
     // Reset location sequence
-    await db.execute(sql`SELECT setval('locations_id_seq', (SELECT MAX(id) FROM locations))`)
+    await db.execute(
+      sql`SELECT setval('locations_id_seq', (SELECT MAX(id) FROM locations))`,
+    )
 
     // 4. Insert items
     console.log("Inserting items...")
@@ -246,7 +304,9 @@ async function seed() {
     console.log(`  Inserted ${TEST_ITEMS.length} items`)
 
     // Reset item sequence
-    await db.execute(sql`SELECT setval('items_id_seq', (SELECT MAX(id) FROM items))`)
+    await db.execute(
+      sql`SELECT setval('items_id_seq', (SELECT MAX(id) FROM items))`,
+    )
 
     // 5. Insert changelog entries
     console.log("Inserting changelog entries...")
@@ -271,9 +331,11 @@ async function seed() {
     console.log("\nE2E database seed completed successfully!")
     console.log(`Summary:`)
     console.log(`  - Users: ${TEST_USERS.length}`)
+    console.log(`  - Sessions: 1 (pre-authenticated e2e-user)`)
     console.log(`  - Locations: ${TEST_LOCATIONS.length}`)
     console.log(`  - Items: ${TEST_ITEMS.length}`)
     console.log(`  - Changelog entries: ${TEST_CHANGELOG.length}`)
+    console.log(`\nE2E Session Token: ${E2E_SESSION_TOKEN}`)
   } catch (error) {
     console.error("Seed failed:", error)
     process.exit(1)

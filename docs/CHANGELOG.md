@@ -83,3 +83,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Technical
 - Added `/logs/*` to `.gitignore` for dev server log files
+
+## 2026-01-17 (Session 4)
+
+### Fixed
+- **Critical:** E2E authentication with better-auth - session tokens must be HMAC-SHA256 signed
+- **E2E:** Auth fixture now properly signs session tokens with `BETTER_AUTH_SECRET`
+- **E2E:** Cookie `secure: false` for HTTP test environment
+- **E2E:** Auth verification checks for user name in header instead of page-specific buttons
+
+### Changed
+- `e2e/fixtures/auth.fixture.ts` - Signs session token with HMAC-SHA256, sets proper cookie attributes
+- `scripts/seed-e2e-data.ts` - Pre-seeds session for `e2e-user` for fast authentication
+- `docker-compose.e2e.yml` - Added `BETTER_AUTH_SECRET` to app and playwright containers, added port mapping `3001:3000`
+
+### Technical
+- All 68 E2E tests pass with pre-seeded session authentication
+- Reference: https://nelsonlai.dev/blog/e2e-testing-with-better-auth

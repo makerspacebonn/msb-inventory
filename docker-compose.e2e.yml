@@ -22,6 +22,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: msb-e2e-app
+    ports:
+      - "3001:3000"
     depends_on:
       postgres-e2e:
         condition: service_healthy
@@ -29,9 +31,11 @@ services:
       - NODE_ENV=test
       - DATABASE_URL=postgres://e2e_user:e2e_password@postgres-e2e:5432/msb_e2e
       - JWT_SECRET=e2e-test-secret-key-12345
+      - BETTER_AUTH_SECRET=e2e-test-secret-key-12345
       - EDITOR_PASSWORD=e2e-test-password
       - SAVE_PATH=/tmp/uploads/
       - BASE_URL=http://app-e2e:3000
+      - BETTER_AUTH_URL=http://app-e2e:3000
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
       interval: 5s
@@ -51,6 +55,7 @@ services:
     working_dir: /app
     environment:
       - E2E_BASE_URL=http://app-e2e:3000
+      - BETTER_AUTH_SECRET=e2e-test-secret-key-12345
       - CI=true
     volumes:
       - .:/app

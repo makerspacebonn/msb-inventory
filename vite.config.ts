@@ -7,6 +7,10 @@ import viteTsConfigPaths from "vite-tsconfig-paths"
 import tsConfigPaths from "vite-tsconfig-paths"
 
 const config = defineConfig({
+  test: {
+    // Exclude e2e tests - they use Playwright, not Vitest
+    exclude: ["e2e/**", "node_modules/**"],
+  },
   plugins: [
     devtools(),
     tsConfigPaths(),
