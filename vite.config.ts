@@ -5,8 +5,12 @@ import viteReact from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import tsConfigPaths from "vite-tsconfig-paths"
 import viteTsConfigPaths from "vite-tsconfig-paths"
+import pkg from "./package.json"
 
 const config = defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   optimizeDeps: {
     exclude: [
       "@tanstack/start-server-core",

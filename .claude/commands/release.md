@@ -24,7 +24,27 @@ Execute these steps in order. **Stop immediately if any step fails.**
 
 Run `git status` to see what will be committed. If there are no staged or unstaged changes, inform the user and stop.
 
-### Step 2: Create Commit
+### Step 2: Determine and Update Version
+
+1. Get the latest version tag (semantic version format X.Y.Z):
+```bash
+git tag --list '[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | head -1
+```
+
+2. If no tags exist, start with `0.1.0`
+
+3. Parse the current version and calculate the next version based on the argument:
+   - **patch** (default): Increment the third number, e.g., 1.2.3 → 1.2.4
+   - **minor**: Increment the second number, reset third to 0, e.g., 1.2.3 → 1.3.0
+   - **major**: Increment the first number, reset second and third to 0, e.g., 1.2.3 → 2.0.0
+
+4. Update `package.json` version field to match the new version:
+```bash
+npm version X.Y.Z --no-git-tag-version --allow-same-version
+```
+This updates the version in package.json without creating a git tag (we'll do that later).
+
+### Step 3: Create Commit
 
 If there are changes:
 1. Run `git add -A` to stage all changes
@@ -42,7 +62,7 @@ EOF
 
 **Do NOT include any co-author lines or AI attribution in the commit message.**
 
-### Step 3: Pull Latest Changes
+### Step 4: Pull Latest Changes
 
 Run `git pull --rebase` to fetch and rebase on top of the latest remote changes.
 
@@ -51,29 +71,17 @@ Run `git pull --rebase` to fetch and rebase on top of the latest remote changes.
 2. Inform the user: "There are merge conflicts that need manual resolution. Please resolve the conflicts, then run `/release` again."
 3. **STOP HERE - Do not continue to push or tag**
 
-### Step 4: Push Changes
+### Step 5: Push Changes
 
 If pull succeeded without conflicts, run `git push` to push the commit to remote.
 
 If push fails, inform the user of the error and stop.
 
-### Step 5: Determine Next Version Tag
-
-1. Get the latest version tag (semantic version format X.Y.Z):
-```bash
-git tag --list '[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | head -1
-```
-
-2. If no tags exist, start with `0.1.0`
-
-3. Parse the current version and calculate the next version based on the argument:
-   - **patch** (default): Increment the third number, e.g., 1.2.3 → 1.2.4
-   - **minor**: Increment the second number, reset third to 0, e.g., 1.2.3 → 1.3.0
-   - **major**: Increment the first number, reset second and third to 0, e.g., 1.2.3 → 2.0.0
-
 ### Step 6: Create and Push Tag
 
-1. Create an annotated tag with the commit message as the tag message:
+Use the version calculated in Step 2:
+
+1. Create an annotated tag:
 ```bash
 git tag -a X.Y.Z -m "Release X.Y.Z"
 ```
@@ -100,6 +108,7 @@ Report to the user:
 ## Example Output
 
 ```
+✓ Updated package.json to 1.3.0
 ✓ Committed: feat(homepage): add inventory statistics cards
 ✓ Pulled latest changes (no conflicts)
 ✓ Pushed to origin/main

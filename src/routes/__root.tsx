@@ -132,7 +132,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <div className="flex flex-col min-h-screen">
           <header className=" py-2 px-4 shadow">
             <nav className="flex flex-row justify-between items-center content-center gap-2  border-b border-gray-800">
-              <ul>
+              <ul className="flex items-center gap-1">
                 <li className="logo w-10">
                   <a href="/">
                     <img
@@ -140,6 +140,11 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                       alt="MakerSpace Bonn e.V."
                     />
                   </a>
+                </li>
+                <li>
+                  <span className="text-[10px] text-gray-500">
+                    v{__APP_VERSION__}
+                  </span>
                 </li>
               </ul>
               <ul className="hidden">
