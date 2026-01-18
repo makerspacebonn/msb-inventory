@@ -11,6 +11,9 @@ const config = defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
+  test: {
+    exclude: ["e2e/**", "node_modules/**"],
+  },
   optimizeDeps: {
     exclude: [
       "@tanstack/start-server-core",
