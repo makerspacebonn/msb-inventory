@@ -8,8 +8,8 @@ import {
   Scripts,
   useRouter,
 } from "@tanstack/react-router"
-import { LogInIcon, LogOutIcon } from "lucide-react"
-import type { ReactNode } from "react"
+import { LogInIcon, LogOutIcon, MenuIcon, XIcon } from "lucide-react"
+import { type ReactNode, useState } from "react"
 import { getAuthContext } from "@/src/actions/authActions"
 import { AuthProvider, useAuth } from "@/src/context/AuthContext"
 import appCss from "../styles.css?url"
@@ -69,7 +69,7 @@ function RootComponent() {
   )
 }
 
-function AuthButtons() {
+function AuthButtons({ onAction }: { onAction?: () => void }) {
   const { isLoggedIn, isLoading, user, logout } = useAuth()
   const router = useRouter()
 
@@ -78,6 +78,7 @@ function AuthButtons() {
   }
 
   const handleLogout = async () => {
+    onAction?.()
     await logout()
     await router.invalidate()
   }
@@ -93,9 +94,7 @@ function AuthButtons() {
             title={user.name || undefined}
           />
         )}
-        <span className="text-sm hidden sm:inline">
-          {user.name || user.email}
-        </span>
+        <span className="text-sm">{user.name || user.email}</span>
         <Button variant="ghost" size="sm" onClick={handleLogout}>
           <LogOutIcon className="w-4 h-4" />
         </Button>
@@ -113,14 +112,51 @@ function AuthButtons() {
 
   return (
     <Button variant="ghost" size="sm" asChild>
-      <Link to="/login">
+      <Link to="/login" onClick={onAction}>
         <LogInIcon className="w-4 h-4" />
       </Link>
     </Button>
   )
 }
 
+function NavLinks({ onClick }: { onClick?: () => void }) {
+  return (
+    <>
+      <Link
+        to="/"
+        className="hover:text-gray-300 transition-colors"
+        onClick={onClick}
+      >
+        Home
+      </Link>
+      <Link
+        to="/items"
+        className="hover:text-gray-300 transition-colors"
+        onClick={onClick}
+      >
+        Items
+      </Link>
+      <Link
+        to="/locations"
+        className="hover:text-gray-300 transition-colors"
+        onClick={onClick}
+      >
+        Locations
+      </Link>
+      <Link
+        to="/changelog"
+        className="hover:text-gray-300 transition-colors"
+        onClick={onClick}
+      >
+        Changelog
+      </Link>
+    </>
+  )
+}
+
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   return (
     <html lang="de">
       <head>
@@ -130,42 +166,78 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <body className="dark">
         <Toaster richColors position="top-center" expand={true} />
         <div className="flex flex-col min-h-screen">
-          <header className=" py-2 px-4 shadow">
-            <nav className="flex flex-row justify-between items-center content-center gap-2  border-b border-gray-800">
-              <ul className="flex items-center gap-1">
-                <li className="logo w-10">
-                  <a href="/">
-                    <img
-                      src="/img/makerspace-bonn-signet.png"
-                      alt="MakerSpace Bonn e.V."
-                    />
-                  </a>
-                </li>
-                <li>
-                  <span className="text-[10px] text-gray-500">
-                    v{__APP_VERSION__}
-                  </span>
-                </li>
-              </ul>
-              <ul className="hidden">
-                <li>MakerSpace Bonn e.V.</li>
-              </ul>
-              <ul className="flex flex-row justify-between items-center p-4 mx-4 gap-2">
-                <li>
-                  <a href="/">Home</a>
-                </li>
-                <li>
-                  <Link to="/items">Items</Link>
-                </li>
-                <li>
-                  <Link to="/locations">Locations</Link>
-                </li>
-                <li>
-                  <AuthButtons />
-                </li>
-              </ul>
+          <header className="py-2 px-4 shadow border-b border-gray-800">
+            <nav className="flex flex-row justify-between items-center gap-2">
+              {/* Logo and version */}
+              <div className="flex items-center gap-2">
+                <a href="/" className="w-10">
+                  <img
+                    src="/img/makerspace-bonn-signet.png"
+                    alt="MakerSpace Bonn e.V."
+                  />
+                </a>
+                <span className="text-[10px] text-gray-500">
+                  v{__APP_VERSION__}
+                </span>
+              </div>
+
+              {/* Desktop navigation */}
+              <div className="hidden md:flex items-center gap-6">
+                <NavLinks />
+                <AuthButtons />
+              </div>
+
+              {/* Mobile menu button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              >
+                {mobileMenuOpen ? (
+                  <XIcon className="w-5 h-5" />
+                ) : (
+                  <MenuIcon className="w-5 h-5" />
+                )}
+              </Button>
             </nav>
           </header>
+
+          {/* Mobile navigation overlay */}
+          {mobileMenuOpen && (
+            <>
+              {/* Backdrop */}
+              <button
+                type="button"
+                className="fixed inset-0 bg-black/60 backdrop-blur-md z-40 md:hidden cursor-default"
+                onClick={() => setMobileMenuOpen(false)}
+                onKeyDown={(e) =>
+                  e.key === "Escape" && setMobileMenuOpen(false)
+                }
+                aria-label="Close menu"
+              />
+              {/* Menu panel */}
+              <div className="fixed top-0 right-0 h-full w-64 bg-black z-50 md:hidden shadow-xl">
+                <div className="flex justify-end p-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setMobileMenuOpen(false)}
+                    aria-label="Close menu"
+                  >
+                    <XIcon className="w-5 h-5" />
+                  </Button>
+                </div>
+                <div className="flex flex-col gap-4 px-6 py-4">
+                  <NavLinks onClick={() => setMobileMenuOpen(false)} />
+                  <div className="pt-4 mt-4 border-t border-gray-700">
+                    <AuthButtons onAction={() => setMobileMenuOpen(false)} />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
           <main className="flex-grow p-4">
             <Outlet />
           </main>
