@@ -13,12 +13,15 @@ export const TEST_USER = {
 
 export type TestFixtures = {
   authenticatedPage: Page
+  logoutTestPage: Page
   testUserEmail: string
 }
 
-// This token matches the one in scripts/seed-e2e-data.ts
-// The session is pre-created in the database when seeding
+// These tokens match the ones in scripts/seed-e2e-data.ts
+// Sessions are pre-created in the database when seeding
 const E2E_SESSION_TOKEN = "e2e-test-session-token-12345"
+// Separate session for logout test - can be safely invalidated without affecting other tests
+const E2E_LOGOUT_SESSION_TOKEN = "e2e-logout-session-token-67890"
 
 /**
  * Sign a session token using HMAC-SHA256 with BETTER_AUTH_SECRET.
@@ -36,13 +39,17 @@ function signSessionToken(token: string): string {
 /**
  * Set the session cookie for the pre-seeded e2e-user.
  * This allows tests to be authenticated without going through the login UI.
+ * @param token - The session token to use (defaults to main E2E session)
  */
-async function setAuthCookie(context: BrowserContext): Promise<void> {
+async function setAuthCookie(
+  context: BrowserContext,
+  token: string = E2E_SESSION_TOKEN,
+): Promise<void> {
   const baseUrl = process.env.E2E_BASE_URL || "http://localhost:3001"
   const domain = new URL(baseUrl).hostname
 
   // Sign the token as better-auth expects
-  const signedToken = signSessionToken(E2E_SESSION_TOKEN)
+  const signedToken = signSessionToken(token)
 
   // Set the session cookie that better-auth expects
   await context.addCookies([
@@ -76,7 +83,22 @@ export const test = base.extend<TestFixtures>({
 
     // Navigate and verify authentication worked by checking for user name in header
     await page.goto("/")
-    await page.waitForSelector(`text=${TEST_USER.name}`, { timeout: 5000 })
+    await expect(page.locator("header").getByText(TEST_USER.name)).toBeVisible({
+      timeout: 5000,
+    })
+
+    await use(page)
+  },
+  logoutTestPage: async ({ page, context }, use) => {
+    // Use separate logout session token - can be safely invalidated
+    // without affecting other parallel tests
+    await setAuthCookie(context, E2E_LOGOUT_SESSION_TOKEN)
+
+    // Navigate and verify authentication worked
+    await page.goto("/")
+    await expect(page.locator("header").getByText(TEST_USER.name)).toBeVisible({
+      timeout: 5000,
+    })
 
     await use(page)
   },
@@ -91,7 +113,8 @@ export async function registerAndLoginViaUI(
   page: Page,
   email?: string,
 ): Promise<void> {
-  const uniqueEmail = email || `e2e-test-${Date.now()}-${userCounter++}@example.com`
+  const uniqueEmail =
+    email || `e2e-test-${Date.now()}-${userCounter++}@example.com`
 
   await page.goto("/login")
 
@@ -108,7 +131,9 @@ export async function registerAndLoginViaUI(
   // Fill in registration form with unique email
   await nameInput.fill(TEST_USER.name)
   await page.locator('input[placeholder="E-Mail"]').fill(uniqueEmail)
-  await page.locator('input[placeholder="Passwort"]').fill("e2e-test-password-123")
+  await page
+    .locator('input[placeholder="Passwort"]')
+    .fill("e2e-test-password-123")
   await page.locator('button[type="submit"]').click()
 
   // Wait for redirect to home
@@ -136,7 +161,9 @@ export async function loginViaUI(
 export async function expectLoggedIn(page: Page): Promise<void> {
   // When logged in, the "Add Item" button should be visible on items page
   await page.goto("/items")
-  await expect(page.locator('a[href="/items/add"]')).toBeVisible({ timeout: 5000 })
+  await expect(page.locator('a[href="/items/add"]')).toBeVisible({
+    timeout: 5000,
+  })
 }
 
 /**

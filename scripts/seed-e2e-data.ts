@@ -43,6 +43,15 @@ const TEST_SESSION = {
   expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 }
 
+// Separate session specifically for logout test - can be safely invalidated
+export const E2E_LOGOUT_SESSION_TOKEN = "e2e-logout-session-token-67890"
+const LOGOUT_TEST_SESSION = {
+  id: "e2e-logout-session-id",
+  userId: "e2e-user",
+  token: E2E_LOGOUT_SESSION_TOKEN,
+  expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+}
+
 // Hierarchical Locations (3 levels deep)
 const TEST_LOCATIONS = [
   // Root Level (IDs 1-3)
@@ -251,8 +260,8 @@ async function seed() {
     }
     console.log(`  Inserted ${TEST_USERS.length} users`)
 
-    // 2.5 Insert pre-created session for e2e-user (for fast auth in tests)
-    console.log("Inserting test session...")
+    // 2.5 Insert pre-created sessions for e2e-user (for fast auth in tests)
+    console.log("Inserting test sessions...")
     await db.execute(sql`
       INSERT INTO sessions (id, user_id, token, expires_at, created_at, updated_at)
       VALUES (
@@ -264,7 +273,19 @@ async function seed() {
         NOW()
       )
     `)
-    console.log(`  Inserted 1 session for e2e-user`)
+    // Separate session for logout test - can be safely invalidated without affecting other tests
+    await db.execute(sql`
+      INSERT INTO sessions (id, user_id, token, expires_at, created_at, updated_at)
+      VALUES (
+        ${LOGOUT_TEST_SESSION.id},
+        ${LOGOUT_TEST_SESSION.userId},
+        ${LOGOUT_TEST_SESSION.token},
+        ${LOGOUT_TEST_SESSION.expiresAt},
+        NOW(),
+        NOW()
+      )
+    `)
+    console.log(`  Inserted 2 sessions for e2e-user (main + logout test)`)
 
     // 3. Insert locations (with explicit IDs using OVERRIDING SYSTEM VALUE)
     console.log("Inserting locations...")
@@ -331,11 +352,12 @@ async function seed() {
     console.log("\nE2E database seed completed successfully!")
     console.log(`Summary:`)
     console.log(`  - Users: ${TEST_USERS.length}`)
-    console.log(`  - Sessions: 1 (pre-authenticated e2e-user)`)
+    console.log(`  - Sessions: 2 (main + logout test)`)
     console.log(`  - Locations: ${TEST_LOCATIONS.length}`)
     console.log(`  - Items: ${TEST_ITEMS.length}`)
     console.log(`  - Changelog entries: ${TEST_CHANGELOG.length}`)
     console.log(`\nE2E Session Token: ${E2E_SESSION_TOKEN}`)
+    console.log(`E2E Logout Session Token: ${E2E_LOGOUT_SESSION_TOKEN}`)
   } catch (error) {
     console.error("Seed failed:", error)
     process.exit(1)
