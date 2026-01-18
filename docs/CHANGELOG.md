@@ -4,6 +4,20 @@ All notable changes to MSB Inventory will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 2026-01-18
+
+### Added
+- Research documentation: `docs/research/authentik-better-auth-data-transfer.md` - comprehensive guide for passing roles and avatars from Authentik to better-auth
+- OIDC profile logging in `mapProfileToUser` for debugging Authentik claims
+- Account linking configuration for Authentik OAuth (`trustedProviders: ["authentik"]`)
+
+### Technical
+- Researched Authentik Scope Mappings with `user.ak_groups.all()` for group claims
+- Documented better-auth `mapProfileToUser` custom claims handling
+- Identified session cache limitation for role updates ([better-auth Issue #5772](https://github.com/better-auth/better-auth/issues/5772))
+
+---
+
 ## 2026-01-17
 
 ### Added

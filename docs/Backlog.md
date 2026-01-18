@@ -135,7 +135,7 @@ test('editor-only route blocks users', async ({ page }) => {
 
 ### AUTH-006: Configure Authentik group to role mapping
 **Priority:** Medium
-**Research:** [authentik-oauth.md](./research/authentik-oauth.md#group-claims)
+**Research:** [authentik-better-auth-data-transfer.md](./research/authentik-better-auth-data-transfer.md)
 **Depends on:** AUTH-005
 
 **Description:**
@@ -143,10 +143,18 @@ test('editor-only route blocks users', async ({ page }) => {
 - Map Authentik groups to local roles via env vars
 - Update role on each OAuth login
 
+**Implementation Reference:**
+See `docs/research/authentik-better-auth-data-transfer.md` for:
+- Authentik Scope Mapping with `user.ak_groups.all()`
+- better-auth `mapProfileToUser` role extraction
+- Environment variable configuration (`AUTHENTIK_ADMIN_GROUPS`, `AUTHENTIK_EDITOR_GROUPS`)
+
 **Acceptance Criteria:**
 - [ ] Authentik groups included in OIDC claims
 - [ ] Environment variables configure mapping
 - [ ] User role updates on re-login
+
+**Known Limitation:** Session cache may require 2 logins for role changes (see Issue #5772)
 
 ---
 

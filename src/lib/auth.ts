@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
-import { genericOAuth } from "better-auth/plugins"
+import { admin, genericOAuth } from "better-auth/plugins"
 import { tanstackStartCookies } from "better-auth/tanstack-start"
 import { db } from "@/src/db"
 import * as schema from "@/src/drizzle/schema"
@@ -22,6 +22,12 @@ export const auth = betterAuth({
       verification: schema.VerificationTable,
     },
   }),
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["authentik"], // Trust Authentik's email verification
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
@@ -38,6 +44,7 @@ export const auth = betterAuth({
     ? [process.env.BETTER_AUTH_URL]
     : ["http://localhost:3000"],
   plugins: [
+    admin(),
     // Conditionally add Authentik OAuth plugin
     ...(authentikConfigured
       ? [
@@ -48,14 +55,29 @@ export const auth = betterAuth({
                 clientId: process.env.AUTHENTIK_CLIENT_ID!,
                 clientSecret: process.env.AUTHENTIK_CLIENT_SECRET!,
                 discoveryUrl: `${process.env.AUTHENTIK_URL}/application/o/${process.env.AUTHENTIK_APP_SLUG || "msb-inventory"}/.well-known/openid-configuration`,
-                scopes: ["openid", "profile", "email"],
-                mapProfileToUser: (profile) => ({
-                  name: profile.name || profile.preferred_username,
-                  // Generate synthetic email if not provided by Authentik
-                  // Uses sub (unique user ID) to ensure uniqueness
-                  email: profile.email || `${profile.sub}@authentik.local`,
-                  image: profile.picture,
-                }),
+                scopes: [],
+                mapProfileToUser: (profile) => {
+                  // DEBUG: Log complete OIDC profile from Authentik
+                  console.log(
+                    "═══════════════════════════════════════════════════════",
+                  )
+                  console.log("🔐 AUTHENTIK OIDC PROFILE DATA")
+                  console.log(
+                    "═══════════════════════════════════════════════════════",
+                  )
+                  console.log(JSON.stringify(profile, null, 2))
+                  console.log(
+                    "═══════════════════════════════════════════════════════",
+                  )
+
+                  return {
+                    name: profile.name || profile.preferred_username,
+                    // Generate synthetic email if not provided by Authentik
+                    // Uses sub (unique user ID) to ensure uniqueness
+                    email: profile.email || `${profile.sub}@authentik.local`,
+                    image: profile.picture,
+                  }
+                },
                 overrideUserInfo: true,
               },
             ],

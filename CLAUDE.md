@@ -153,3 +153,14 @@ Use conventional commits format: `type(scope): description`
 - **Port mapping for local debugging:** Add `ports: "3001:3000"` to `docker-compose.e2e.yml` to access app from host during debugging
 - **Auth verification:** Check for user name in header (`text=${TEST_USER.name}`) instead of feature-specific buttons that may not exist on all pages
 - **Test commands:** Use `bun run test` (Vitest) for unit tests, `bun run e2e` (Playwright) for E2E tests. Note: `bun test` uses Bun's native runner which conflicts with Playwright
+
+### 2026-01-18 - Authentik OIDC Claims & Role Mapping
+- **Authentik groups claim:** Use `user.ak_groups.all()` in Scope Mapping expressions to expose groups:
+  ```python
+  return {"groups": [group.name for group in user.ak_groups.all()]}
+  ```
+- **better-auth mapProfileToUser:** Receives full OIDC profile including custom claims. Use with `overrideUserInfo: true` to update user on each login
+- **Session cache gotcha:** With `session.cookieCache.enabled: true`, role changes from OAuth may require 2 logins to take effect ([Issue #5772](https://github.com/better-auth/better-auth/issues/5772))
+- **Account linking:** Enable with `account.accountLinking.enabled: true` and `trustedProviders: ["authentik"]` to link OAuth accounts to existing email users
+- **Debugging OIDC claims:** Add `console.log(JSON.stringify(profile, null, 2))` in `mapProfileToUser` to see all claims from provider
+- **Authentik avatars:** Standard `picture` claim in `profile` scope, or custom via `user.attributes.get("avatar")` in Property Mapping
