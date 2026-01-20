@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { Clock, Image, MapPin, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import {
@@ -12,7 +13,6 @@ import {
   fetchInventoryStats,
   type InventoryStats,
 } from "@/src/actions/statsActions"
-import { Package, MapPin, Image, Clock } from "lucide-react"
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,13 +35,19 @@ interface StatCardProps {
 function StatCard({ title, value, description, icon }: StatCardProps) {
   return (
     <Card className="transition-all hover:shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className="text-muted-foreground">{icon}</div>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 md:p-6 md:pb-2">
+        <CardTitle className="text-[11px] uppercase tracking-wide text-muted-foreground md:text-sm md:normal-case md:tracking-normal md:text-foreground font-medium">
+          {title}
+        </CardTitle>
+        <div className="text-primary/70 [&>svg]:h-5 [&>svg]:w-5">{icon}</div>
       </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold">{value.toLocaleString("de-DE")}</div>
-        <CardDescription className="mt-1">{description}</CardDescription>
+      <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+        <div className="text-2xl md:text-3xl font-bold tracking-tight">
+          {value.toLocaleString("de-DE")}
+        </div>
+        <CardDescription className="mt-0.5 text-[10px] md:text-sm text-muted-foreground/80">
+          {description}
+        </CardDescription>
       </CardContent>
     </Card>
   )
@@ -59,7 +65,7 @@ function StatsGrid({ stats }: { stats: InventoryStats }) {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <StatCard
           title="Gesamte Items"
           value={stats.totalItems}
