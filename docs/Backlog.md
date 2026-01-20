@@ -231,3 +231,188 @@ Configure registration restrictions when open signup period ends.
 **Research:** [better-auth.md](./research/better-auth.md#password-reset)
 
 Implement password reset via email.
+
+---
+
+## Architecture Improvements
+
+Code consolidation and structural improvements identified via architectural review (2026-01-19).
+
+### ARCH-001: Extract shared image utilities
+**Priority:** High
+**Effort:** 1 day
+
+**Description:**
+Extract duplicated image handling code into `src/lib/imageUtils.ts`.
+
+**Current Duplication:**
+- `src/routes/items/add.tsx` - `decodeBase64Image()` function
+- `src/routes/locations.tsx` - `decodeBase64Image()` function
+- `src/actions/locationActions.ts` - `decodeBase64Image()` function (lines 49-58)
+
+**Implementation:**
+```typescript
+// src/lib/imageUtils.ts
+export function decodeBase64Image(base64: string): { buffer: Buffer; mimeType: string }
+export function saveImage(buffer: Buffer, filename: string, directory: string): Promise<string>
+export function deleteImage(path: string): Promise<void>
+```
+
+**Acceptance Criteria:**
+- [ ] `src/lib/imageUtils.ts` created with shared functions
+- [ ] All 3 files refactored to use shared utility
+- [ ] Unit tests for image utilities
+- [ ] No functional changes to image upload behavior
+
+---
+
+### ARCH-002: Standardize error handling
+**Priority:** Medium
+**Effort:** 1 day
+
+**Description:**
+Create consistent error handling with structured `AppError` class.
+
+**Current Issues:**
+- `aiActions.ts` has excellent granular error handling (lines 62-115)
+- `authGuardMiddleware` throws plain strings: `throw new Error("Unauthorized")`
+- No standardized error response format across server functions
+
+**Implementation:**
+```typescript
+// src/lib/errors.ts
+export class AppError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public statusCode: number = 400,
+    public details?: Record<string, unknown>
+  ) {
+    super(message)
+  }
+}
+
+// Usage
+throw new AppError('UNAUTHORIZED', 'Authentication required', 401)
+throw new AppError('VALIDATION_ERROR', 'Invalid item ID', 400, { field: 'itemId' })
+```
+
+**Acceptance Criteria:**
+- [ ] `src/lib/errors.ts` created with `AppError` class
+- [ ] `authMiddleware.ts` uses `AppError` instead of plain strings
+- [ ] Error responses include consistent `{ code, message, statusCode }` format
+- [ ] Client-side error handling updated to use error codes
+
+---
+
+### ARCH-003: Extract generic undo handler
+**Priority:** High
+**Effort:** 1-2 days
+
+**Description:**
+Consolidate near-identical `undoItemChange` and `undoLocationChange` functions into a generic handler.
+
+**Current Duplication:**
+- `src/actions/changelogActions.ts` lines 107-209: `undoItemChange()` (~100 lines)
+- `src/actions/changelogActions.ts` lines 211-305: `undoLocationChange()` (~100 lines)
+- Functions are 90% identical, differing only in repository and field handling
+
+**Implementation:**
+```typescript
+// src/lib/changelogUtils.ts
+interface EntityRestorer<T> {
+  repository: { restore: (data: T) => Promise<T>; delete: (id: number) => Promise<void> }
+  excludeFields: string[]
+  entityType: 'item' | 'location'
+}
+
+export async function undoEntityChange<T>(
+  changelogEntry: ChangelogEntry,
+  restorer: EntityRestorer<T>,
+  context: AuthContext
+): Promise<UndoResult>
+```
+
+**Acceptance Criteria:**
+- [ ] `src/lib/changelogUtils.ts` created with generic undo handler
+- [ ] Both `undoItemChange` and `undoLocationChange` use shared handler
+- [ ] Conflict detection logic preserved
+- [ ] Existing undo E2E tests pass
+
+---
+
+### ARCH-004: Move server logic from route files to actions
+**Priority:** Medium
+**Effort:** 2-3 days
+
+**Description:**
+Extract business logic from route files into dedicated action files.
+
+**Current Issues:**
+- `src/routes/items/add.tsx` contains ~80 lines of server logic including:
+  - `addItem` server function with direct repository calls
+  - File I/O operations
+  - Changelog creation
+- Violates single responsibility principle
+- Harder to test in isolation
+
+**Implementation:**
+1. Move `addItem` logic to `src/actions/itemActions.ts`
+2. Keep route file focused on UI rendering and loader/action wiring
+3. Apply same pattern to any other routes with embedded server logic
+
+**Acceptance Criteria:**
+- [ ] `addItem` moved to `itemActions.ts`
+- [ ] Route file only handles UI and calls action functions
+- [ ] No direct repository instantiation in route files
+- [ ] Existing functionality preserved
+
+---
+
+### ARCH-005: Consolidate changelog recording
+**Priority:** Medium
+**Effort:** 1 day
+
+**Description:**
+Extract repeated changelog recording pattern into reusable helper.
+
+**Current Duplication (4+ locations):**
+- `src/actions/itemActions.ts` lines 67-76, 100-109
+- `src/actions/locationActions.ts` lines 91-101, 180-188, 212-220
+
+**Pattern:**
+```typescript
+await new ChangelogRepository().create({
+  entityType: "item" | "location",
+  entityId: id,
+  changeType: "create" | "update" | "delete",
+  userId: context.userId,
+  beforeValues: ...,
+  afterValues: ...,
+  changedFields: [...]
+})
+```
+
+**Implementation:**
+```typescript
+// src/lib/changelogUtils.ts
+export async function recordChange(params: {
+  entityType: 'item' | 'location'
+  entityId: number
+  changeType: 'create' | 'update' | 'delete'
+  userId: string | null
+  before?: Record<string, unknown>
+  after?: Record<string, unknown>
+}): Promise<void>
+
+export function detectChangedFields(
+  before: Record<string, unknown>,
+  after: Record<string, unknown>
+): string[]
+```
+
+**Acceptance Criteria:**
+- [ ] `recordChange` helper created in `changelogUtils.ts`
+- [ ] `detectChangedFields` utility extracted
+- [ ] All 4+ duplication sites refactored
+- [ ] Changelog E2E tests pass
