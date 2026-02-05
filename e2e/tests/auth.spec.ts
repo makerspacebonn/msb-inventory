@@ -37,9 +37,8 @@ authenticatedTest.describe("Session Management", () => {
       await expect(logoutButton).toBeVisible()
       await logoutButton.click()
 
-      // Should no longer see authenticated UI elements
-      await page.goto("/items")
-      await expect(page.locator('a[href="/items/add"]')).not.toBeVisible()
+      // Should see login button instead of user name
+      await expect(page.locator('a[href="/login"]')).toBeVisible()
     },
   )
 })

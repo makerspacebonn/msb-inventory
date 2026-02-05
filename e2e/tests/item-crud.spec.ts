@@ -5,7 +5,8 @@ test.describe("Item CRUD Operations", () => {
     test("should navigate to add item page when authenticated", async ({ authenticatedPage: page }) => {
       await page.goto("/items")
 
-      const addButton = page.locator('a[href="/items/add"]')
+      // Use navbar button (first match) - there's also one in the items page content
+      const addButton = page.locator('a[href="/items/add"]').first()
       await expect(addButton).toBeVisible()
 
       await addButton.click()

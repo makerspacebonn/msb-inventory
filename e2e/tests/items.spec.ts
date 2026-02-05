@@ -65,9 +65,15 @@ test.describe("Items Page", () => {
     await expect(page).toHaveURL(/\/i\/\d+/)
   })
 
-  test("should show Add Item button only when authenticated", async ({ page }) => {
-    // Unauthenticated - button should not be visible
-    const addButton = page.locator('a[href="/items/add"]')
-    await expect(addButton).not.toBeVisible()
+  test("should require authentication to add items", async ({ page }) => {
+    // Add item button is always visible in navbar, but page requires auth
+    const addButton = page.locator('a[href="/items/add"]').first()
+    await expect(addButton).toBeVisible()
+
+    await addButton.click()
+    await expect(page).toHaveURL("/items/add")
+
+    // Should show unauthorized error
+    await expect(page.getByText("Unauthorized")).toBeVisible()
   })
 })
