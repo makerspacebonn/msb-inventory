@@ -17,8 +17,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - `components/location/LocationBrowser.tsx` - Extended with optional props for displaying recent locations
 - `src/routes/items/$itemId/location/add.tsx` - Integrated recent locations with save-on-confirm and click-to-select
+- `src/routes/__root.tsx` - Restructured nav with three-column flex layout for centered add button
+
+### Fixed
+- E2E tests updated for new navbar button (selector disambiguation, auth verification changes)
 
 ### Technical
+- Completed UX-003: Add item button in navigation bar
 - Completed UX-002: Remember recent locations when adding items
 - localStorage key: `msb-inventory:recent-locations`
 - Maximum 5 recent locations, most recent first, with deduplication

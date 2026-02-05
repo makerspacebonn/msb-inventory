@@ -179,3 +179,7 @@ Use conventional commits format: `type(scope): description`
   }
   ```
 - **Extending component props:** Add optional props with defaults (`showRecentLocations = false`) for backward compatibility
+
+### 2026-02-05 - Navigation Button & E2E Test Updates (UX-003)
+- **Global UI elements break selectors:** When adding UI elements that appear on every page (like navbar buttons), existing E2E selectors may match multiple elements. Use `.first()` or more specific selectors.
+- **Auth test assumptions:** Tests that check for button visibility to verify auth state need updating when buttons become globally visible. Prefer checking for login button presence or error messages instead.
