@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## 2026-02-05
 
 ### Added
+- **UX-003: Add Item Button in Navigation** - Centered "Item hinzufügen" button with plus icon in the main navigation bar for quick access to item creation from any page
 - **UX-002: Recent Locations Feature** - Quick-select chips for recently used locations when adding items
 - `lib/recent-locations.ts` - localStorage utilities for persisting recent locations
 - `src/hooks/useRecentLocations.ts` - SSR-safe React hook for recent locations state

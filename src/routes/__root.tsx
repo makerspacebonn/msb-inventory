@@ -8,7 +8,7 @@ import {
   Scripts,
   useRouter,
 } from "@tanstack/react-router"
-import { LogInIcon, LogOutIcon, MenuIcon, XIcon } from "lucide-react"
+import { LogInIcon, LogOutIcon, MenuIcon, PlusIcon, XIcon } from "lucide-react"
 import { type ReactNode, useState } from "react"
 import { getAuthContext } from "@/src/actions/authActions"
 import { AuthProvider, useAuth } from "@/src/context/AuthContext"
@@ -169,7 +169,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
           <header className="py-2 px-4 shadow border-b border-gray-800">
             <nav className="flex flex-row justify-between items-center gap-2">
               {/* Logo and version */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1">
                 <a href="/" className="w-10">
                   <img
                     src="/img/makerspace-bonn-signet.png"
@@ -181,8 +181,16 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 </span>
               </div>
 
+              {/* Center: Add Item button */}
+              <Button variant="secondary" size="sm" asChild>
+                <Link to="/items/add">
+                  <PlusIcon className="w-4 h-4 mr-1" />
+                  Item hinzufügen
+                </Link>
+              </Button>
+
               {/* Desktop navigation */}
-              <div className="hidden md:flex items-center gap-6">
+              <div className="hidden md:flex items-center gap-6 flex-1 justify-end">
                 <NavLinks />
                 <AuthButtons />
               </div>

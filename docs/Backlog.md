@@ -483,3 +483,24 @@ When adding an item, remember the last 5 selected locations in localStorage and 
 - [x] Maximum 5 recent locations, most recent first
 - [x] Clicking recent location selects it
 - [x] Recent locations persist across sessions
+
+---
+
+### UX-003: Add item button in navigation bar ✅ COMPLETED 2026-02-05
+**Priority:** Low
+**Effort:** 0.25 day
+
+**Description:**
+Add a prominent "Item hinzufügen" button to the center of the main navigation bar for quick access to item creation from any page.
+
+**Implementation Notes:**
+- Added to `src/routes/__root.tsx`
+- Uses three-column flex layout with `flex-1` on sides for true centering
+- Button uses `variant="secondary"` for visual distinction
+- Links to existing `/items/add` route
+
+**Acceptance Criteria:**
+- [x] Button visible in center of navigation bar
+- [x] Button has plus icon and "Item hinzufügen" label
+- [x] Button navigates to `/items/add`
+- [x] Layout remains responsive on mobile
