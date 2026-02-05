@@ -416,3 +416,60 @@ export function detectChangedFields(
 - [ ] `detectChangedFields` utility extracted
 - [ ] All 4+ duplication sites refactored
 - [ ] Changelog E2E tests pass
+
+---
+
+## UX Improvements
+
+User experience enhancements for common workflows.
+
+### UX-001: Auto-select newly created location
+**Priority:** Medium
+**Effort:** 0.5 day
+
+**Description:**
+After creating a new location, automatically set it as the active/selected location instead of staying on the previous location or requiring manual navigation.
+
+**Current Behavior:**
+- User creates a new location
+- User must manually navigate to or select the newly created location
+
+**Desired Behavior:**
+- After successful location creation, the new location becomes the active one
+- User can immediately see and work with the new location
+
+**Acceptance Criteria:**
+- [ ] After creating a location, the new location is automatically selected/active
+- [ ] Location list updates to show the new location as current
+- [ ] Works for both top-level and nested location creation
+
+---
+
+### UX-002: Remember recent locations when adding items
+**Priority:** Medium
+**Effort:** 0.5 day
+
+**Description:**
+When adding an item, remember the last 5 selected locations in localStorage and display them as quick-select options below the location search field.
+
+**Current Behavior:**
+- User must search for a location every time they add an item
+- No memory of frequently or recently used locations
+
+**Desired Behavior:**
+- After selecting a location when adding an item, store it in localStorage (max 5, most recent first)
+- Display recent locations as clickable chips/buttons below the location search field
+- Clicking a recent location immediately selects it
+
+**Implementation Notes:**
+- Store in localStorage key: `msb-inventory:recent-locations`
+- Format: `[{ id: number, name: string, path: string }]` (path for display context)
+- Update list on location selection (move to front if exists, add to front if new, trim to 5)
+- Clear individual recent locations if they no longer exist in database
+
+**Acceptance Criteria:**
+- [ ] Recent locations stored in localStorage after selection
+- [ ] Recent locations displayed below search field in item add form
+- [ ] Maximum 5 recent locations, most recent first
+- [ ] Clicking recent location selects it
+- [ ] Recent locations persist across sessions
