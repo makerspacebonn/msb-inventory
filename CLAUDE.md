@@ -164,3 +164,18 @@ Use conventional commits format: `type(scope): description`
 - **Account linking:** Enable with `account.accountLinking.enabled: true` and `trustedProviders: ["authentik"]` to link OAuth accounts to existing email users
 - **Debugging OIDC claims:** Add `console.log(JSON.stringify(profile, null, 2))` in `mapProfileToUser` to see all claims from provider
 - **Authentik avatars:** Standard `picture` claim in `profile` scope, or custom via `user.attributes.get("avatar")` in Property Mapping
+
+### 2026-02-05 - Recent Locations Feature (UX-002)
+- **localStorage pattern:** For client-side persistence, create utilities in `lib/` with SSR guards (`if (typeof window === "undefined") return`)
+- **React hook for localStorage:** Use `useState` + `useEffect` for SSR-safe loading, with `isLoaded` flag to prevent hydration mismatch
+- **Composing location paths:** When storing location hierarchy, compute path at save time from `locationPath.map(l => l.name).join(" → ")`
+- **Lazy validation pattern:** When selecting from cached data (like recent locations), validate existence before using:
+  ```typescript
+  const location = await fetchLocationById({ data: recent.id })
+  if (!location) {
+    removeFromCache(recent.id)
+    toast.error("Location nicht mehr vorhanden")
+    return
+  }
+  ```
+- **Extending component props:** Add optional props with defaults (`showRecentLocations = false`) for backward compatibility

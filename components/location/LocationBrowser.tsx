@@ -2,7 +2,9 @@ import { Input } from "@components/ui/input"
 import type { Location } from "@server/app/types"
 import { MapPinIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react"
 import { type ReactNode, useState } from "react"
+import type { RecentLocation } from "@/lib/recent-locations"
 import { searchLocations } from "@/src/actions/locationActions"
+import { RecentLocationsList } from "./RecentLocationsList"
 
 type LocationWithPath = Location & { path: string }
 
@@ -14,6 +16,11 @@ type LocationBrowserProps = {
   onStartCreate?: () => void
   renderHeader?: () => ReactNode
   renderFooter?: () => ReactNode
+  // Recent locations props
+  recentLocations?: RecentLocation[]
+  onRecentLocationSelect?: (location: RecentLocation) => void
+  onRecentLocationRemove?: (locationId: number) => void
+  showRecentLocations?: boolean
 }
 
 export function LocationBrowser({
@@ -24,6 +31,10 @@ export function LocationBrowser({
   onStartCreate,
   renderHeader,
   renderFooter,
+  recentLocations,
+  onRecentLocationSelect,
+  onRecentLocationRemove,
+  showRecentLocations = false,
 }: LocationBrowserProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<LocationWithPath[]>([])
@@ -112,6 +123,20 @@ export function LocationBrowser({
           )}
         </div>
       )}
+
+      {/* Recent locations - show when not searching and at root */}
+      {!searchQuery &&
+        showRecentLocations &&
+        recentLocations &&
+        recentLocations.length > 0 &&
+        onRecentLocationSelect &&
+        onRecentLocationRemove && (
+          <RecentLocationsList
+            locations={recentLocations}
+            onSelect={onRecentLocationSelect}
+            onRemove={onRecentLocationRemove}
+          />
+        )}
 
       {/* Browse mode - only show when not searching */}
       {!searchQuery && (

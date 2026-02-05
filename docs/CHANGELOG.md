@@ -4,6 +4,27 @@ All notable changes to MSB Inventory will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 2026-02-05
+
+### Added
+- **UX-002: Recent Locations Feature** - Quick-select chips for recently used locations when adding items
+- `lib/recent-locations.ts` - localStorage utilities for persisting recent locations
+- `src/hooks/useRecentLocations.ts` - SSR-safe React hook for recent locations state
+- `components/location/RecentLocationsList.tsx` - Pill-shaped chip UI with clock icon and remove buttons
+- `fetchLocationById` server function in `locationActions.ts` for validating cached locations
+
+### Changed
+- `components/location/LocationBrowser.tsx` - Extended with optional props for displaying recent locations
+- `src/routes/items/$itemId/location/add.tsx` - Integrated recent locations with save-on-confirm and click-to-select
+
+### Technical
+- Completed UX-002: Remember recent locations when adding items
+- localStorage key: `msb-inventory:recent-locations`
+- Maximum 5 recent locations, most recent first, with deduplication
+- Lazy validation on click - deleted locations show toast and auto-remove from list
+
+---
+
 ## 2026-01-18
 
 ### Added

@@ -10,6 +10,12 @@ export const fetchRootLocations = createServerFn().handler(async () => {
   return new LocationRepository().findRootLocations()
 })
 
+export const fetchLocationById = createServerFn()
+  .inputValidator((locationId: number) => locationId)
+  .handler(async ({ data: locationId }) => {
+    return new LocationRepository().findById(locationId)
+  })
+
 export const fetchLocationChain = createServerFn()
   .inputValidator((locationId: number) => locationId)
   .handler(async ({ data: locationId }) => {
@@ -95,9 +101,12 @@ export const createLocation = createServerFn({ method: "POST" })
       userId: context.userId,
       beforeValues: null,
       afterValues: location as unknown as Record<string, unknown>,
-      changedFields: ["name", "parentId", "parentLocationMarker", "imagePath"].filter(
-        (field) => data[field as keyof typeof data] !== undefined
-      ),
+      changedFields: [
+        "name",
+        "parentId",
+        "parentLocationMarker",
+        "imagePath",
+      ].filter((field) => data[field as keyof typeof data] !== undefined),
     })
 
     return { success: true, location }
@@ -131,11 +140,17 @@ export const updateLocation = createServerFn({ method: "POST" })
       changedFields.push("name")
       updateData.name = data.name
     }
-    if (data.description !== undefined && data.description !== beforeLocation.description) {
+    if (
+      data.description !== undefined &&
+      data.description !== beforeLocation.description
+    ) {
       changedFields.push("description")
       updateData.description = data.description
     }
-    if (data.parentId !== undefined && data.parentId !== beforeLocation.parentId) {
+    if (
+      data.parentId !== undefined &&
+      data.parentId !== beforeLocation.parentId
+    ) {
       changedFields.push("parentId")
       updateData.parentId = data.parentId
     }

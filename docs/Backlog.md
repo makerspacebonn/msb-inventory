@@ -445,7 +445,7 @@ After creating a new location, automatically set it as the active/selected locat
 
 ---
 
-### UX-002: Remember recent locations when adding items
+### UX-002: Remember recent locations when adding items ✅ COMPLETED 2026-02-05
 **Priority:** Medium
 **Effort:** 0.5 day
 
@@ -467,9 +467,19 @@ When adding an item, remember the last 5 selected locations in localStorage and 
 - Update list on location selection (move to front if exists, add to front if new, trim to 5)
 - Clear individual recent locations if they no longer exist in database
 
+**Files Created:**
+- `lib/recent-locations.ts` - localStorage utilities
+- `src/hooks/useRecentLocations.ts` - SSR-safe React hook
+- `components/location/RecentLocationsList.tsx` - Pill chip UI component
+
+**Files Modified:**
+- `components/location/LocationBrowser.tsx` - Added recent locations props
+- `src/actions/locationActions.ts` - Added `fetchLocationById`
+- `src/routes/items/$itemId/location/add.tsx` - Full integration
+
 **Acceptance Criteria:**
-- [ ] Recent locations stored in localStorage after selection
-- [ ] Recent locations displayed below search field in item add form
-- [ ] Maximum 5 recent locations, most recent first
-- [ ] Clicking recent location selects it
-- [ ] Recent locations persist across sessions
+- [x] Recent locations stored in localStorage after selection
+- [x] Recent locations displayed below search field in item add form
+- [x] Maximum 5 recent locations, most recent first
+- [x] Clicking recent location selects it
+- [x] Recent locations persist across sessions

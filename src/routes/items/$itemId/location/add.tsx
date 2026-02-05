@@ -10,13 +10,17 @@ import {
   MapPinIcon,
 } from "lucide-react"
 import { type MouseEvent, type RefObject, useRef, useState } from "react"
+import { toast } from "sonner"
+import type { RecentLocation } from "@/lib/recent-locations"
 import { fetchItem, setItemLocation } from "@/src/actions/itemActions"
 import {
   createLocation,
   fetchChildLocations,
+  fetchLocationById,
   fetchLocationChain,
   fetchRootLocations,
 } from "@/src/actions/locationActions"
+import { useRecentLocations } from "@/src/hooks/useRecentLocations"
 
 // Types
 type MarkerPosition = { x: number; y: number }
@@ -303,6 +307,14 @@ function RouteComponent() {
   const navigate = useNavigate()
   const imageRef = useRef<HTMLImageElement>(null)
 
+  // Recent locations
+  const {
+    recentLocations,
+    isLoaded: recentLocationsLoaded,
+    addRecentLocation,
+    removeRecentLocation,
+  } = useRecentLocations()
+
   // Location navigation
   const {
     currentLocations,
@@ -347,6 +359,19 @@ function RouteComponent() {
 
   const handleConfirmMarker = async () => {
     if (!selectedLocation) return
+
+    // Save to recent locations before navigating away
+    const pathParts = [
+      ...locationPath.map((l) => l.name),
+      selectedLocation.name,
+    ]
+    const path = pathParts.join(" → ")
+    addRecentLocation({
+      id: selectedLocation.id,
+      name: selectedLocation.name,
+      path,
+    })
+
     await setItemLocation({
       data: {
         itemId: parseInt(itemId, 10),
@@ -406,6 +431,23 @@ function RouteComponent() {
 
   const handleCancel = () => {
     navigate({ to: "/i/$itemId", params: { itemId } })
+  }
+
+  const handleRecentLocationSelect = async (recent: RecentLocation) => {
+    // Validate the location still exists
+    const location = await fetchLocationById({ data: recent.id })
+    if (!location) {
+      // Location was deleted, remove from recent and show error
+      removeRecentLocation(recent.id)
+      toast.error("Location nicht mehr vorhanden", {
+        description: `"${recent.name}" wurde gelöscht.`,
+      })
+      return
+    }
+
+    // Directly select the location to go to marker view
+    // The marker view shows the location name, so breadcrumb context isn't needed
+    handleSelect(location)
   }
 
   // Render appropriate view based on state
@@ -485,6 +527,10 @@ function RouteComponent() {
         onLocationClick={navigateToLocation}
         onBreadcrumbClick={navigateToBreadcrumb}
         onStartCreate={handleStartCreate}
+        recentLocations={recentLocationsLoaded ? recentLocations : []}
+        onRecentLocationSelect={handleRecentLocationSelect}
+        onRecentLocationRemove={removeRecentLocation}
+        showRecentLocations={true}
         renderHeader={() =>
           locationPath.length > 0 ? (
             <div className="mb-4">
