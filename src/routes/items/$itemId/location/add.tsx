@@ -309,7 +309,6 @@ function RouteComponent() {
     locationPath,
     navigateToLocation,
     navigateToBreadcrumb,
-    addLocation,
   } = useLocationNavigation(rootLocations, initialLocations, initialPath)
 
   // Selection state
@@ -398,9 +397,10 @@ function RouteComponent() {
     })
 
     if (result.success && result.location) {
-      addLocation(result.location)
       setCreateState({ isCreating: false, name: "", image: "", pending: null })
       setMarkerPosition(null)
+      // Navigate into the newly created location (show it, don't select it)
+      await navigateToLocation(result.location)
     }
   }
 

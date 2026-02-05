@@ -13,12 +13,7 @@ import {
   DialogTrigger,
 } from "@components/ui/dialog"
 import type { Item, Location } from "@server/app/types"
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-  useRouter,
-} from "@tanstack/react-router"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import {
   CheckIcon,
@@ -163,7 +158,6 @@ function RouteComponent() {
   const { currentLocation, locationPath, childLocations, items } =
     Route.useLoaderData()
   const navigate = useNavigate()
-  const router = useRouter()
   const { isLoggedIn } = useAuth()
   const imageRef = useRef<HTMLImageElement>(null)
   const [newImage, setNewImage] = useState("")
@@ -270,7 +264,7 @@ function RouteComponent() {
       setCreateImage("")
       setPendingCreate(null)
       setMarkerPosition(null)
-      await router.invalidate()
+      await navigate({ to: "/locations", search: { id: result.location.id } })
     }
   }
 
