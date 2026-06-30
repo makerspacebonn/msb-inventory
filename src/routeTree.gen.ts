@@ -126,7 +126,7 @@ export interface FileRoutesByFullPath {
   '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
   '/items/testedit': typeof ItemsTesteditRoute
-  '/items': typeof ItemsIndexRoute
+  '/items/': typeof ItemsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/e2e/create-session': typeof ApiE2eCreateSessionRoute
   '/backup/download/$': typeof BackupDownloadSplatRoute
@@ -186,7 +186,7 @@ export interface FileRouteTypes {
     | '/img/$'
     | '/items/add'
     | '/items/testedit'
-    | '/items'
+    | '/items/'
     | '/api/auth/$'
     | '/api/e2e/create-session'
     | '/backup/download/$'
@@ -304,7 +304,7 @@ declare module '@tanstack/react-router' {
     '/items/': {
       id: '/items/'
       path: '/items'
-      fullPath: '/items'
+      fullPath: '/items/'
       preLoaderRoute: typeof ItemsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
