@@ -8,8 +8,10 @@ import { signIn, signUp } from "@/src/lib/auth-client"
 
 const getAuthConfig = createServerFn().handler(async () => {
   // Import dynamically to avoid bundling server code in client
-  const { authentikConfigured } = await import("@/src/lib/auth")
-  return { authentikConfigured }
+  const { authentikConfigured, kanidmConfigured } = await import(
+    "@/src/lib/auth"
+  )
+  return { authentikConfigured, kanidmConfigured }
 })
 
 export const Route = createFileRoute("/login")({
@@ -19,32 +21,38 @@ export const Route = createFileRoute("/login")({
   }),
   loader: async () => {
     const config = await getAuthConfig()
-    return { showAuthentik: config.authentikConfigured }
+    return {
+      showAuthentik: config.authentikConfigured,
+      showKanidm: config.kanidmConfigured,
+    }
   },
 })
 
 function LoginPage() {
-  const { showAuthentik } = Route.useLoaderData()
+  const { showAuthentik, showKanidm } = Route.useLoaderData()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const handleAuthentikLogin = async () => {
+  const handleOAuthLogin = async (
+    providerId: "authentik" | "kanidm",
+    label: string,
+  ) => {
     setLoading(true)
     setError("")
     try {
       const result = await signIn.oauth2({
-        providerId: "authentik",
+        providerId,
         callbackURL: "/",
       })
       // If we get here without redirect, there was an error
       if (result?.error) {
-        setError(result.error.message || "Authentik Login fehlgeschlagen")
+        setError(result.error.message || `${label} Login fehlgeschlagen`)
         setLoading(false)
       }
     } catch (err) {
-      console.error("Authentik OAuth error:", err)
+      console.error(`${label} OAuth error:`, err)
       setError(
-        err instanceof Error ? err.message : "Authentik Login fehlgeschlagen",
+        err instanceof Error ? err.message : `${label} Login fehlgeschlagen`,
       )
       setLoading(false)
     }
@@ -54,17 +62,30 @@ function LoginPage() {
     <div className="max-w-md mx-auto mt-20 p-6">
       <h1 className="text-2xl font-bold mb-6 text-center">Anmelden</h1>
       {error && <div>{error}</div>}
-      {showAuthentik && (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={handleAuthentikLogin}
-          disabled={loading}
-        >
-          Mit Authentik anmelden
-        </Button>
-      )}
+      <div className="flex flex-col gap-3">
+        {showAuthentik && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => handleOAuthLogin("authentik", "Authentik")}
+            disabled={loading}
+          >
+            Mit Authentik anmelden
+          </Button>
+        )}
+        {showKanidm && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => handleOAuthLogin("kanidm", "Kanidm")}
+            disabled={loading}
+          >
+            Mit Kanidm anmelden
+          </Button>
+        )}
+      </div>
     </div>
   )
 }
