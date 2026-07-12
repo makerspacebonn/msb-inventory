@@ -12,5 +12,10 @@ dist
 .DS_Store
 *.log
 .tanstack
+# Runtime upload dir (user images + DB backups) — provided by a volume at
+# runtime, must never be baked into the image. Pattern must match the nested
+# path: a bare "container" only matches a top-level dir, not public/container.
 container
+public/container
+**/container
 count.txt
