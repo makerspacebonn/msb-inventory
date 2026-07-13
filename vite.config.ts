@@ -3,7 +3,6 @@ import { devtools } from "@tanstack/devtools-vite"
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import viteReact from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
-import tsConfigPaths from "vite-tsconfig-paths"
 import viteTsConfigPaths from "vite-tsconfig-paths"
 import pkg from "./package.json"
 
@@ -23,8 +22,9 @@ const config = defineConfig({
   },
   plugins: [
     devtools(),
-    tsConfigPaths(),
-    // this is the plugin tha t enables path aliases
+    // Scoped to this project's tsconfig so the plugin does NOT crawl the
+    // filesystem for tsconfig files (that crawl walks into ~/Library and
+    // crashes Bun on macOS with EINTR). Enables the "@/" path aliases.
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],
     }),
