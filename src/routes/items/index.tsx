@@ -10,6 +10,13 @@ import { useAuth } from "@/src/context/AuthContext"
 
 export const Route = createFileRoute("/items/")({
   component: RouteComponent,
+  // Accept an optional ?q= search term (e.g. from the homepage search field).
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+    q:
+      typeof search.q === "string" && search.q.trim() !== ""
+        ? search.q
+        : undefined,
+  }),
   loader: async () => {
     return fetchPaginatedItems({ data: { page: 1, pageSize: 24 } })
   },
@@ -36,12 +43,17 @@ function useDebounce<T>(value: T, delay: number): T {
 
 function RouteComponent() {
   const initialData = Route.useLoaderData()
+  const { q } = Route.useSearch()
   const { isLoggedIn } = useAuth()
 
-  const [searchQuery, setSearchQuery] = useState("")
+  // Seed the search box from the ?q= param so a homepage search lands here
+  // pre-filled; the debounced effect below then runs the search automatically.
+  const [searchQuery, setSearchQuery] = useState(q ?? "")
   const [items, setItems] = useState<Item[]>(initialData.items)
   const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(initialData.page < initialData.totalPages)
+  const [hasMore, setHasMore] = useState(
+    initialData.page < initialData.totalPages,
+  )
   const [isLoading, setIsLoading] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState<Item[] | null>(null)
@@ -95,7 +107,9 @@ function RouteComponent() {
     setIsLoading(true)
     try {
       const nextPage = page + 1
-      const result = await fetchPaginatedItems({ data: { page: nextPage, pageSize: 24 } })
+      const result = await fetchPaginatedItems({
+        data: { page: nextPage, pageSize: 24 },
+      })
       setItems((prev) => [...prev, ...result.items])
       setPage(nextPage)
       setHasMore(nextPage < result.totalPages)
