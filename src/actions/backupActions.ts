@@ -124,7 +124,7 @@ export const listBackups = createServerFn().handler(
 
 export const deleteBackup = createServerFn()
   .middleware([authGuardMiddleware])
-  .inputValidator((filename: string) => filename)
+  .validator((filename: string) => filename)
   .handler(async ({ data: filename }): Promise<{ success: boolean }> => {
     const filePath = path.join(BACKUPS_DIR, filename)
 
@@ -150,7 +150,7 @@ export interface RestoreResult {
 
 export const restoreBackup = createServerFn()
   .middleware([authGuardMiddleware])
-  .inputValidator((filename: string) => filename)
+  .validator((filename: string) => filename)
   .handler(async ({ data: filename }): Promise<RestoreResult> => {
     const filePath = path.join(BACKUPS_DIR, filename)
 

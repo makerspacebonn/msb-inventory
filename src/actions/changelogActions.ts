@@ -12,7 +12,7 @@ import { LocationRepository } from "@/src/repositories/LocationRepository"
 
 export const fetchChangelogPaginated = createServerFn()
   .middleware([authGuardMiddleware])
-  .inputValidator((data: { page: number; pageSize?: number }) => data)
+  .validator((data: { page: number; pageSize?: number }) => data)
   .handler(
     async ({ data }): Promise<PaginatedResult<ChangelogEntryWithUser>> => {
       return new ChangelogRepository().findPaginated(
@@ -24,14 +24,14 @@ export const fetchChangelogPaginated = createServerFn()
 
 export const fetchChangelogEntry = createServerFn()
   .middleware([authGuardMiddleware])
-  .inputValidator((changelogId: number) => changelogId)
+  .validator((changelogId: number) => changelogId)
   .handler(async ({ data: changelogId }): Promise<ChangelogEntry | null> => {
     return (await new ChangelogRepository().findById(changelogId)) ?? null
   })
 
 export const checkUndoConflict = createServerFn()
   .middleware([authGuardMiddleware])
-  .inputValidator((changelogId: number) => changelogId)
+  .validator((changelogId: number) => changelogId)
   .handler(
     async ({
       data: changelogId,
@@ -69,7 +69,7 @@ export const checkUndoConflict = createServerFn()
 
 export const undoChange = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
-  .inputValidator((changelogId: number) => changelogId)
+  .validator((changelogId: number) => changelogId)
   .handler(async ({ data: changelogId, context }): Promise<UndoResult> => {
     const changelogRepo = new ChangelogRepository()
     const entry = await changelogRepo.findById(changelogId)

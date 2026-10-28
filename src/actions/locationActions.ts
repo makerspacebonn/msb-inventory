@@ -11,13 +11,13 @@ export const fetchRootLocations = createServerFn().handler(async () => {
 })
 
 export const fetchLocationById = createServerFn()
-  .inputValidator((locationId: number) => locationId)
+  .validator((locationId: number) => locationId)
   .handler(async ({ data: locationId }) => {
     return new LocationRepository().findById(locationId)
   })
 
 export const fetchLocationChain = createServerFn()
-  .inputValidator((locationId: number) => locationId)
+  .validator((locationId: number) => locationId)
   .handler(async ({ data: locationId }) => {
     const chain = await new LocationRepository().findChainForId(locationId)
     // Chain is returned as [current, parent, grandparent, ...root]
@@ -26,13 +26,13 @@ export const fetchLocationChain = createServerFn()
   })
 
 export const fetchChildLocations = createServerFn()
-  .inputValidator((parentId: number | undefined) => parentId)
+  .validator((parentId: number | undefined) => parentId)
   .handler(async ({ data: parentId }) => {
     return new LocationRepository().findByParentId(parentId)
   })
 
 export const searchLocations = createServerFn()
-  .inputValidator((query: string) => query)
+  .validator((query: string) => query)
   .handler(async ({ data: query }) => {
     if (!query.trim()) return []
     const repo = new LocationRepository()
@@ -65,7 +65,7 @@ function decodeBase64Image(dataString: string) {
 
 export const createLocation = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
-  .inputValidator(
+  .validator(
     (data: {
       name: string
       image?: string
@@ -114,7 +114,7 @@ export const createLocation = createServerFn({ method: "POST" })
 
 export const updateLocation = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
-  .inputValidator(
+  .validator(
     (data: {
       id: number
       name?: string
@@ -207,7 +207,7 @@ export const updateLocation = createServerFn({ method: "POST" })
 
 export const deleteLocation = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
-  .inputValidator((locationId: number) => locationId)
+  .validator((locationId: number) => locationId)
   .handler(async ({ data: locationId, context }) => {
     const locationRepo = new LocationRepository()
     const location = await locationRepo.findById(locationId)

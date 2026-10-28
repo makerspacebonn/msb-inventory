@@ -5,7 +5,7 @@ import { createServerFn } from "@tanstack/react-start"
 import z from "zod/v4"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "")
 
 const imageInputSchema = z.object({
   base64Image: z.string().optional(),
@@ -14,7 +14,7 @@ const imageInputSchema = z.object({
 
 export const describeImageFn = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
-  .inputValidator(imageInputSchema)
+  .validator(imageInputSchema)
   .handler(async ({ data }) => {
     let base64Image: string
 

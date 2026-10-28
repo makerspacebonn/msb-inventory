@@ -18,7 +18,7 @@ type PrintResult = {
 
 export const printLabelFn = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
-  .inputValidator(printLabelSchema)
+  .validator(printLabelSchema)
   .handler(async ({ data }): Promise<{ success: boolean; error?: string }> => {
     const brokerUrl = process.env.MQTT_BROKER_URL
     const username = process.env.MQTT_USERNAME

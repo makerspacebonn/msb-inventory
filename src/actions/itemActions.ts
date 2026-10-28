@@ -11,26 +11,26 @@ import {
 const imagePath = process.env.SAVE_PATH || ""
 
 export const searchItems = createServerFn()
-  .inputValidator((query: string) => query)
+  .validator((query: string) => query)
   .handler(async ({ data: query }): Promise<SearchResult[]> => {
     return new ItemRepository().search(query)
   })
 
 export const fetchPaginatedItems = createServerFn()
-  .inputValidator((data: { page: number; pageSize?: number }) => data)
+  .validator((data: { page: number; pageSize?: number }) => data)
   .handler(async ({ data }): Promise<PaginatedResult<Item>> => {
     return new ItemRepository().findPaginated(data.page, data.pageSize ?? 24)
   })
 
 export const fetchItem = createServerFn()
-  .inputValidator((itemId: number) => itemId)
+  .validator((itemId: number) => itemId)
   .handler(async ({ data: itemId }) => {
     return new ItemRepository().findById(itemId)
   })
 
 export const setItemLocation = createServerFn()
   .middleware([authGuardMiddleware])
-  .inputValidator(
+  .validator(
     (data: {
       itemId: number
       locationId: number
@@ -81,7 +81,7 @@ export const setItemLocation = createServerFn()
 
 export const deleteItem = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
-  .inputValidator((itemId: number) => itemId)
+  .validator((itemId: number) => itemId)
   .handler(async ({ data: itemId, context }) => {
     const itemRepo = new ItemRepository()
     const item = await itemRepo.findById(itemId)

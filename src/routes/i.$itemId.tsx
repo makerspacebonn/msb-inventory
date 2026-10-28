@@ -17,7 +17,7 @@ const ItemIdSchema = z.object({
 })
 
 const fetchItem = createServerFn()
-  .inputValidator(ItemIdSchema)
+  .validator(ItemIdSchema)
   .handler(async ({ data: { itemId } }) => {
     const item = await new ItemRepository().findById(itemId)
     if (item?.locationId) {
@@ -25,13 +25,13 @@ const fetchItem = createServerFn()
         item.locationId,
       )
     }
-    const baseUrl = process.env.BASE_URL! || ""
+    const baseUrl = process.env.BASE_URL || ""
     return { item, baseUrl }
   })
 
 const removeItemLocation = createServerFn()
   .middleware([authGuardMiddleware])
-  .inputValidator(ItemIdSchema)
+  .validator(ItemIdSchema)
   .handler(async ({ data: { itemId } }) => {
     await new ItemRepository().upsert({
       id: itemId,

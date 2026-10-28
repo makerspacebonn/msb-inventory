@@ -31,7 +31,7 @@ Requires Docker. Create `.env` from `.env_exampl   e` before running.
 1. **Server Functions** - Type-safe RPC via `createServerFn()` from `@tanstack/react-start`
    ```typescript
    export const fetchItem = createServerFn()
-     .inputValidator((itemId: number) => itemId)
+     .validator((itemId: number) => itemId)
      .handler(async ({ data: itemId }) => {
        return new ItemRepository().findById(itemId)
      })

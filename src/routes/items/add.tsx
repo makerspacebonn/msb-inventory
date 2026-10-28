@@ -53,7 +53,7 @@ const searchSchema = z.object({
 })
 
 const fetchItemForEdit = createServerFn()
-  .inputValidator((itemId: number) => itemId)
+  .validator((itemId: number) => itemId)
   .handler(async ({ data: itemId }) => {
     return new ItemRepository().findById(itemId)
   })
@@ -126,7 +126,7 @@ function decodeBase64Image(dataString: string) {
 
 const addItem = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
-  .inputValidator(itemSchema)
+  .validator(itemSchema)
   .handler(
     async ({
       data,
@@ -137,8 +137,8 @@ const addItem = createServerFn({ method: "POST" })
       let beforeItem: Item | undefined
 
       // Fetch before state if updating
-      if (isUpdate) {
-        beforeItem = await itemRepo.findById(data.id!)
+      if (data.id) {
+        beforeItem = await itemRepo.findById(data.id)
         if (!beforeItem) {
           return { success: false, error: "Item not found" }
         }
@@ -162,7 +162,7 @@ const addItem = createServerFn({ method: "POST" })
       const newItem = await itemRepo.upsert(data)
 
       // Log to changelog
-      if (newItem && newItem[0]) {
+      if (newItem?.[0]) {
         const savedItem = newItem[0]
 
         if (isUpdate && beforeItem) {
@@ -608,6 +608,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
               <FieldLabel>Links</FieldLabel>
               <div className="space-y-2">
                 {(field.state.value ?? []).map((link, index) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: links have no stable id; keying by content would remount inputs on every keystroke
                   <div key={index} className="flex gap-2 items-start">
                     <div className="flex-1 grid grid-cols-3 gap-2">
                       <Input

@@ -37,7 +37,7 @@ import { LocationRepository } from "@/src/repositories/LocationRepository"
 type MarkerPosition = { x: number; y: number }
 
 const fetchLocationData = createServerFn()
-  .inputValidator((locationId: number | undefined) => locationId)
+  .validator((locationId: number | undefined) => locationId)
   .handler(async ({ data: locationId }) => {
     const locationRepo = new LocationRepository()
     const itemRepo = new ItemRepository()
