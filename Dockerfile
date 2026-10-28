@@ -1,12 +1,12 @@
 # Stage 1: Dependencies
-FROM oven/bun:alpine AS deps
+FROM oven/bun:1.4.4-alpine AS deps
 WORKDIR /app
 
 COPY package.json bun.lock bunfig.toml ./
 RUN bun install --frozen-lockfile
 
 # Stage 2: Builder
-FROM oven/bun:alpine AS builder
+FROM oven/bun:1.4.4-alpine AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -16,7 +16,7 @@ ENV NODE_ENV=production
 RUN bun run build
 
 # Stage 3: Production
-FROM oven/bun:alpine AS production
+FROM oven/bun:1.4.4-alpine AS production
 WORKDIR /app
 
 ENV NODE_ENV=production

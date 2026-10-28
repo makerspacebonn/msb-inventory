@@ -7,6 +7,8 @@ export function getRouter() {
     routeTree,
     scrollRestoration: true,
     defaultNotFoundComponent: () => <div>Not Found</div>,
-    defaultErrorComponent: ({ error }) => <div>Error {error.message}</div>,
+    defaultErrorComponent: ({ error }) => (
+      <div>Error {error instanceof Error ? error.message : String(error)}</div>
+    ),
   })
 }

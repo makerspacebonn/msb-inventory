@@ -9,48 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TestRouteImport } from './routes/test'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as LocationsRouteImport } from './routes/locations'
-import { Route as ChangelogRouteImport } from './routes/changelog'
-import { Route as BackupRouteImport } from './routes/backup'
-import { Route as AidescriptionRouteImport } from './routes/aidescription'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ItemsIndexRouteImport } from './routes/items/index'
-import { Route as SsoKanidmRouteImport } from './routes/sso.kanidm'
-import { Route as ItemsTesteditRouteImport } from './routes/items/testedit'
-import { Route as ItemsAddRouteImport } from './routes/items/add'
-import { Route as ImgSplatRouteImport } from './routes/img.$'
-import { Route as IItemIdRouteImport } from './routes/i.$itemId'
+import { Route as AidescriptionRouteImport } from './routes/aidescription'
+import { Route as BackupRouteImport } from './routes/backup'
+import { Route as ChangelogRouteImport } from './routes/changelog'
+import { Route as LocationsRouteImport } from './routes/locations'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as TestRouteImport } from './routes/test'
 import { Route as ApiItemsRouteImport } from './routes/api/items'
-import { Route as BackupDownloadSplatRouteImport } from './routes/backup.download.$'
-import { Route as ApiE2eCreateSessionRouteImport } from './routes/api/e2e/create-session'
+import { Route as IItemIdRouteImport } from './routes/i.$itemId'
+import { Route as ImgSplatRouteImport } from './routes/img.$'
+import { Route as ItemsIndexRouteImport } from './routes/items/index'
+import { Route as ItemsAddRouteImport } from './routes/items/add'
+import { Route as ItemsTesteditRouteImport } from './routes/items/testedit'
+import { Route as SsoKanidmRouteImport } from './routes/sso.kanidm'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiE2eCreateSessionRouteImport } from './routes/api/e2e/create-session'
+import { Route as BackupDownloadSplatRouteImport } from './routes/backup.download.$'
 import { Route as ItemsItemIdLocationAddRouteImport } from './routes/items/$itemId/location/add'
 
-const TestRoute = TestRouteImport.update({
-  id: '/test',
-  path: '/test',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LocationsRoute = LocationsRouteImport.update({
-  id: '/locations',
-  path: '/locations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChangelogRoute = ChangelogRouteImport.update({
-  id: '/changelog',
-  path: '/changelog',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BackupRoute = BackupRouteImport.update({
-  id: '/backup',
-  path: '/backup',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AidescriptionRoute = AidescriptionRouteImport.update({
@@ -58,39 +38,29 @@ const AidescriptionRoute = AidescriptionRouteImport.update({
   path: '/aidescription',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const BackupRoute = BackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ItemsIndexRoute = ItemsIndexRouteImport.update({
-  id: '/items/',
-  path: '/items/',
+const ChangelogRoute = ChangelogRouteImport.update({
+  id: '/changelog',
+  path: '/changelog',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SsoKanidmRoute = SsoKanidmRouteImport.update({
-  id: '/sso/kanidm',
-  path: '/sso/kanidm',
+const LocationsRoute = LocationsRouteImport.update({
+  id: '/locations',
+  path: '/locations',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ItemsTesteditRoute = ItemsTesteditRouteImport.update({
-  id: '/items/testedit',
-  path: '/items/testedit',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ItemsAddRoute = ItemsAddRouteImport.update({
-  id: '/items/add',
-  path: '/items/add',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ImgSplatRoute = ImgSplatRouteImport.update({
-  id: '/img/$',
-  path: '/img/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IItemIdRoute = IItemIdRouteImport.update({
-  id: '/i/$itemId',
-  path: '/i/$itemId',
+const TestRoute = TestRouteImport.update({
+  id: '/test',
+  path: '/test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiItemsRoute = ApiItemsRouteImport.update({
@@ -98,20 +68,50 @@ const ApiItemsRoute = ApiItemsRouteImport.update({
   path: '/api/items',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BackupDownloadSplatRoute = BackupDownloadSplatRouteImport.update({
-  id: '/download/$',
-  path: '/download/$',
-  getParentRoute: () => BackupRoute,
+const IItemIdRoute = IItemIdRouteImport.update({
+  id: '/i/$itemId',
+  path: '/i/$itemId',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ApiE2eCreateSessionRoute = ApiE2eCreateSessionRouteImport.update({
-  id: '/api/e2e/create-session',
-  path: '/api/e2e/create-session',
+const ImgSplatRoute = ImgSplatRouteImport.update({
+  id: '/img/$',
+  path: '/img/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ItemsIndexRoute = ItemsIndexRouteImport.update({
+  id: '/items/',
+  path: '/items/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ItemsAddRoute = ItemsAddRouteImport.update({
+  id: '/items/add',
+  path: '/items/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ItemsTesteditRoute = ItemsTesteditRouteImport.update({
+  id: '/items/testedit',
+  path: '/items/testedit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SsoKanidmRoute = SsoKanidmRouteImport.update({
+  id: '/sso/kanidm',
+  path: '/sso/kanidm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiE2eCreateSessionRoute = ApiE2eCreateSessionRouteImport.update({
+  id: '/api/e2e/create-session',
+  path: '/api/e2e/create-session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BackupDownloadSplatRoute = BackupDownloadSplatRouteImport.update({
+  id: '/download/$',
+  path: '/download/$',
+  getParentRoute: () => BackupRoute,
 } as any)
 const ItemsItemIdLocationAddRoute = ItemsItemIdLocationAddRouteImport.update({
   id: '/items/$itemId/location/add',
@@ -265,39 +265,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/test': {
-      id: '/test'
-      path: '/test'
-      fullPath: '/test'
-      preLoaderRoute: typeof TestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/locations': {
-      id: '/locations'
-      path: '/locations'
-      fullPath: '/locations'
-      preLoaderRoute: typeof LocationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/changelog': {
-      id: '/changelog'
-      path: '/changelog'
-      fullPath: '/changelog'
-      preLoaderRoute: typeof ChangelogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/backup': {
-      id: '/backup'
-      path: '/backup'
-      fullPath: '/backup'
-      preLoaderRoute: typeof BackupRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aidescription': {
@@ -307,53 +279,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AidescriptionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/backup': {
+      id: '/backup'
+      path: '/backup'
+      fullPath: '/backup'
+      preLoaderRoute: typeof BackupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/items/': {
-      id: '/items/'
-      path: '/items'
-      fullPath: '/items/'
-      preLoaderRoute: typeof ItemsIndexRouteImport
+    '/changelog': {
+      id: '/changelog'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof ChangelogRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sso/kanidm': {
-      id: '/sso/kanidm'
-      path: '/sso/kanidm'
-      fullPath: '/sso/kanidm'
-      preLoaderRoute: typeof SsoKanidmRouteImport
+    '/locations': {
+      id: '/locations'
+      path: '/locations'
+      fullPath: '/locations'
+      preLoaderRoute: typeof LocationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/items/testedit': {
-      id: '/items/testedit'
-      path: '/items/testedit'
-      fullPath: '/items/testedit'
-      preLoaderRoute: typeof ItemsTesteditRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/items/add': {
-      id: '/items/add'
-      path: '/items/add'
-      fullPath: '/items/add'
-      preLoaderRoute: typeof ItemsAddRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/img/$': {
-      id: '/img/$'
-      path: '/img/$'
-      fullPath: '/img/$'
-      preLoaderRoute: typeof ImgSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/i/$itemId': {
-      id: '/i/$itemId'
-      path: '/i/$itemId'
-      fullPath: '/i/$itemId'
-      preLoaderRoute: typeof IItemIdRouteImport
+    '/test': {
+      id: '/test'
+      path: '/test'
+      fullPath: '/test'
+      preLoaderRoute: typeof TestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/items': {
@@ -363,18 +321,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiItemsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/backup/download/$': {
-      id: '/backup/download/$'
-      path: '/download/$'
-      fullPath: '/backup/download/$'
-      preLoaderRoute: typeof BackupDownloadSplatRouteImport
-      parentRoute: typeof BackupRoute
+    '/i/$itemId': {
+      id: '/i/$itemId'
+      path: '/i/$itemId'
+      fullPath: '/i/$itemId'
+      preLoaderRoute: typeof IItemIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/api/e2e/create-session': {
-      id: '/api/e2e/create-session'
-      path: '/api/e2e/create-session'
-      fullPath: '/api/e2e/create-session'
-      preLoaderRoute: typeof ApiE2eCreateSessionRouteImport
+    '/img/$': {
+      id: '/img/$'
+      path: '/img/$'
+      fullPath: '/img/$'
+      preLoaderRoute: typeof ImgSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/items/': {
+      id: '/items/'
+      path: '/items'
+      fullPath: '/items/'
+      preLoaderRoute: typeof ItemsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/items/add': {
+      id: '/items/add'
+      path: '/items/add'
+      fullPath: '/items/add'
+      preLoaderRoute: typeof ItemsAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/items/testedit': {
+      id: '/items/testedit'
+      path: '/items/testedit'
+      fullPath: '/items/testedit'
+      preLoaderRoute: typeof ItemsTesteditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sso/kanidm': {
+      id: '/sso/kanidm'
+      path: '/sso/kanidm'
+      fullPath: '/sso/kanidm'
+      preLoaderRoute: typeof SsoKanidmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -383,6 +369,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/e2e/create-session': {
+      id: '/api/e2e/create-session'
+      path: '/api/e2e/create-session'
+      fullPath: '/api/e2e/create-session'
+      preLoaderRoute: typeof ApiE2eCreateSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/backup/download/$': {
+      id: '/backup/download/$'
+      path: '/download/$'
+      fullPath: '/backup/download/$'
+      preLoaderRoute: typeof BackupDownloadSplatRouteImport
+      parentRoute: typeof BackupRoute
     }
     '/items/$itemId/location/add': {
       id: '/items/$itemId/location/add'
