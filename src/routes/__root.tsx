@@ -120,6 +120,7 @@ function AuthButtons({ onAction }: { onAction?: () => void }) {
 }
 
 function NavLinks({ onClick }: { onClick?: () => void }) {
+  const { isLoggedIn } = useAuth()
   return (
     <>
       <Link
@@ -143,6 +144,15 @@ function NavLinks({ onClick }: { onClick?: () => void }) {
       >
         Locations
       </Link>
+      {isLoggedIn && (
+        <Link
+          to="/printers"
+          className="hover:text-gray-300 transition-colors"
+          onClick={onClick}
+        >
+          Drucker
+        </Link>
+      )}
       <Link
         to="/changelog"
         className="hover:text-gray-300 transition-colors"
