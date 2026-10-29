@@ -1,0 +1,41 @@
+name: Dependency Audit
+
+# Weekly vulnerability report for bun.lock. GitHub's dependency graph only
+# reads package.json, so this is the only check that covers transitive deps.
+# Report only: fixes are applied locally with `bun audit fix`.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      # bun audit reads bun.lock directly, no install needed
+      - name: Write audit report to summary
+        run: |
+          {
+            echo "## bun audit --production"
+            echo '```'
+            bun audit --production 2>&1 || true
+            echo '```'
+            echo "## bun audit (incl. dev)"
+            echo '```'
+            bun audit 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Fails the run (and triggers GitHub's failure email) on high/critical
+      # findings in what ships to production
+      - name: Fail on high or critical production findings
+        run: bun audit --production --audit-level=high
