@@ -41,8 +41,8 @@ INCLUDE_LOCALHOST="${INCLUDE_LOCALHOST:-true}"
 LOCALHOST_ORIGIN="${LOCALHOST_ORIGIN:-http://localhost:3000}"
 
 # Derived — the redirect URI is dictated by better-auth's genericOAuth plugin:
-#   {origin}/api/auth/oauth2/callback/{providerId}   (providerId is "kanidm")
-CALLBACK_PATH="/api/auth/oauth2/callback/kanidm"
+#   {origin}/api/auth/callback/{providerId}   (providerId is "kanidm")
+CALLBACK_PATH="/api/auth/callback/kanidm"
 REDIRECT_URL="${APP_ORIGIN}${CALLBACK_PATH}"
 LOCALHOST_REDIRECT_URL="${LOCALHOST_ORIGIN}${CALLBACK_PATH}"
 

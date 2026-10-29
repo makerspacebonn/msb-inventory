@@ -11,9 +11,9 @@ import * as schema from "@/src/drizzle/schema"
 type OidcProfile = {
   name?: string
   preferred_username?: string
-  email?: string
+  email?: string | null
   picture?: string
-  sub?: string
+  sub?: string | number | null
 }
 
 // Check if Authentik is configured
@@ -150,8 +150,8 @@ export const auth = betterAuth({
                 ? [
                     {
                       providerId: "authentik",
-                      clientId: process.env.AUTHENTIK_CLIENT_ID!,
-                      clientSecret: process.env.AUTHENTIK_CLIENT_SECRET!,
+                      clientId: process.env.AUTHENTIK_CLIENT_ID ?? "",
+                      clientSecret: process.env.AUTHENTIK_CLIENT_SECRET ?? "",
                       discoveryUrl: `${process.env.AUTHENTIK_URL}/application/o/${process.env.AUTHENTIK_APP_SLUG || "msb-inventory"}/.well-known/openid-configuration`,
                       scopes: [],
                       mapProfileToUser: (profile: OidcProfile) => {
@@ -185,8 +185,8 @@ export const auth = betterAuth({
                 ? [
                     {
                       providerId: "kanidm",
-                      clientId: process.env.KANIDM_CLIENT_ID!,
-                      clientSecret: process.env.KANIDM_CLIENT_SECRET!,
+                      clientId: process.env.KANIDM_CLIENT_ID ?? "",
+                      clientSecret: process.env.KANIDM_CLIENT_SECRET ?? "",
                       // Kanidm OIDC discovery lives under /oauth2/openid/<client-id>/
                       discoveryUrl: `${process.env.KANIDM_URL}/oauth2/openid/${process.env.KANIDM_CLIENT_ID}/.well-known/openid-configuration`,
                       // Kanidm emits the group claim via a claim-map (not a custom

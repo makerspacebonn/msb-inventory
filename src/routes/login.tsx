@@ -1,10 +1,8 @@
 import { Button } from "@components/ui/button"
-import { Input } from "@components/ui/input"
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { useState } from "react"
-import { useAuth } from "@/src/context/AuthContext"
-import { signIn, signUp } from "@/src/lib/auth-client"
+import { signIn } from "@/src/lib/auth-client"
 
 const getAuthConfig = createServerFn().handler(async () => {
   // Import dynamically to avoid bundling server code in client
@@ -40,8 +38,8 @@ function LoginPage() {
     setLoading(true)
     setError("")
     try {
-      const result = await signIn.oauth2({
-        providerId,
+      const result = await signIn.social({
+        provider: providerId,
         callbackURL: "/",
       })
       // If we get here without redirect, there was an error

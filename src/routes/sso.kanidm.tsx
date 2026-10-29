@@ -40,7 +40,7 @@ function SsoKanidm() {
     }
 
     signIn
-      .oauth2({ providerId: "kanidm", callbackURL: "/" })
+      .social({ provider: "kanidm", callbackURL: "/" })
       .then((result) => {
         if (result?.error) {
           started.current = false

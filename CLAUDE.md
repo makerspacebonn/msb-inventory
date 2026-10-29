@@ -98,7 +98,7 @@ Use conventional commits format: `type(scope): description`
 ### 2026-01-17 - better-auth Implementation Patterns
 - **API route pattern:** TanStack Start uses `createFileRoute` with `server.handlers` for API routes, NOT `createAPIFileRoute`. Export must be `Route`, not `APIRoute`
 - **Catch-all auth route:** `src/routes/api/auth/$.ts` handles all `/api/auth/*` endpoints via `auth.handler(request)`
-- **Client plugins:** When using `genericOAuth` on server, add `genericOAuthClient()` to client plugins for `signIn.oauth2()` method
+- **Generic OAuth sign-in (better-auth ≥1.7):** `genericOAuth` providers are registered as social providers — call `signIn.social({ provider: "<providerId>" })`. `genericOAuthClient()` / `signIn.oauth2()` no longer exist
 - **Conditional plugins:** Check env vars and conditionally add plugins: `plugins: authentikConfigured ? [genericOAuth({...})] : []`
 - **useSession hook:** better-auth's `useSession` returns `{ data: session, isPending, refetch }` - replaces all manual JWT/cookie logic
 - **OIDC discovery:** `discoveryUrl` auto-configures authorization, token, and userinfo endpoints from `.well-known/openid-configuration`
@@ -112,7 +112,7 @@ Use conventional commits format: `type(scope): description`
     return { authentikConfigured }
   })
   ```
-- **OAuth redirect URIs:** better-auth's `genericOAuth` plugin uses callback pattern `/api/auth/oauth2/callback/{providerId}`. This exact URI must be whitelisted in the OAuth provider (e.g., Authentik)
+- **OAuth redirect URIs:** better-auth's `genericOAuth` plugin uses callback pattern `/api/auth/callback/{providerId}` (was `/api/auth/oauth2/callback/{providerId}` before 1.7). This exact URI must be whitelisted in the OAuth provider (e.g., Authentik)
 - **Configurable app slugs:** Use env vars like `AUTHENTIK_APP_SLUG` for provider-specific paths: `discoveryUrl: \`\${AUTHENTIK_URL}/application/o/\${AUTHENTIK_APP_SLUG}/.well-known/openid-configuration\``
 - **Dev server logging:** Use `bun run dev:bg` to restart dev server in background with logging to `logs/dev.log`
 
