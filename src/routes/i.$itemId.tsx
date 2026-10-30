@@ -49,7 +49,7 @@ const removeItemLocation = createServerFn()
 export const Route = createFileRoute("/i/$itemId")({
   component: RouteComponent,
   loader: async ({ params }) => {
-    const itemId = parseInt(params.itemId)
+    const itemId = parseInt(params.itemId, 10)
     return fetchItem({ data: { itemId } })
   },
   head: ({ loaderData }) => ({

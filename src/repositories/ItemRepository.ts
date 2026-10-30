@@ -116,10 +116,10 @@ export class ItemRepository {
       .from(ItemTable)
       .where(sql`search_vector @@ plainto_tsquery('german', ${searchText})
         OR searchable_text % ${searchText}
-        OR searchable_text ILIKE ${"%" + searchText + "%"}
+        OR searchable_text ILIKE ${`%${searchText}%`}
         OR EXISTS (
           SELECT 1 FROM unnest(tags) AS tag
-          WHERE tag ILIKE ${"%" + searchText + "%"}
+          WHERE tag ILIKE ${`%${searchText}%`}
         )`)
       .orderBy(sql`(ts_rank(search_vector, plainto_tsquery('german', ${searchText})) * 2
                        + similarity(searchable_text, ${searchText})) DESC,

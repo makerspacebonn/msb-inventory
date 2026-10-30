@@ -7,7 +7,7 @@ export default defineConfig({
   retries: 0,
   // Workers: use E2E_WORKERS env var, or default to 4 in CI, 50% of cores locally
   workers: process.env.E2E_WORKERS
-    ? parseInt(process.env.E2E_WORKERS)
+    ? parseInt(process.env.E2E_WORKERS, 10)
     : process.env.CI
       ? 4
       : undefined,

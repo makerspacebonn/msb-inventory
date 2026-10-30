@@ -1,3 +1,4 @@
+import fs from "node:fs"
 import { MyCropper } from "@components/form/MyCropper"
 import { Badge } from "@components/ui/badge"
 import { Button } from "@components/ui/button"
@@ -5,7 +6,6 @@ import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { type Tag, TagInput } from "emblor"
-import fs from "fs"
 import {
   CheckIcon,
   Loader2Icon,
@@ -146,7 +146,7 @@ const addItem = createServerFn({ method: "POST" })
 
       if (data?.image) {
         try {
-          const savePath = process.env.SAVE_PATH + "items/"
+          const savePath = `${process.env.SAVE_PATH}items/`
           const { fileType, fileBuffer } = decodeBase64Image(data.image)
           const fileName = uuidv7()
           const fileExtension = fileType?.split("/")[1]
