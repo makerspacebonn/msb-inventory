@@ -22,8 +22,18 @@ function RouteComponent() {
   )
 }
 
+type AiSuggestion = {
+  bezeichnung: string
+  hersteller: string | null
+  modell: string | null
+  kategorie: string
+  zustand: string
+  beschreibung_kurz: string
+  zusatzinfos: string
+}
+
 export function ImageUploader() {
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<AiSuggestion[] | null>(null)
 
   const mutation = useMutation({
     mutationFn: describeImageFn,
@@ -57,7 +67,7 @@ export function ImageUploader() {
 
       // 3. An Server Function senden
       console.log(base64)
-      mutation.mutate({ data: base64 })
+      mutation.mutate({ data: { base64Image: base64 } })
     } catch (error) {
       console.error("Fehler bei der Kompression:", error)
     }
@@ -65,10 +75,14 @@ export function ImageUploader() {
 
   return (
     <div className="space-y-4 p-6 border rounded-lg bg-white shadow-sm">
-      <label className="block font-medium text-gray-700">
+      <label
+        htmlFor="ai-image-upload"
+        className="block font-medium text-gray-700"
+      >
         Gegenstand fotografieren/hochladen
       </label>
       <input
+        id="ai-image-upload"
         type="file"
         accept="image/*"
         capture="environment" // Öffnet auf dem Handy direkt die Kamera
