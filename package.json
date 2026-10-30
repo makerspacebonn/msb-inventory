@@ -14,7 +14,6 @@
     "dev:bg": "pkill -f 'bun.*vite.*dev' 2>/dev/null || true; mkdir -p logs && nohup bun run dev > logs/dev.log 2>&1 & echo \"Dev server started (PID: $!) - logs at logs/dev.log\"",
     "dev:logs": "tail -f logs/dev.log",
     "build": "bun --bun vite build",
-    "serve": "bun --bun vite preview",
     "test": "vitest run",
     "dev:tests": "docker compose exec app bun --watch --dots test",
     "dev:stop": "docker compose down",
