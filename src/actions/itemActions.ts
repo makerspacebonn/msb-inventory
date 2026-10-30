@@ -1,5 +1,9 @@
 import fs from "node:fs"
-import type { Item, PaginatedResult, ParentLocationMarker } from "@server/app/types"
+import type {
+  Item,
+  PaginatedResult,
+  ParentLocationMarker,
+} from "@server/app/types"
 import { createServerFn } from "@tanstack/react-start"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { ChangelogRepository } from "@/src/repositories/ChangelogRepository"
@@ -57,11 +61,12 @@ export const setItemLocation = createServerFn()
       changedFields.push("parentLocationMarker")
     }
 
-    const [updatedItem] = (await itemRepo.upsert({
-      id: data.itemId,
-      locationId: data.locationId,
-      parentLocationMarker: data.parentLocationMarker,
-    })) || []
+    const [updatedItem] =
+      (await itemRepo.upsert({
+        id: data.itemId,
+        locationId: data.locationId,
+        parentLocationMarker: data.parentLocationMarker,
+      })) || []
 
     // Log to changelog if there were changes
     if (changedFields.length > 0 && updatedItem) {

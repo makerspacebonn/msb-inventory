@@ -1,5 +1,5 @@
-import { count, isNotNull, sql } from "drizzle-orm"
 import { createServerFn } from "@tanstack/react-start"
+import { count, isNotNull, sql } from "drizzle-orm"
 import { db } from "@/src/db"
 import { ItemTable, LocationTable } from "@/src/drizzle/schema"
 
@@ -63,7 +63,7 @@ export const fetchInventoryStats = createServerFn().handler(
     cacheTimestamp = now
 
     return stats
-  }
+  },
 )
 
 // Optional: Force refresh the cache (useful for admin operations)
@@ -73,5 +73,5 @@ export const refreshInventoryStats = createServerFn().handler(
     cachedStats = stats
     cacheTimestamp = Date.now()
     return stats
-  }
+  },
 )

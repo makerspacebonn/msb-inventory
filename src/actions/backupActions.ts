@@ -6,10 +6,10 @@ import PizZip from "pizzip"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { db } from "../db"
 import {
-  ItemTable,
   type ItemInsert,
-  LocationTable,
+  ItemTable,
   type LocationInsert,
+  LocationTable,
 } from "../drizzle/schema"
 
 const SAVE_PATH = process.env.SAVE_PATH || ""
@@ -78,7 +78,10 @@ export const generateBackup = createServerFn()
     addImagesToZip(zip, path.join(SAVE_PATH, "locations"), "locations")
 
     // Generate zip buffer and write to file
-    const zipBuffer = zip.generate({ type: "nodebuffer", compression: "DEFLATE" })
+    const zipBuffer = zip.generate({
+      type: "nodebuffer",
+      compression: "DEFLATE",
+    })
     fs.writeFileSync(zipPath, zipBuffer)
 
     // Get file size
@@ -90,8 +93,7 @@ export const generateBackup = createServerFn()
       sizeFormatted: formatBytes(stats.size),
       createdAt: stats.birthtime,
     }
-  },
-)
+  })
 
 export const listBackups = createServerFn().handler(
   async (): Promise<BackupInfo[]> => {
@@ -262,7 +264,7 @@ export const restoreBackup = createServerFn()
           ${item.parentLocationMarker ? JSON.stringify(item.parentLocationMarker) : null}::json,
           ${item.imagePath ?? null},
           ${item.additionalInfo ? JSON.stringify(item.additionalInfo) : null}::json,
-          ${item.tags && item.tags.length > 0 ? `{${item.tags.map(t => `"${t.replace(/"/g, '\\"')}"`).join(',')}}` : null}::varchar[],
+          ${item.tags && item.tags.length > 0 ? `{${item.tags.map((t) => `"${t.replace(/"/g, '\\"')}"`).join(",")}}` : null}::varchar[],
           ${item.manufacturer ?? null},
           ${item.model ?? null},
           ${item.category ?? null},

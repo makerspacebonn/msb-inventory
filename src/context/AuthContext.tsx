@@ -1,10 +1,6 @@
-import {
-  createContext,
-  useContext,
-  type ReactNode,
-} from "react"
-import { useSession, signOut } from "@/src/lib/auth-client"
+import { createContext, type ReactNode, useContext } from "react"
 import type { User } from "@/src/drizzle/schema"
+import { signOut, useSession } from "@/src/lib/auth-client"
 
 type AuthContextType = {
   isLoggedIn: boolean

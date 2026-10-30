@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 
 test.describe("Item Detail Page", () => {
   test("should load item detail page", async ({ page }) => {
@@ -50,7 +50,7 @@ test.describe("Item Detail Page", () => {
 
     // App returns null for non-existent items
     const is404 = response?.status() === 404
-    const hasNoContent = await page.locator("h1").count() === 0
+    const hasNoContent = (await page.locator("h1").count()) === 0
 
     expect(is404 || hasNoContent).toBeTruthy()
   })
@@ -58,7 +58,7 @@ test.describe("Item Detail Page", () => {
   test("should not show edit button when unauthenticated", async ({ page }) => {
     await page.goto("/i/1")
 
-    const editButton = page.locator('text=Bearbeiten')
+    const editButton = page.locator("text=Bearbeiten")
     await expect(editButton).not.toBeVisible()
   })
 })

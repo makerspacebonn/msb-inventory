@@ -34,10 +34,7 @@ export class ItemRepository {
     })
   }
 
-  async findPaginated(
-    page = 1,
-    pageSize = 24
-  ): Promise<PaginatedResult<Item>> {
+  async findPaginated(page = 1, pageSize = 24): Promise<PaginatedResult<Item>> {
     const offset = (page - 1) * pageSize
 
     const [items, totalResult] = await Promise.all([

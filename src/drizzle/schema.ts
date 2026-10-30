@@ -166,7 +166,6 @@ export const ItemTable = pgTable(
 export type ItemSelect = InferSelectModel<typeof ItemTable>
 export type ItemInsert = InferInsertModel<typeof ItemTable>
 
-
 export const projectsTable = pgTable("projects", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull(),

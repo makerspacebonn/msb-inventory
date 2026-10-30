@@ -17,7 +17,10 @@ type ItemDeleteButtonProps = {
   onDelete: () => void
 }
 
-export function ItemDeleteButton({ itemName, onDelete }: ItemDeleteButtonProps) {
+export function ItemDeleteButton({
+  itemName,
+  onDelete,
+}: ItemDeleteButtonProps) {
   const { isLoggedIn } = useAuth()
 
   if (!isLoggedIn) {

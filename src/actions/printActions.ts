@@ -1,5 +1,5 @@
-import mqtt from "mqtt"
 import { createServerFn } from "@tanstack/react-start"
+import mqtt from "mqtt"
 import { v4 as uuidv4 } from "uuid"
 import z from "zod/v4"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
@@ -40,7 +40,10 @@ export const printLabelFn = createServerFn({ method: "POST" })
 
       const timeout = setTimeout(() => {
         client.end()
-        resolve({ success: false, error: "Zeitüberschreitung beim Warten auf Druckergebnis" })
+        resolve({
+          success: false,
+          error: "Zeitüberschreitung beim Warten auf Druckergebnis",
+        })
       }, 30000)
 
       client.on("connect", () => {
@@ -49,7 +52,10 @@ export const printLabelFn = createServerFn({ method: "POST" })
           if (err) {
             clearTimeout(timeout)
             client.end()
-            resolve({ success: false, error: "Fehler beim Abonnieren des Ergebnis-Topics" })
+            resolve({
+              success: false,
+              error: "Fehler beim Abonnieren des Ergebnis-Topics",
+            })
             return
           }
 
@@ -61,7 +67,10 @@ export const printLabelFn = createServerFn({ method: "POST" })
               clearTimeout(timeout)
               client.end()
               console.error("MQTT publish error:", err)
-              resolve({ success: false, error: "Fehler beim Senden an den Drucker" })
+              resolve({
+                success: false,
+                error: "Fehler beim Senden an den Drucker",
+              })
             } else {
               console.log("Label print message sent:", message)
             }
@@ -82,7 +91,10 @@ export const printLabelFn = createServerFn({ method: "POST" })
               if (result.success) {
                 resolve({ success: true })
               } else {
-                resolve({ success: false, error: result.error || "Druckfehler" })
+                resolve({
+                  success: false,
+                  error: result.error || "Druckfehler",
+                })
               }
             }
           } catch (e) {

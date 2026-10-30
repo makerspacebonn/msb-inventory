@@ -296,7 +296,8 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
       toast.success("KI-Analyse abgeschlossen")
     } catch (error) {
       console.error(error)
-      const message = error instanceof Error ? error.message : "Fehler bei der KI-Analyse"
+      const message =
+        error instanceof Error ? error.message : "Fehler bei der KI-Analyse"
       toast.error(message)
     } finally {
       setAiLoading(false)
@@ -457,7 +458,10 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
                       onUse={() => {
                         field.handleChange(aiData.beschreibung_kurz)
                         dismissSuggestion("description")
-                        setTimeout(() => resizeTextarea(descriptionRef.current), 0)
+                        setTimeout(
+                          () => resizeTextarea(descriptionRef.current),
+                          0,
+                        )
                       }}
                       onDismiss={() => dismissSuggestion("description")}
                     />
@@ -495,7 +499,8 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
                     closeButton: "text-emerald-300 hover:text-white ml-1",
                   },
                   autoComplete: {
-                    popoverContent: "bg-card border rounded-md shadow-lg mt-1 p-1 z-50",
+                    popoverContent:
+                      "bg-card border rounded-md shadow-lg mt-1 p-1 z-50",
                     commandList: "max-h-48 bg-card",
                     commandGroup: "p-1 bg-card",
                     commandItem:
@@ -845,4 +850,3 @@ function InlineTagsSuggestion({
     </div>
   )
 }
-

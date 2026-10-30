@@ -17,9 +17,9 @@ export const fetchChangelogPaginated = createServerFn()
     async ({ data }): Promise<PaginatedResult<ChangelogEntryWithUser>> => {
       return new ChangelogRepository().findPaginated(
         data.page,
-        data.pageSize ?? 50
+        data.pageSize ?? 50,
       )
-    }
+    },
   )
 
 export const fetchChangelogEntry = createServerFn()
@@ -52,7 +52,7 @@ export const checkUndoConflict = createServerFn()
         changelogId,
         entry.entityType,
         entry.entityId,
-        entry.changedFields || []
+        entry.changedFields || [],
       )
 
       if (conflict) {
@@ -64,7 +64,7 @@ export const checkUndoConflict = createServerFn()
       }
 
       return { canUndo: true }
-    }
+    },
   )
 
 export const undoChange = createServerFn({ method: "POST" })
@@ -83,7 +83,7 @@ export const undoChange = createServerFn({ method: "POST" })
       changelogId,
       entry.entityType,
       entry.entityId,
-      entry.changedFields || []
+      entry.changedFields || [],
     )
 
     if (conflict) {
@@ -107,7 +107,7 @@ export const undoChange = createServerFn({ method: "POST" })
 async function undoItemChange(
   entry: ChangelogEntry,
   userId: string | null,
-  changelogRepo: ChangelogRepository
+  changelogRepo: ChangelogRepository,
 ): Promise<UndoResult> {
   const itemRepo = new ItemRepository()
 
@@ -184,7 +184,7 @@ async function undoItemChange(
 
       // Use restore method to INSERT with original ID
       const restoredItem = await itemRepo.restore(
-        insertData as Parameters<typeof itemRepo.restore>[0]
+        insertData as Parameters<typeof itemRepo.restore>[0],
       )
 
       if (!restoredItem) {
@@ -211,7 +211,7 @@ async function undoItemChange(
 async function undoLocationChange(
   entry: ChangelogEntry,
   userId: string | null,
-  changelogRepo: ChangelogRepository
+  changelogRepo: ChangelogRepository,
 ): Promise<UndoResult> {
   const locationRepo = new LocationRepository()
 
@@ -253,7 +253,7 @@ async function undoLocationChange(
 
       const updatedLocation = await locationRepo.update(
         entry.entityId,
-        updateData
+        updateData,
       )
 
       await changelogRepo.create({
@@ -280,7 +280,7 @@ async function undoLocationChange(
 
       // Use restore method to INSERT with original ID
       const restoredLocation = await locationRepo.restore(
-        locationData as Parameters<typeof locationRepo.restore>[0]
+        locationData as Parameters<typeof locationRepo.restore>[0],
       )
 
       if (!restoredLocation) {

@@ -1,19 +1,18 @@
-
-import {defineConfig} from "drizzle-kit";
-import * as process from "node:process";
+import * as process from "node:process"
+import { defineConfig } from "drizzle-kit"
 
 export default defineConfig({
-    dialect: "postgresql",
-    schema: "./src/drizzle/schema.ts",
+  dialect: "postgresql",
+  schema: "./src/drizzle/schema.ts",
 
-    out: "./src/drizzle/migrations",
-    dbCredentials: {
-        url: process.env.DATABASE_URL as string
-    },
-    migrations: {
-        table: 'migrations',
-        schema: 'makerspace_inventory'
-    },
-    verbose: true,
-    strict: true
+  out: "./src/drizzle/migrations",
+  dbCredentials: {
+    url: process.env.DATABASE_URL as string,
+  },
+  migrations: {
+    table: "migrations",
+    schema: "makerspace_inventory",
+  },
+  verbose: true,
+  strict: true,
 })

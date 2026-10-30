@@ -41,7 +41,10 @@ async function getResizedImage(
   let resizedImage = image
 
   // Only resize if larger than maxSize
-  if ((metadata.width && metadata.width > maxSize) || (metadata.height && metadata.height > maxSize)) {
+  if (
+    (metadata.width && metadata.width > maxSize) ||
+    (metadata.height && metadata.height > maxSize)
+  ) {
     resizedImage = image.resize(maxSize, maxSize, {
       fit: "inside",
       withoutEnlargement: true,
@@ -89,7 +92,12 @@ export const Route = createFileRoute("/img/$")({
         const cachePath = path.join(cacheDir, cacheSubDir, imagePath)
 
         try {
-          const buffer = await getResizedImage(originalPath, cachePath, config.maxSize, config.quality)
+          const buffer = await getResizedImage(
+            originalPath,
+            cachePath,
+            config.maxSize,
+            config.quality,
+          )
           const mimeType = imagePath.toLowerCase().endsWith(".png")
             ? "image/png"
             : imagePath.toLowerCase().endsWith(".webp")
@@ -137,10 +145,9 @@ export const Route = createFileRoute("/img/$")({
         const fullPath = imageRootPath + imagePath
         if (fs.existsSync(fullPath)) {
           fs.unlinkSync(fullPath)
-          return new Response(
-            JSON.stringify({ success: true }),
-            { headers: { "Content-Type": "application/json" } },
-          )
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { "Content-Type": "application/json" },
+          })
         }
 
         return new Response("Image not found", { status: 404 })

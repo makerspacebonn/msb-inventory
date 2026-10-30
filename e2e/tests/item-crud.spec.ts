@@ -1,8 +1,10 @@
-import { test, expect } from "../fixtures/auth.fixture"
+import { expect, test } from "../fixtures/auth.fixture"
 
 test.describe("Item CRUD Operations", () => {
   test.describe("Create Item", () => {
-    test("should navigate to add item page when authenticated", async ({ authenticatedPage: page }) => {
+    test("should navigate to add item page when authenticated", async ({
+      authenticatedPage: page,
+    }) => {
       await page.goto("/items")
 
       // Use navbar button (first match) - there's also one in the items page content
@@ -49,23 +51,29 @@ test.describe("Item CRUD Operations", () => {
   })
 
   test.describe("Edit Item", () => {
-    test("should show edit button on item detail when authenticated", async ({ authenticatedPage: page }) => {
+    test("should show edit button on item detail when authenticated", async ({
+      authenticatedPage: page,
+    }) => {
       await page.goto("/i/1")
 
-      const editButton = page.locator('text=Bearbeiten')
+      const editButton = page.locator("text=Bearbeiten")
       await expect(editButton.first()).toBeVisible()
     })
 
-    test("should navigate to edit form", async ({ authenticatedPage: page }) => {
+    test("should navigate to edit form", async ({
+      authenticatedPage: page,
+    }) => {
       await page.goto("/i/1")
 
-      const editButton = page.locator('text=Bearbeiten')
+      const editButton = page.locator("text=Bearbeiten")
       await editButton.first().click()
 
       await expect(page).toHaveURL(/\/items\/add\?itemId=1/)
     })
 
-    test("should pre-fill form with existing data", async ({ authenticatedPage: page }) => {
+    test("should pre-fill form with existing data", async ({
+      authenticatedPage: page,
+    }) => {
       await page.goto("/items/add?itemId=1")
 
       const nameInput = page.locator('input[name="name"]')
@@ -104,14 +112,20 @@ test.describe("Item CRUD Operations", () => {
   })
 
   test.describe("Delete Item", () => {
-    test("should show delete button when authenticated", async ({ authenticatedPage: page }) => {
+    test("should show delete button when authenticated", async ({
+      authenticatedPage: page,
+    }) => {
       await page.goto("/i/1")
 
-      const deleteButton = page.locator('button').filter({ has: page.locator('svg.lucide-trash-2') })
+      const deleteButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg.lucide-trash-2") })
       await expect(deleteButton.first()).toBeVisible()
     })
 
-    test("should require confirmation before deleting", async ({ authenticatedPage: page }) => {
+    test("should require confirmation before deleting", async ({
+      authenticatedPage: page,
+    }) => {
       // Create a test item to delete
       await page.goto("/items/add")
 
@@ -124,7 +138,9 @@ test.describe("Item CRUD Operations", () => {
 
       await page.waitForURL(/\/i\/\d+/)
 
-      const deleteButton = page.locator('button').filter({ has: page.locator('svg.lucide-trash-2') })
+      const deleteButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg.lucide-trash-2") })
       await expect(deleteButton.first()).toBeVisible()
       await deleteButton.first().click()
 
@@ -135,7 +151,9 @@ test.describe("Item CRUD Operations", () => {
       await page.locator('button:has-text("Abbrechen")').click()
     })
 
-    test("should delete item after confirmation", async ({ authenticatedPage: page }) => {
+    test("should delete item after confirmation", async ({
+      authenticatedPage: page,
+    }) => {
       // Create a test item to delete
       await page.goto("/items/add")
 
@@ -150,13 +168,17 @@ test.describe("Item CRUD Operations", () => {
       const itemUrl = page.url()
       const itemId = itemUrl.match(/\/i\/(\d+)/)?.[1]
 
-      const deleteButton = page.locator('button').filter({ has: page.locator('svg.lucide-trash-2') })
+      const deleteButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg.lucide-trash-2") })
       await expect(deleteButton.first()).toBeVisible()
       await deleteButton.first().click()
 
       await expect(page.locator('[role="dialog"]')).toBeVisible()
 
-      const confirmButton = page.locator('[role="dialog"] button:has-text("Löschen")')
+      const confirmButton = page.locator(
+        '[role="dialog"] button:has-text("Löschen")',
+      )
       await confirmButton.click()
 
       // Should redirect to items list
@@ -166,7 +188,7 @@ test.describe("Item CRUD Operations", () => {
       if (itemId) {
         const response = await page.goto(`/i/${itemId}`)
         const is404 = response?.status() === 404
-        const hasNoContent = await page.locator("h1").count() === 0
+        const hasNoContent = (await page.locator("h1").count()) === 0
 
         expect(is404 || hasNoContent).toBeTruthy()
       }

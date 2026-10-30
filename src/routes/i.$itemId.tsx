@@ -2,9 +2,14 @@ import { ItemDetail } from "@components/ItemDetail"
 import { ItemDeleteButton } from "@components/item/ItemDeleteButton"
 import { ItemQRCode } from "@components/item/ItemQRCode"
 import { Button } from "@components/ui/button"
-import { Link, createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
-import { PencilIcon } from "lucide-react"
+import {
+  createFileRoute,
+  Link,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
+import { PencilIcon } from "lucide-react"
 import { z } from "zod/v4"
 import { deleteItem } from "@/src/actions/itemActions"
 import { useAuth } from "@/src/context/AuthContext"

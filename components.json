@@ -18,7 +18,5 @@
     "hooks": "@/hooks"
   },
   "iconLibrary": "lucide",
-  "registries": {
-    
-  }
+  "registries": {}
 }

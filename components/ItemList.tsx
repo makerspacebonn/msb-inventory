@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react"
 import type { Item } from "@server/app/types"
-import { ItemCard } from "@/components/ItemCard"
 import { Loader2 } from "lucide-react"
+import { useEffect, useRef } from "react"
+import { ItemCard } from "@/components/ItemCard"
 
 export type InfiniteScrollProps = {
   hasMore: boolean
@@ -27,7 +27,7 @@ export function ItemList({
           infiniteScroll.onLoadMore()
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     )
 
     const currentRef = loadMoreRef.current

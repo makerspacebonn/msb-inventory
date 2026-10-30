@@ -56,7 +56,11 @@ function BackupPage() {
   }
 
   const handleRestore = async (filename: string) => {
-    if (!confirm(`Backup "${filename}" wiederherstellen? Alle aktuellen Daten werden überschrieben!`)) {
+    if (
+      !confirm(
+        `Backup "${filename}" wiederherstellen? Alle aktuellen Daten werden überschrieben!`,
+      )
+    ) {
       return
     }
     setRestoringFile(filename)

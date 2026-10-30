@@ -72,7 +72,9 @@ export class LocationRepository {
    * Restore a deleted location with its original ID.
    * Uses OVERRIDING SYSTEM VALUE since LocationTable uses generatedAlwaysAsIdentity.
    */
-  async restore(location: Partial<Location> & { id: number }): Promise<Location | null> {
+  async restore(
+    location: Partial<Location> & { id: number },
+  ): Promise<Location | null> {
     const result = await db.execute(sql`
       INSERT INTO locations (id, name, description, parent_id, "parentLocationMarker", image_path, "additionalInfo")
       OVERRIDING SYSTEM VALUE

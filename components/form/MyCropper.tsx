@@ -96,9 +96,7 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Bild zuschneiden</DialogTitle>
-            <DialogDescription>
-              Wähle den Bildausschnitt aus.
-            </DialogDescription>
+            <DialogDescription>Wähle den Bildausschnitt aus.</DialogDescription>
           </DialogHeader>
           <div className="flex items-center gap-2">
             <div className="flex flex-col w-full">

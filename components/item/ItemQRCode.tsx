@@ -42,7 +42,8 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
     const textPadding = 60
     const nameHeight = 96
     const idHeight = 72
-    const totalHeight = qrSize + padding * 2 + textPadding + nameHeight + idHeight
+    const totalHeight =
+      qrSize + padding * 2 + textPadding + nameHeight + idHeight
     const totalWidth = qrSize + padding * 2
 
     outputCanvas.width = totalWidth
@@ -64,7 +65,10 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
     // Truncate name if too long
     let displayName = itemName
     const maxWidth = totalWidth - padding * 2
-    while (ctx.measureText(displayName).width > maxWidth && displayName.length > 3) {
+    while (
+      ctx.measureText(displayName).width > maxWidth &&
+      displayName.length > 3
+    ) {
       displayName = `${displayName.slice(0, -4)}...`
     }
     ctx.fillText(displayName, totalWidth / 2, nameY)
@@ -114,7 +118,8 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
       }
     } catch (error) {
       console.error(error)
-      const message = error instanceof Error ? error.message : "Fehler beim Drucken"
+      const message =
+        error instanceof Error ? error.message : "Fehler beim Drucken"
       toast.error(message)
     } finally {
       setIsPrinting(false)
@@ -143,7 +148,12 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
       )}
 
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={handleDownload} disabled={!pngUrl}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownload}
+          disabled={!pngUrl}
+        >
           <Download className="w-4 h-4 mr-2" />
           PNG herunterladen
         </Button>
@@ -160,7 +170,8 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
               <DialogHeader>
                 <DialogTitle>Label drucken?</DialogTitle>
                 <DialogDescription>
-                  Ein QR-Code Label für "{itemName}" (ID: {itemId}) wird an den Labeldrucker gesendet.
+                  Ein QR-Code Label für "{itemName}" (ID: {itemId}) wird an den
+                  Labeldrucker gesendet.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>

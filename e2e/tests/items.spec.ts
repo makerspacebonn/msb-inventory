@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 
 test.describe("Items Page", () => {
   test.beforeEach(async ({ page }) => {
@@ -27,7 +27,9 @@ test.describe("Items Page", () => {
     await page.waitForTimeout(800)
 
     // Should show search results - look for "Ergebnis" text indicating search completed
-    await expect(page.locator("text=Ergebnis").first()).toBeVisible({ timeout: 5000 })
+    await expect(page.locator("text=Ergebnis").first()).toBeVisible({
+      timeout: 5000,
+    })
     // And the item should be visible
     await expect(page.locator("text=Bohrmaschine").first()).toBeVisible()
   })
@@ -40,7 +42,9 @@ test.describe("Items Page", () => {
     await page.waitForTimeout(800)
 
     // Should show the item with Makita in its name
-    await expect(page.locator("text=Makita").first()).toBeVisible({ timeout: 5000 })
+    await expect(page.locator("text=Makita").first()).toBeVisible({
+      timeout: 5000,
+    })
   })
 
   test("should clear search", async ({ page }) => {
@@ -50,7 +54,9 @@ test.describe("Items Page", () => {
     await page.waitForTimeout(500)
 
     // Clear button appears when search has value (X icon)
-    const clearButton = page.locator('button').filter({ has: page.locator('svg.lucide-x') })
+    const clearButton = page
+      .locator("button")
+      .filter({ has: page.locator("svg.lucide-x") })
     if (await clearButton.isVisible()) {
       await clearButton.click()
       await expect(searchInput).toHaveValue("")
