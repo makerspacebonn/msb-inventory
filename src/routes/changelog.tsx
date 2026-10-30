@@ -205,8 +205,9 @@ function ChangelogEntryCard({
         className={`border-b transition-all ${isHighlighted ? "bg-blue-500/10" : ""}`}
         id={`changelog-${entry.id}`}
       >
-        <div
-          className="flex items-center gap-1.5 py-1.5 px-2 cursor-pointer hover:bg-muted/50"
+        <button
+          type="button"
+          className="flex w-full items-center gap-1.5 py-1.5 px-2 text-left cursor-pointer hover:bg-muted/50"
           onClick={() => hasDiffData && setShowDiff(!showDiff)}
         >
           <ChangeTypeBadge type={entry.changeType} />
@@ -229,7 +230,7 @@ function ChangelogEntryCard({
               className={`w-3 h-3 text-muted-foreground transition-transform ${showDiff ? "rotate-180" : ""}`}
             />
           )}
-        </div>
+        </button>
 
         {showDiff && hasDiffData && (
           <div className="px-2 pb-2 pt-1 border-t bg-muted/30">
@@ -512,6 +513,7 @@ function DiffRow({
         <div className="px-3 py-2 flex flex-wrap gap-1">
           {removed.map((item, i) => (
             <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: static list, values may repeat
               key={`removed-${i}`}
               className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-500/30 text-red-700 dark:text-red-300 line-through"
             >
@@ -520,6 +522,7 @@ function DiffRow({
           ))}
           {unchanged.map((item, i) => (
             <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: static list, values may repeat
               key={`unchanged-${i}`}
               className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-muted"
             >
@@ -528,6 +531,7 @@ function DiffRow({
           ))}
           {added.map((item, i) => (
             <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: static list, values may repeat
               key={`added-${i}`}
               className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-500/30 text-green-700 dark:text-green-300"
             >
@@ -560,6 +564,7 @@ function DiffRow({
           <span className="break-all whitespace-pre-wrap text-xs">
             {diff.map((part, i) => (
               <span
+                // biome-ignore lint/suspicious/noArrayIndexKey: static list, values may repeat
                 key={i}
                 className={
                   part.type === "removed"
