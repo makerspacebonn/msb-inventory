@@ -20,7 +20,7 @@ bun dev:bg       # Restart dev server in background with logging (logs/dev.log)
 bun dev:logs     # Tail the dev server log file
 ```
 
-Requires Docker. Create `.env` from `.env_exampl   e` before running.
+Requires Docker. Create `.env` from `.env_example` before running.
 
 ## Architecture
 
@@ -64,7 +64,7 @@ Requires Docker. Create `.env` from `.env_exampl   e` before running.
 
 ## Development Rules
 **Rules:**
-- use biome to chack and autoformat the code
+- use biome to check and autoformat the code
 
 **Commands:**
 - ```bun dev``` starts the dev server.
