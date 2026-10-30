@@ -7,6 +7,7 @@ import z from "zod/v4"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "")
+const geminiModel = process.env.GEMINI_MODEL || "gemini-3.8-flash"
 
 const imageInputSchema = z.object({
   base64Image: z.string().optional(),
@@ -33,7 +34,7 @@ export const describeImageFn = createServerFn({ method: "POST" })
     }
     //console.log(base64Image)
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: geminiModel,
       generationConfig: { responseMimeType: "application/json" },
     })
 
