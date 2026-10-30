@@ -20,11 +20,7 @@ export const Route = createFileRoute("/backup/download/$")({
         const filename = params._splat
 
         // Security: only allow .zip files and prevent directory traversal
-        if (
-          !filename ||
-          !filename.endsWith(".zip") ||
-          filename.includes("..")
-        ) {
+        if (!filename?.endsWith(".zip") || filename.includes("..")) {
           return new Response("Invalid filename", { status: 400 })
         }
 

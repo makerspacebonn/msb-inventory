@@ -1,8 +1,8 @@
+import * as fs from "node:fs"
 import { ItemDetail } from "@components/ItemDetail"
 import { staticPlugin } from "@elysiajs/static"
 import { bold, cyan, green } from "ansis"
 import { Elysia, t } from "elysia"
-import * as fs from "fs"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 import { ItemAdd } from "../pages/ItemAdd"
@@ -17,11 +17,7 @@ import type { Item, Location } from "./types"
 const startTime = performance.now()
 const ELYSIA_VERSION = import.meta.require("elysia/package.json").version
 
-try {
-  //await migrateDB()
-} catch (e) {
-  console.error(e)
-}
+//await migrateDB()
 
 export const ZeugApp = new Elysia()
   .use(

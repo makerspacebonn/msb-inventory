@@ -15,11 +15,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@components/ui/empty"
-import { FieldLabel } from "@components/ui/field"
 import { ImageIcon, PencilIcon } from "lucide-react"
 import { useRef, useState } from "react"
 import Cropper from "react-easy-crop"
-import { getCroppedImg, getRotatedImage } from "./-canvasUtils"
+import { getCroppedImg } from "./-canvasUtils"
 
 interface MyCropperProps {
   onChange?: (image: string) => void
@@ -37,13 +36,7 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
   const [open, setOpen] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const ORIENTATION_TO_ANGLE = {
-    "3": 180,
-    "6": 90,
-    "8": -90,
-  }
-
-  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+  const onCropComplete = (_croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels)
   }
 

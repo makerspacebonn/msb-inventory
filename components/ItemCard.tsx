@@ -1,6 +1,4 @@
 import type { Item } from "@server/app/types"
-import { Pencil } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 export function ItemCard({ item }: { item: Item }) {
   return (

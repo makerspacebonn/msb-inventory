@@ -256,9 +256,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               </div>
             </>
           )}
-          <main className="flex-grow p-4">
-            <Outlet />
-          </main>
+          <main className="flex-grow p-4">{children}</main>
         </div>
         <Scripts />
       </body>

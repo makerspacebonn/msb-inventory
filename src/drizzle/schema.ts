@@ -15,7 +15,6 @@ import {
   serial,
   text,
   timestamp,
-  uuid,
   varchar,
 } from "drizzle-orm/pg-core"
 import type { ItemLink, ParentLocationMarker } from "../app/types"
