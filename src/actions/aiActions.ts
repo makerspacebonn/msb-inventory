@@ -131,6 +131,18 @@ export const describeImageFn = createServerFn({ method: "POST" })
         )
       }
 
+      if (statusCode === 402 || message.includes("402")) {
+        throw new Error(
+          "KI-Guthaben aufgebraucht. Bitte das Gemini-Konto aufladen.",
+        )
+      }
+
+      if (statusCode === 404 || message.includes("404")) {
+        throw new Error(
+          `KI-Modell "${geminiModel}" ist nicht verfügbar. Bitte GEMINI_MODEL anpassen.`,
+        )
+      }
+
       if (statusCode === 431 || message.includes("431")) {
         throw new Error(
           "Das Bild ist zu groß. Bitte verwende ein kleineres Bild.",
