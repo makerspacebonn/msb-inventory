@@ -142,11 +142,10 @@ function RouteComponent() {
   return (
     <div className="text-center content-center py-8">
       <h1 className="text-4xl font-extrabold mb-4">
-        Zeug beim MakerSpace Bonn e.v.
+        Zeug beim MakerSpace Bonn e.V.
       </h1>
       <div className="mb-8">
-        <p>Willkommen bei unserem MakerSpace Zeug und Aufgaben System.</p>
-        <p>Hier können Sie Ihre Projekte verwalten und Ihre Aufgaben planen.</p>
+        <p>Willkommen bei unserem MakerSpace Zeug System.</p>
       </div>
 
       <HomeSearch />
