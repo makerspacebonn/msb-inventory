@@ -504,3 +504,88 @@ Add a prominent "Item hinzufügen" button to the center of the main navigation b
 - [x] Button has plus icon and "Item hinzufügen" label
 - [x] Button navigates to `/items/add`
 - [x] Layout remains responsive on mobile
+
+---
+
+### UX-004: Larger item images in the item list
+**Priority:** Medium
+
+**Description:**
+Item images in the item list are too small to recognize items at a glance. Images should be much bigger so users can identify items visually while scrolling.
+
+**Acceptance Criteria:**
+- [ ] Item images in the list are large enough to recognize the item without opening it
+- [ ] Images stay sharp at the larger size
+- [ ] The list remains usable on mobile and desktop
+
+---
+
+### UX-005: Consistent location selection experience
+**Priority:** High
+
+**Description:**
+Choosing a location (e.g. for an item) behaves inconsistently depending on where it happens. Every location selection should offer the same options on every location level.
+
+**Desired Behavior:**
+On every location the user can:
+- Choose this location as the final location, which leads to the marker placement on the location image
+- Add a new sublocation to this location
+- Use a breadcrumb list to jump to a different location as entry point
+- Select one of the existing sublocations
+
+**Acceptance Criteria:**
+- [ ] All four options are available on every location level
+- [ ] The experience is identical everywhere a location is selected
+- [ ] Choosing the final location leads directly to marker placement
+
+---
+
+### LOC-001: Replace a location image while keeping markers
+**Priority:** Medium
+
+**Description:**
+When a location's picture is replaced (e.g. after rearranging a shelf), all existing markers of sublocations and items on that image would no longer match. Users should be able to transfer the markers to the new image instead of placing all of them again.
+
+**Desired Behavior:**
+- All existing markers are shown on the old image
+- The user defines a few reference points that correspond between the old and the new image
+- The marker positions on the new image are calculated from these reference points
+- A warning appears if not all markers can be placed on the new image
+- The user can review the result before it's applied
+- The change can be undone
+
+**Acceptance Criteria:**
+- [ ] Old markers are visible on the old image during replacement
+- [ ] Reference points can be set on both images
+- [ ] Markers are transferred to the new image automatically
+- [ ] Markers that can't be placed are listed in a warning
+- [ ] The user can check the result before saving
+- [ ] The image replacement including marker changes can be undone
+
+---
+
+### AI-001: More relevant AI item descriptions and tags
+**Priority:** Medium
+
+**Description:**
+The AI description from an item photo includes too much generic information. It should focus on information that helps find and identify the item. Tags should not contain general attributes like unimportant colors or the material an item is made of.
+
+**Acceptance Criteria:**
+- [ ] AI-generated descriptions only contain relevant information
+- [ ] Tags no longer contain generic attributes (e.g. color, material) unless they distinguish the item
+- [ ] Tags help when searching for the item
+
+---
+
+### AI-002: Curated item categories
+**Priority:** Medium
+
+**Description:**
+Item categories have grown into an inconsistent list. Categories should be reduced to a meaningful set, e.g. a fixed list, with the option to add a new category when no existing one fits. The AI identification should pick from this list.
+
+**Acceptance Criteria:**
+- [ ] A defined list of meaningful categories exists
+- [ ] Users choose a category from the list when adding/editing an item
+- [ ] A new category can be added when no existing one fits
+- [ ] AI identification suggests a category from the existing list
+- [ ] Existing items are mapped to the curated categories
