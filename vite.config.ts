@@ -21,7 +21,9 @@ const config = defineConfig({
     ],
   },
   plugins: [
-    devtools(),
+    // Console piping echoes server logs into the browser and browser logs back
+    // into the server, which loops and grew logs/dev.log to 20+ GB
+    devtools({ consolePiping: { enabled: false } }),
     // Scoped to this project's tsconfig so the plugin does NOT crawl the
     // filesystem for tsconfig files (that crawl walks into ~/Library and
     // crashes Bun on macOS with EINTR). Enables the "@/" path aliases.
