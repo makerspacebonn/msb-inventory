@@ -124,7 +124,7 @@ export function LocationBrowser({
         </div>
       )}
 
-      {/* Recent locations - show when not searching and at root */}
+      {/* Recent locations - show when not searching */}
       {!searchQuery &&
         showRecentLocations &&
         recentLocations &&

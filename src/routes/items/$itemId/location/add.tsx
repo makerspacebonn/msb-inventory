@@ -1,313 +1,58 @@
 import { CreateLocationForm } from "@components/location/CreateLocationForm"
+import { CurrentLocationCard } from "@components/location/CurrentLocationCard"
 import { LocationBrowser } from "@components/location/LocationBrowser"
+import {
+  collectMarkers,
+  type MarkerPosition,
+  MarkerStep,
+} from "@components/location/LocationMarkers"
 import { Button } from "@components/ui/button"
 import type { Location } from "@server/app/types"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import {
-  CheckIcon,
-  ChevronLeftIcon,
-  CrosshairIcon,
-  MapPinIcon,
-} from "lucide-react"
-import { type MouseEvent, type RefObject, useRef, useState } from "react"
+import { CheckIcon, ChevronLeftIcon } from "lucide-react"
+import { useState } from "react"
 import { toast } from "sonner"
 import type { RecentLocation } from "@/lib/recent-locations"
 import { fetchItem, setItemLocation } from "@/src/actions/itemActions"
 import {
-  createLocation,
-  fetchChildLocations,
   fetchLocationById,
-  fetchLocationChain,
-  fetchRootLocations,
+  fetchLocationView,
 } from "@/src/actions/locationActions"
+import { useCreateLocation } from "@/src/hooks/useCreateLocation"
 import { useRecentLocations } from "@/src/hooks/useRecentLocations"
 
-// Types
-type MarkerPosition = { x: number; y: number }
-
-type CreateLocationState = {
-  isCreating: boolean
-  name: string
-  image: string
-  pending: { name: string; image: string } | null
+type LocationPickerSearch = {
+  at?: number // location currently shown in the picker
 }
 
-// Custom hook for location navigation
-function useLocationNavigation(
-  rootLocations: Location[],
-  initialLocations: Location[],
-  initialPath: Location[],
-) {
-  const [currentLocations, setCurrentLocations] =
-    useState<Location[]>(initialLocations)
-  const [locationPath, setLocationPath] = useState<Location[]>(initialPath)
-
-  const navigateToLocation = async (location: Location) => {
-    const children = await fetchChildLocations({ data: location.id })
-    setLocationPath([...locationPath, location])
-    setCurrentLocations(children)
-  }
-
-  const navigateToBreadcrumb = async (index: number) => {
-    if (index === -1) {
-      setCurrentLocations(rootLocations)
-      setLocationPath([])
-    } else {
-      const newPath = locationPath.slice(0, index + 1)
-      const targetLocation = newPath[index]
-      setLocationPath(newPath)
-      const children = await fetchChildLocations({ data: targetLocation.id })
-      setCurrentLocations(children)
-    }
-  }
-
-  const addLocation = (location: Location) => {
-    setCurrentLocations([...currentLocations, location])
-  }
-
-  return {
-    currentLocations,
-    locationPath,
-    navigateToLocation,
-    navigateToBreadcrumb,
-    addLocation,
-  }
-}
-
-// Shared component for image with marker picker
-function ImageMarkerPicker({
-  imagePath,
-  imagePathPrefix,
-  name,
-  markerPosition,
-  onImageClick,
-  imageRef,
-}: {
-  imagePath: string | null
-  imagePathPrefix: string
-  name: string
-  markerPosition: MarkerPosition | null
-  onImageClick: (e: MouseEvent<HTMLButtonElement>) => void
-  imageRef: RefObject<HTMLImageElement | null>
-}) {
-  if (!imagePath) {
-    return (
-      <div className="w-full aspect-square rounded-2xl bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
-        <MapPinIcon className="w-24 h-24 text-gray-400" />
-      </div>
-    )
-  }
-
-  return (
-    <button
-      type="button"
-      className="relative inline-block w-full"
-      onClick={onImageClick}
-    >
-      <img
-        ref={imageRef}
-        src={`${imagePathPrefix}${imagePath}`}
-        alt={name}
-        className="w-full rounded-lg cursor-crosshair"
-      />
-      {markerPosition && (
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            left: `${markerPosition.x}%`,
-            top: `${markerPosition.y}%`,
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <CrosshairIcon className="w-8 h-8 text-red-500 drop-shadow-lg" />
-        </div>
-      )}
-    </button>
-  )
-}
-
-// Marker action buttons
-function MarkerActionButtons({
-  hasImage,
-  hasMarker,
-  onConfirm,
-}: {
-  hasImage: boolean
-  hasMarker: boolean
-  onConfirm: () => void
-}) {
-  if (!hasImage) {
-    return (
-      <Button onClick={onConfirm}>
-        <CheckIcon className="w-4 h-4 mr-1" />
-        Speichern
-      </Button>
-    )
-  }
-
-  return (
-    <>
-      <Button onClick={onConfirm} disabled={!hasMarker}>
-        <CheckIcon className="w-4 h-4 mr-1" />
-        Speichern
-      </Button>
-      <Button variant="outline" onClick={onConfirm}>
-        Ohne Markierung speichern
-      </Button>
-    </>
-  )
-}
-
-// View: Place marker on parent for new location
-function CreateLocationMarkerView({
-  pendingLocation,
-  parentLocation,
-  markerPosition,
-  imageRef,
-  onImageClick,
-  onConfirm,
-  onCancel,
-}: {
-  pendingLocation: { name: string; image: string }
-  parentLocation: Location
-  markerPosition: MarkerPosition | null
-  imageRef: RefObject<HTMLImageElement | null>
-  onImageClick: (e: MouseEvent<HTMLButtonElement>) => void
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  return (
-    <div className="max-w-128 mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Position markieren</h1>
-      <p className="text-muted-foreground mb-4">
-        Klicke auf das Bild, um die Position von "{pendingLocation.name}" in "
-        {parentLocation.name}" zu markieren.
-      </p>
-
-      <div className="flex items-center gap-2 mb-4">
-        <Button variant="ghost" size="sm" onClick={onCancel}>
-          <ChevronLeftIcon className="w-4 h-4 mr-1" />
-          Abbrechen
-        </Button>
-      </div>
-
-      <ImageMarkerPicker
-        imagePath={parentLocation.imagePath}
-        imagePathPrefix="/img/locations/"
-        name={parentLocation.name}
-        markerPosition={markerPosition}
-        onImageClick={onImageClick}
-        imageRef={imageRef}
-      />
-
-      <div className="mt-4 flex gap-2">
-        <MarkerActionButtons
-          hasImage={!!parentLocation.imagePath}
-          hasMarker={!!markerPosition}
-          onConfirm={onConfirm}
-        />
-      </div>
-    </div>
-  )
-}
-
-// View: Place marker on selected location for item
-function MarkerSelectionView({
-  location,
-  markerPosition,
-  imageRef,
-  onImageClick,
-  onConfirm,
-  onBack,
-}: {
-  location: Location
-  markerPosition: MarkerPosition | null
-  imageRef: RefObject<HTMLImageElement | null>
-  onImageClick: (e: MouseEvent<HTMLButtonElement>) => void
-  onConfirm: () => void
-  onBack: () => void
-}) {
-  return (
-    <div className="max-w-128 mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Position markieren</h1>
-      <p className="text-muted-foreground mb-4">
-        Klicke auf das Bild, um die Position des Items in "{location.name}" zu
-        markieren.
-      </p>
-
-      <div className="flex items-center gap-2 mb-4">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ChevronLeftIcon className="w-4 h-4 mr-1" />
-          Zurück
-        </Button>
-      </div>
-
-      <ImageMarkerPicker
-        imagePath={location.imagePath}
-        imagePathPrefix="/img/locations/"
-        name={location.name}
-        markerPosition={markerPosition}
-        onImageClick={onImageClick}
-        imageRef={imageRef}
-      />
-
-      <div className="mt-4 flex gap-2">
-        <MarkerActionButtons
-          hasImage={!!location.imagePath}
-          hasMarker={!!markerPosition}
-          onConfirm={onConfirm}
-        />
-      </div>
-    </div>
-  )
-}
-
-// Route definition
 export const Route = createFileRoute("/items/$itemId/location/add")({
   component: RouteComponent,
+  validateSearch: (search: Record<string, unknown>): LocationPickerSearch => {
+    return {
+      at: search.at ? Number(search.at) : undefined,
+    }
+  },
   beforeLoad: ({ context }) => {
     if (!context.isLoggedIn) {
       throw new Error("Unauthorized")
     }
   },
-  loader: async ({ params }) => {
-    const [locations, item] = await Promise.all([
-      fetchRootLocations(),
-      fetchItem({ data: parseInt(params.itemId, 10) }),
-    ])
-    let initialPath: Location[] = []
-    let initialLocations = locations
-    if (item?.locationId) {
-      const chain = await fetchLocationChain({ data: item.locationId })
-      initialPath = chain
-      if (chain.length > 0) {
-        const parentId = chain[chain.length - 1].id
-        initialLocations = await fetchChildLocations({ data: parentId })
-      }
-    }
-    return {
-      locations,
-      item,
-      itemId: params.itemId,
-      initialPath,
-      initialLocations,
-    }
+  loaderDeps: ({ search: { at } }) => ({ at }),
+  loader: async ({ params, deps: { at } }) => {
+    const item = await fetchItem({ data: parseInt(params.itemId, 10) })
+    // Without an explicit position, start at the item's current location
+    const view = await fetchLocationView({
+      data: at ?? item?.locationId ?? undefined,
+    })
+    return { item, itemId: params.itemId, ...view }
   },
 })
 
 function RouteComponent() {
-  const {
-    locations: rootLocations,
-    item,
-    itemId,
-    initialPath,
-    initialLocations,
-  } = Route.useLoaderData()
-
+  const { item, itemId, currentLocation, locationPath, childLocations, items } =
+    Route.useLoaderData()
   const navigate = useNavigate()
-  const imageRef = useRef<HTMLImageElement>(null)
 
-  // Recent locations
   const {
     recentLocations,
     isLoaded: recentLocationsLoaded,
@@ -315,188 +60,115 @@ function RouteComponent() {
     removeRecentLocation,
   } = useRecentLocations()
 
-  // Location navigation
-  const {
-    currentLocations,
-    locationPath,
-    navigateToLocation,
-    navigateToBreadcrumb,
-  } = useLocationNavigation(rootLocations, initialLocations, initialPath)
+  // Id of the location whose marker step is open. Keyed by id so that
+  // browser navigation while the step is open can't mix up locations.
+  const [markerStepFor, setMarkerStepFor] = useState<number | null>(null)
 
-  // Selection state
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(
-    null,
-  )
-  const [markerPosition, setMarkerPosition] = useState<MarkerPosition | null>(
-    null,
+  // Markers of everything else at this location (not the item itself)
+  const markers = collectMarkers(
+    childLocations,
+    items.filter((i) => i.id !== item?.id),
   )
 
-  // Create location state
-  const [createState, setCreateState] = useState<CreateLocationState>({
-    isCreating: false,
-    name: "",
-    image: "",
-    pending: null,
-  })
+  const goToLocation = (locationId: number | undefined) =>
+    navigate({
+      to: "/items/$itemId/location/add",
+      params: { itemId },
+      search: locationId === undefined ? {} : { at: locationId },
+    })
 
-  const handleImageClick = (e: MouseEvent<HTMLButtonElement>) => {
-    if (!imageRef.current) return
-    const rect = imageRef.current.getBoundingClientRect()
-    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100)
-    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100)
-    setMarkerPosition({ x, y })
-  }
+  const create = useCreateLocation(currentLocation, (location) =>
+    goToLocation(location.id),
+  )
 
-  const handleSelect = (location: Location) => {
-    setSelectedLocation(location)
-    setMarkerPosition(null)
-  }
-
-  const handleBack = () => {
-    setSelectedLocation(null)
-    setMarkerPosition(null)
-  }
-
-  const handleConfirmMarker = async () => {
-    if (!selectedLocation) return
-
-    // Save to recent locations before navigating away
-    const pathParts = [
-      ...locationPath.map((l) => l.name),
-      selectedLocation.name,
-    ]
-    const path = pathParts.join(" → ")
+  const saveItemLocation = async (
+    location: Location,
+    marker: MarkerPosition | null,
+  ) => {
     addRecentLocation({
-      id: selectedLocation.id,
-      name: selectedLocation.name,
-      path,
+      id: location.id,
+      name: location.name,
+      path: locationPath.map((l) => l.name).join(" → "),
     })
 
     await setItemLocation({
       data: {
         itemId: parseInt(itemId, 10),
-        locationId: selectedLocation.id,
-        parentLocationMarker: markerPosition
-          ? { id: 1, x: markerPosition.x, y: markerPosition.y }
+        locationId: location.id,
+        parentLocationMarker: marker
+          ? { id: 1, x: marker.x, y: marker.y }
           : null,
       },
     })
     await navigate({ to: "/i/$itemId", params: { itemId } })
   }
 
-  const handleStartCreate = () => {
-    setCreateState({ isCreating: true, name: "", image: "", pending: null })
-  }
-
-  const handleCancelCreate = () => {
-    setCreateState({ isCreating: false, name: "", image: "", pending: null })
-    setMarkerPosition(null)
-  }
-
-  const handleProceedToMarker = () => {
-    if (!createState.name.trim()) return
-    setCreateState({
-      ...createState,
-      pending: { name: createState.name, image: createState.image },
-    })
-    setMarkerPosition(null)
-  }
-
-  const handleConfirmNewLocation = async () => {
-    const name = createState.pending?.name ?? createState.name
-    const image = createState.pending?.image ?? createState.image
-    if (!name.trim()) return
-
-    const parentLocation =
-      locationPath.length > 0 ? locationPath[locationPath.length - 1] : null
-
-    const result = await createLocation({
-      data: {
-        name,
-        image: image || undefined,
-        parentId: parentLocation?.id ?? null,
-        parentLocationMarker: markerPosition
-          ? { id: 1, x: markerPosition.x, y: markerPosition.y }
-          : null,
-      },
-    })
-
-    if (result.success && result.location) {
-      setCreateState({ isCreating: false, name: "", image: "", pending: null })
-      setMarkerPosition(null)
-      // Navigate into the newly created location (show it, don't select it)
-      await navigateToLocation(result.location)
+  const handleChooseCurrent = () => {
+    if (!currentLocation) return
+    if (currentLocation.imagePath) {
+      setMarkerStepFor(currentLocation.id)
+    } else {
+      // Nothing to mark on, save directly
+      void saveItemLocation(currentLocation, null)
     }
   }
 
-  const handleCancel = () => {
-    navigate({ to: "/i/$itemId", params: { itemId } })
-  }
+  const handleBreadcrumbClick = (index: number) =>
+    goToLocation(index === -1 ? undefined : locationPath[index].id)
 
   const handleRecentLocationSelect = async (recent: RecentLocation) => {
     // Validate the location still exists
     const location = await fetchLocationById({ data: recent.id })
     if (!location) {
-      // Location was deleted, remove from recent and show error
       removeRecentLocation(recent.id)
       toast.error("Location nicht mehr vorhanden", {
         description: `"${recent.name}" wurde gelöscht.`,
       })
       return
     }
-
-    // Directly select the location to go to marker view
-    // The marker view shows the location name, so breadcrumb context isn't needed
-    handleSelect(location)
+    await goToLocation(location.id)
   }
 
-  // Render appropriate view based on state
-  if (createState.pending && locationPath.length > 0) {
-    const parentLocation = locationPath[locationPath.length - 1]
+  const handleCancel = () => navigate({ to: "/i/$itemId", params: { itemId } })
+
+  // View: Place marker for the item on the chosen location
+  if (currentLocation && markerStepFor === currentLocation.id) {
     return (
-      <CreateLocationMarkerView
-        pendingLocation={createState.pending}
-        parentLocation={parentLocation}
-        markerPosition={markerPosition}
-        imageRef={imageRef}
-        onImageClick={handleImageClick}
-        onConfirm={handleConfirmNewLocation}
-        onCancel={handleCancelCreate}
+      <MarkerStep
+        location={currentLocation}
+        markers={markers}
+        description={`Klicke auf das Bild, um die Position des Items in "${currentLocation.name}" zu markieren.`}
+        onConfirm={(marker) => saveItemLocation(currentLocation, marker)}
+        onCancel={() => setMarkerStepFor(null)}
       />
     )
   }
 
-  if (createState.isCreating) {
+  // View: Place marker for a new sublocation on the current location
+  if (create.state.step === "marker" && currentLocation) {
+    return (
+      <MarkerStep
+        location={currentLocation}
+        markers={markers}
+        description={`Klicke auf das Bild, um die Position von "${create.state.name}" in "${currentLocation.name}" zu markieren.`}
+        onConfirm={create.save}
+        onCancel={create.cancel}
+      />
+    )
+  }
+
+  // View: Create sublocation form
+  if (create.state.step === "form") {
     return (
       <CreateLocationForm
         locationPath={locationPath}
-        name={createState.name}
-        onNameChange={(name) => setCreateState({ ...createState, name })}
-        onImageChange={(image) => setCreateState({ ...createState, image })}
-        onProceedToMarker={handleProceedToMarker}
-        onConfirmCreate={handleConfirmNewLocation}
-        onCancel={handleCancelCreate}
+        name={create.state.name}
+        onNameChange={create.setName}
+        onImageChange={create.setImage}
+        onSubmit={create.submitForm}
+        onCancel={create.cancel}
       />
     )
-  }
-
-  if (selectedLocation) {
-    return (
-      <MarkerSelectionView
-        location={selectedLocation}
-        markerPosition={markerPosition}
-        imageRef={imageRef}
-        onImageClick={handleImageClick}
-        onConfirm={handleConfirmMarker}
-        onBack={handleBack}
-      />
-    )
-  }
-
-  const handleSelectCurrent = () => {
-    if (locationPath.length > 0) {
-      handleSelect(locationPath[locationPath.length - 1])
-    }
   }
 
   return (
@@ -522,23 +194,23 @@ function RouteComponent() {
       </div>
 
       <LocationBrowser
-        locations={currentLocations}
+        locations={childLocations}
         locationPath={locationPath}
-        onLocationClick={navigateToLocation}
-        onBreadcrumbClick={navigateToBreadcrumb}
-        onStartCreate={handleStartCreate}
+        onLocationClick={(location: Location) => goToLocation(location.id)}
+        onBreadcrumbClick={handleBreadcrumbClick}
+        onStartCreate={create.start}
         recentLocations={recentLocationsLoaded ? recentLocations : []}
         onRecentLocationSelect={handleRecentLocationSelect}
         onRecentLocationRemove={removeRecentLocation}
         showRecentLocations={true}
         renderHeader={() =>
-          locationPath.length > 0 ? (
-            <div className="mb-4">
-              <Button onClick={handleSelectCurrent}>
-                <CheckIcon className="w-4 h-4 mr-1" />"
-                {locationPath[locationPath.length - 1].name}" auswählen
+          currentLocation ? (
+            <CurrentLocationCard location={currentLocation} markers={markers}>
+              <Button className="w-full" onClick={handleChooseCurrent}>
+                <CheckIcon className="w-4 h-4 mr-1" />
+                Hier ablegen
               </Button>
-            </div>
+            </CurrentLocationCard>
           ) : null
         }
       />

@@ -9,8 +9,7 @@ type CreateLocationFormProps = {
   name: string
   onNameChange: (name: string) => void
   onImageChange: (image: string) => void
-  onProceedToMarker: () => void
-  onConfirmCreate: () => void
+  onSubmit: () => void
   onCancel: () => void
 }
 
@@ -19,8 +18,7 @@ export function CreateLocationForm({
   name,
   onNameChange,
   onImageChange,
-  onProceedToMarker,
-  onConfirmCreate,
+  onSubmit,
   onCancel,
 }: CreateLocationFormProps) {
   const parentLocation =
@@ -63,12 +61,13 @@ export function CreateLocationForm({
         </div>
 
         <div className="flex gap-2">
-          {parentLocation ? (
-            <Button onClick={onProceedToMarker} disabled={!name.trim()}>
+          {/* Marker step only exists when the parent has an image */}
+          {parentLocation?.imagePath ? (
+            <Button onClick={onSubmit} disabled={!name.trim()}>
               Weiter zur Markierung
             </Button>
           ) : (
-            <Button onClick={onConfirmCreate} disabled={!name.trim()}>
+            <Button onClick={onSubmit} disabled={!name.trim()}>
               <CheckIcon className="w-4 h-4 mr-1" />
               Erstellen
             </Button>

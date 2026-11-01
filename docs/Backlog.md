@@ -520,7 +520,7 @@ Item images in the item list are too small to recognize items at a glance. Image
 
 ---
 
-### UX-005: Consistent location selection experience
+### UX-005: Consistent location selection experience ✅ COMPLETED 2026-11-01
 **Priority:** High
 
 **Description:**
@@ -534,9 +534,19 @@ On every location the user can:
 - Select one of the existing sublocations
 
 **Acceptance Criteria:**
-- [ ] All four options are available on every location level
-- [ ] The experience is identical everywhere a location is selected
-- [ ] Choosing the final location leads directly to marker placement
+- [x] All four options are available on every location level
+- [x] The experience is identical everywhere a location is selected
+- [x] Choosing the final location leads directly to marker placement
+
+**Implementation Notes:**
+- Every way of picking a location (tile, search, breadcrumb, recent chip) only opens it; "Hier ablegen" is the only way to choose
+- Picker position lives in the URL (`/items/$itemId/location/add?at=<id>`), so back/reload work and the breadcrumb path is always loaded from the server (fixes wrong path after search)
+- Current location is shown as a card with its image; tapping the image enlarges it with existing markers
+- Marker step is skipped for locations without an image and shows existing markers faintly
+- New sublocations open directly after creation; marker step only when the parent has an image
+- Shared building blocks: `components/location/LocationMarkers.tsx`, `components/location/CurrentLocationCard.tsx`, `src/hooks/useCreateLocation.ts`, `fetchLocationView` in `locationActions.ts`
+- `/locations` uses the same layout and shared code
+- E2E: `e2e/tests/item-location-picker.spec.ts`
 
 ---
 
@@ -589,3 +599,29 @@ Item categories have grown into an inconsistent list. Categories should be reduc
 - [ ] A new category can be added when no existing one fits
 - [ ] AI identification suggests a category from the existing list
 - [ ] Existing items are mapped to the curated categories
+
+---
+
+### UX-006: Choose location directly after adding an item
+**Priority:** Medium
+
+**Description:**
+After adding a new item, the user lands on the item detail page and has to start the location selection separately. Choosing a location should follow directly as part of adding an item, so new items don't end up without a location.
+
+**Acceptance Criteria:**
+- [ ] After saving a new item, the location selection starts directly
+- [ ] The user can skip choosing a location
+- [ ] Editing an existing item does not force a location selection
+
+---
+
+### UX-007: Filter items without a location
+**Priority:** Medium
+
+**Description:**
+Items without a location are hard to find in the inventory. The item list should offer a filter that shows only items without a location, so they can be located and sorted in.
+
+**Acceptance Criteria:**
+- [ ] The item list can be filtered to items without a location
+- [ ] The filter can be combined with the search
+- [ ] From the filtered list, a location can be assigned to an item easily

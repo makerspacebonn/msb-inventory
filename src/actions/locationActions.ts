@@ -1,9 +1,10 @@
 import fs from "node:fs"
-import type { ParentLocationMarker } from "@server/app/types"
+import type { Item, Location, ParentLocationMarker } from "@server/app/types"
 import { createServerFn } from "@tanstack/react-start"
 import { v7 as uuidv7 } from "uuid"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { ChangelogRepository } from "@/src/repositories/ChangelogRepository"
+import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
 export const fetchRootLocations = createServerFn().handler(async () => {
@@ -29,6 +30,39 @@ export const fetchChildLocations = createServerFn()
   .validator((parentId: number | undefined) => parentId)
   .handler(async ({ data: parentId }) => {
     return new LocationRepository().findByParentId(parentId)
+  })
+
+// Everything needed to render one location level: the location itself,
+// its full path (root → current), its sublocations and its items.
+// Without a locationId (or for an unknown one) the root level is returned.
+export const fetchLocationView = createServerFn()
+  .validator((locationId: number | undefined) => locationId)
+  .handler(async ({ data: locationId }) => {
+    const locationRepo = new LocationRepository()
+    const rootView = async () => ({
+      currentLocation: null,
+      locationPath: [] as Location[],
+      childLocations: await locationRepo.findRootLocations(),
+      items: [] as Item[],
+    })
+
+    if (locationId === undefined) return rootView()
+
+    const currentLocation = await locationRepo.findById(locationId)
+    if (!currentLocation) return rootView()
+
+    const [locationChain, childLocations, items] = await Promise.all([
+      locationRepo.findChainForId(locationId),
+      locationRepo.findByParentId(locationId),
+      new ItemRepository().findByLocationId(locationId),
+    ])
+
+    return {
+      currentLocation,
+      locationPath: locationChain.reverse(),
+      childLocations,
+      items,
+    }
   })
 
 export const searchLocations = createServerFn()
