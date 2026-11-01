@@ -9,7 +9,15 @@ const getAuthConfig = createServerFn().handler(async () => {
   const { authentikConfigured, kanidmConfigured } = await import(
     "@/src/lib/auth"
   )
-  return { authentikConfigured, kanidmConfigured }
+  const { devLoginEnabled } = await import("@/src/lib/devLogin")
+  return { authentikConfigured, kanidmConfigured, devLoginEnabled }
+})
+
+const devAdminLogin = createServerFn({ method: "POST" }).handler(async () => {
+  const { getRequest } = await import("@tanstack/react-start/server")
+  const { signInAsDevAdmin } = await import("@/src/lib/devLogin")
+  await signInAsDevAdmin(getRequest().headers)
+  return { success: true }
 })
 
 export const Route = createFileRoute("/login")({
@@ -22,12 +30,13 @@ export const Route = createFileRoute("/login")({
     return {
       showAuthentik: config.authentikConfigured,
       showKanidm: config.kanidmConfigured,
+      showDevLogin: config.devLoginEnabled,
     }
   },
 })
 
 function LoginPage() {
-  const { showAuthentik, showKanidm } = Route.useLoaderData()
+  const { showAuthentik, showKanidm, showDevLogin } = Route.useLoaderData()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -52,6 +61,20 @@ function LoginPage() {
       setError(
         err instanceof Error ? err.message : `${label} Login fehlgeschlagen`,
       )
+      setLoading(false)
+    }
+  }
+
+  const handleDevLogin = async () => {
+    setLoading(true)
+    setError("")
+    try {
+      await devAdminLogin()
+      // Full reload so root context and session cache pick up the new cookie
+      window.location.href = "/"
+    } catch (err) {
+      console.error("Dev login error:", err)
+      setError(err instanceof Error ? err.message : "Dev Login fehlgeschlagen")
       setLoading(false)
     }
   }
@@ -81,6 +104,17 @@ function LoginPage() {
             disabled={loading}
           >
             Mit Kanidm anmelden
+          </Button>
+        )}
+        {showDevLogin && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            onClick={handleDevLogin}
+            disabled={loading}
+          >
+            Als Dev-Admin anmelden
           </Button>
         )}
       </div>
