@@ -128,9 +128,18 @@ export const auth = betterAuth({
       maxAge: 60 * 5, // 5 minutes
     },
   },
-  trustedOrigins: process.env.BETTER_AUTH_URL
-    ? [process.env.BETTER_AUTH_URL]
-    : ["http://localhost:3000"],
+  trustedOrigins: (request) => {
+    const configured = process.env.BETTER_AUTH_URL
+      ? [process.env.BETTER_AUTH_URL]
+      : ["http://localhost:3000"]
+    // In development the app is also opened via the machine's network
+    // address, e.g. from a phone. Requests from the page to its own address
+    // are same-origin, so that address is trusted too.
+    if (process.env.NODE_ENV !== "production" && request) {
+      return [...configured, new URL(request.url).origin]
+    }
+    return configured
+  },
   plugins: [
     admin(),
     // Kanidm OAuth, only when configured

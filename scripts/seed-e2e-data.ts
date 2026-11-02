@@ -47,12 +47,20 @@ const TEST_SESSION = {
 
 // Separate session specifically for logout test - can be safely invalidated
 export const E2E_LOGOUT_SESSION_TOKEN = "e2e-logout-session-token-67890"
-const LOGOUT_TEST_SESSION = {
-  id: "e2e-logout-session-id",
+// One more for the logout test on a phone, which runs in parallel
+export const E2E_PHONE_LOGOUT_SESSION_TOKEN =
+  "e2e-phone-logout-session-token-13579"
+const LOGOUT_TEST_SESSIONS = [
+  { id: "e2e-logout-session-id", token: E2E_LOGOUT_SESSION_TOKEN },
+  {
+    id: "e2e-phone-logout-session-id",
+    token: E2E_PHONE_LOGOUT_SESSION_TOKEN,
+  },
+].map((session) => ({
+  ...session,
   userId: "e2e-user",
-  token: E2E_LOGOUT_SESSION_TOKEN,
   expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-}
+}))
 
 // Session for the admin user, to test admin-only actions
 export const E2E_ADMIN_SESSION_TOKEN = "e2e-admin-session-token-24680"
@@ -298,19 +306,21 @@ async function seed() {
         NOW()
       )
     `)
-    // Separate session for logout test - can be safely invalidated without affecting other tests
-    await db.execute(sql`
-      INSERT INTO sessions (id, user_id, token, expires_at, created_at, updated_at)
-      VALUES (
-        ${LOGOUT_TEST_SESSION.id},
-        ${LOGOUT_TEST_SESSION.userId},
-        ${LOGOUT_TEST_SESSION.token},
-        ${LOGOUT_TEST_SESSION.expiresAt},
-        NOW(),
-        NOW()
-      )
-    `)
-    console.log(`  Inserted 2 sessions for e2e-user (main + logout test)`)
+    // Separate sessions for logout tests - can be safely invalidated without affecting other tests
+    for (const session of LOGOUT_TEST_SESSIONS) {
+      await db.execute(sql`
+        INSERT INTO sessions (id, user_id, token, expires_at, created_at, updated_at)
+        VALUES (
+          ${session.id},
+          ${session.userId},
+          ${session.token},
+          ${session.expiresAt},
+          NOW(),
+          NOW()
+        )
+      `)
+    }
+    console.log(`  Inserted 3 sessions for e2e-user (main + 2 logout tests)`)
     await db.execute(sql`
       INSERT INTO sessions (id, user_id, token, expires_at, created_at, updated_at)
       VALUES (
@@ -396,7 +406,7 @@ async function seed() {
     console.log("\nE2E database seed completed successfully!")
     console.log(`Summary:`)
     console.log(`  - Users: ${TEST_USERS.length}`)
-    console.log(`  - Sessions: 2 (main + logout test)`)
+    console.log(`  - Sessions: 3 (main + 2 logout tests)`)
     console.log(`  - Locations: ${TEST_LOCATIONS.length}`)
     console.log(`  - Items: ${TEST_ITEMS.length}`)
     console.log(`  - Changelog entries: ${TEST_CHANGELOG.length}`)

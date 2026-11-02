@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-router"
 import { LogInIcon, LogOutIcon, PlusIcon } from "lucide-react"
 import type { ReactNode } from "react"
+import { toast } from "sonner"
 import { getAuthContext } from "@/src/actions/authActions"
 import { AuthProvider, useAuth } from "@/src/context/AuthContext"
 import appCss from "../styles.css?url"
@@ -82,7 +83,14 @@ function AuthButtons({ onAction }: { onAction?: () => void }) {
 
   const handleLogout = async () => {
     onAction?.()
-    await logout()
+    try {
+      await logout()
+    } catch (error) {
+      toast.error("Abmelden fehlgeschlagen", {
+        description: error instanceof Error ? error.message : undefined,
+      })
+      return
+    }
     await router.invalidate()
   }
 

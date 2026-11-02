@@ -22,7 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdminUser = isAdmin(user)
 
   const logout = async () => {
-    await signOut()
+    // signOut reports failures (e.g. a rejected origin) instead of throwing
+    const { error } = await signOut()
+    if (error) {
+      throw new Error(error.message ?? "Abmelden fehlgeschlagen")
+    }
     await refetch()
   }
 

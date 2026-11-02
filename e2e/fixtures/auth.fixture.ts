@@ -20,6 +20,7 @@ export type TestFixtures = {
   authenticatedPage: Page
   adminPage: Page
   logoutTestPage: Page
+  phoneLogoutTestPage: Page
   testUserEmail: string
 }
 
@@ -28,6 +29,8 @@ export type TestFixtures = {
 const E2E_SESSION_TOKEN = "e2e-test-session-token-12345"
 // Separate session for logout test - can be safely invalidated without affecting other tests
 const E2E_LOGOUT_SESSION_TOKEN = "e2e-logout-session-token-67890"
+// Separate session for the logout test on a phone, which runs in parallel
+const E2E_PHONE_LOGOUT_SESSION_TOKEN = "e2e-phone-logout-session-token-13579"
 // Session for the seeded e2e-admin, for admin-only actions
 const E2E_ADMIN_SESSION_TOKEN = "e2e-admin-session-token-24680"
 
@@ -117,6 +120,18 @@ export const test = base.extend<TestFixtures>({
     await expect(page.locator("header").getByText(TEST_USER.name)).toBeVisible({
       timeout: 5000,
     })
+
+    await use(page)
+  },
+  phoneLogoutTestPage: async ({ page, context }, use) => {
+    await setAuthCookie(context, E2E_PHONE_LOGOUT_SESSION_TOKEN)
+
+    // On a phone the user name sits in the menu; the add-item button in the
+    // header is only shown to logged-in users
+    await page.goto("/")
+    await expect(
+      page.getByRole("banner").getByRole("link", { name: "Item hinzufügen" }),
+    ).toBeVisible({ timeout: 5000 })
 
     await use(page)
   },
