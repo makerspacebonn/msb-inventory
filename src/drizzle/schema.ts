@@ -213,9 +213,3 @@ export const CategoryTable = pgTable("categories", {
 })
 
 export type CategorySelect = InferSelectModel<typeof CategoryTable>
-
-// Data migrations that have been applied (see src/drizzle/data-migrations)
-export const DataMigrationTable = pgTable("data_migrations", {
-  id: varchar("id").primaryKey(),
-  appliedAt: timestamp("applied_at").defaultNow().notNull(),
-})

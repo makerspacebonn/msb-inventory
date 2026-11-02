@@ -639,7 +639,7 @@ Items without a location are hard to find in the inventory. The item list should
 
 ---
 
-### CLEANUP-001: Remove temporary category/tag migration
+### CLEANUP-001: Remove temporary category/tag migration ✅ COMPLETED 2026-11-02
 **Priority:** Low
 **Depends on:** AI-002 migration ran on production
 
@@ -647,6 +647,9 @@ Items without a location are hard to find in the inventory. The item list should
 The one-time migration for curated categories and tag cleanup is only needed until it ran on production. Afterwards its code should be removed.
 
 **Acceptance Criteria:**
-- [ ] Migration ran on production (`/admin/migration` shows "bereits ausgeführt")
-- [ ] `src/dataMigration/` and `src/routes/admin/migration.tsx` are removed
-- [ ] `data_migrations` table is removed from the schema (or kept, if a future migration needs it)
+- [x] Migration ran on production (`/admin/migration` shows "bereits ausgeführt")
+- [x] `src/dataMigration/` and `src/routes/admin/migration.tsx` are removed
+- [x] `data_migrations` table is removed from the schema
+
+**Implementation Notes:**
+- The changelog keeps showing "Migration" as user for the migration's entries
