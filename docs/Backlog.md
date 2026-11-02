@@ -304,10 +304,10 @@ Backups, releases and running the app.
 A backup should contain everything needed to restore the inventory completely. Today it covers items, locations and images, but not the changelog and other data added since (e.g. categories), so a restore loses history and information.
 
 **Acceptance Criteria:**
-- [ ] Backups include the changelog
-- [ ] Backups include all other data needed for a complete restore (e.g. categories)
-- [ ] A restore brings back the complete state of the backup
-- [ ] Older backups can still be restored
+- [x] Backups include the changelog
+- [x] Backups include all other data needed for a complete restore (e.g. categories)
+- [x] A restore brings back the complete state of the backup
+- [x] Older backups can still be restored
 
 ---
 
@@ -322,3 +322,16 @@ Every deployment should get its own version number, shown in the app, so it's cl
 - [ ] The running version is visible in the app
 - [ ] The version change type is derived from the changes since the last version
 - [ ] It's traceable which changes are in which version
+
+---
+
+### OPS-003: Remove projects
+**Priority:** Low
+
+**Description:**
+The inventory is meant to manage items only. Leftovers of a former projects feature (database table, server routes) are still in the codebase, although nothing in the app uses them. They should be removed so the codebase only contains what the tool is for.
+
+**Acceptance Criteria:**
+- [ ] No project-related code, routes or data structures remain
+- [ ] The projects table is removed from the database
+- [ ] The app works as before
