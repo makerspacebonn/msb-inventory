@@ -51,14 +51,3 @@ export async function storeImage(
   await fs.promises.writeFile(path.join(dir, fileName), buffer)
   return fileName
 }
-
-/** Deletes a stored image; a file that is already gone is not an error */
-export async function deleteImage(
-  fileName: string,
-  folder: ImageFolder,
-): Promise<void> {
-  // basename keeps a stored path from pointing outside the image folder
-  await fs.promises.rm(path.join(folderPath(folder), path.basename(fileName)), {
-    force: true,
-  })
-}

@@ -1,7 +1,7 @@
 import type { Item, Location, ParentLocationMarker } from "@server/app/types"
 import { createServerFn } from "@tanstack/react-start"
 import { isSameValue } from "@/src/lib/changelogUtils"
-import { deleteImage, storeImage } from "@/src/lib/imageUtils"
+import { storeImage } from "@/src/lib/imageUtils"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { recordChange } from "@/src/repositories/ChangelogRepository"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
@@ -211,10 +211,7 @@ export const updateLocation = createServerFn({ method: "POST" })
     if (data.image) {
       updateData.imagePath = await storeImage(data.image, "locations")
       changedFields.push("imagePath")
-
-      if (beforeLocation.imagePath) {
-        await deleteImage(beforeLocation.imagePath, "locations")
-      }
+      // The old image file is kept, so undoing the change restores it too
     }
 
     if (changedFields.length === 0) {
@@ -262,11 +259,7 @@ export const deleteLocation = createServerFn({ method: "POST" })
         after: null,
         changedFields: Object.keys(location),
       })
-
-      // Delete the image file if it exists
-      if (location.imagePath) {
-        await deleteImage(location.imagePath, "locations")
-      }
+      // The image file is kept, so undoing the deletion restores it too
     }
 
     return { success: deleted }

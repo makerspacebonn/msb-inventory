@@ -2,7 +2,7 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { deleteImage, parseImageDataUrl, storeImage } from "./imageUtils"
+import { parseImageDataUrl, storeImage } from "./imageUtils"
 
 const fakeImage = Buffer.from("fake-image").toString("base64")
 
@@ -32,7 +32,7 @@ describe("parseImageDataUrl", () => {
   })
 })
 
-describe("storeImage and deleteImage", () => {
+describe("storeImage", () => {
   let saveDir: string
   const originalSavePath = process.env.SAVE_PATH
 
@@ -61,22 +61,5 @@ describe("storeImage and deleteImage", () => {
       storeImage(`data:text/html;base64,${fakeImage}`, "items"),
     ).rejects.toThrow("text/html")
     expect(fs.existsSync(path.join(saveDir, "items"))).toBe(false)
-  })
-
-  it("deletes a stored image and ignores one that is already gone", async () => {
-    const fileName = await storeImage(
-      `data:image/jpeg;base64,${fakeImage}`,
-      "items",
-    )
-    await deleteImage(fileName, "items")
-    expect(fs.existsSync(path.join(saveDir, "items", fileName))).toBe(false)
-    await expect(deleteImage(fileName, "items")).resolves.toBeUndefined()
-  })
-
-  it("never deletes outside the image folder", async () => {
-    const outside = path.join(saveDir, "keep.txt")
-    fs.writeFileSync(outside, "keep")
-    await deleteImage("../keep.txt", "items")
-    expect(fs.existsSync(outside)).toBe(true)
   })
 })

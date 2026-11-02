@@ -3,7 +3,6 @@ import path from "node:path"
 import * as process from "node:process"
 import { createFileRoute } from "@tanstack/react-router"
 import sharp from "sharp"
-import { ItemRepository } from "@/src/repositories/ItemRepository"
 
 const imageRootPath = process.env.SAVE_PATH || ""
 const cacheDir = path.join(imageRootPath, ".cache")
@@ -118,43 +117,6 @@ export const Route = createFileRoute("/img/$")({
           // Fallback to original file if processing fails
           return new Response(Bun.file(originalPath))
         }
-      },
-      DELETE: async ({ params }) => {
-        const imagePath = params._splat
-        if (!imagePath) {
-          return new Response("Image path required", { status: 400 })
-        }
-
-        // Extract just the filename from path like "items/abc.jpg"
-        const fileName = imagePath.split("/").pop()
-        if (!fileName) {
-          return new Response("Invalid image path", { status: 400 })
-        }
-
-        // Check if any items are using this image
-        const itemRepo = new ItemRepository()
-        const usageCount = await itemRepo.countByImagePath(fileName)
-
-        if (usageCount > 0) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              message: `Image is still used by ${usageCount} item(s)`,
-            }),
-            { status: 409, headers: { "Content-Type": "application/json" } },
-          )
-        }
-
-        // Delete the file
-        const fullPath = imageRootPath + imagePath
-        if (fs.existsSync(fullPath)) {
-          fs.unlinkSync(fullPath)
-          return new Response(JSON.stringify({ success: true }), {
-            headers: { "Content-Type": "application/json" },
-          })
-        }
-
-        return new Response("Image not found", { status: 404 })
       },
     },
   },

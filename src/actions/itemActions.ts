@@ -6,7 +6,7 @@ import type {
 import { createServerFn } from "@tanstack/react-start"
 import z from "zod/v4"
 import { diffFields } from "@/src/lib/changelogUtils"
-import { deleteImage, storeImage } from "@/src/lib/imageUtils"
+import { storeImage } from "@/src/lib/imageUtils"
 import { itemSchema } from "@/src/lib/itemSchema"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { CategoryRepository } from "@/src/repositories/CategoryRepository"
@@ -217,16 +217,7 @@ export const deleteItem = createServerFn({ method: "POST" })
         after: null,
         changedFields: Object.keys(item),
       })
-
-      // Handle image cleanup
-      if (item.imagePath) {
-        // Check if any other items use this image
-        const usageCount = await itemRepo.countByImagePath(item.imagePath)
-
-        if (usageCount === 0) {
-          await deleteImage(item.imagePath, "items")
-        }
-      }
+      // The image file is kept, so undoing the deletion restores it too
     }
 
     return { success: deleted }
