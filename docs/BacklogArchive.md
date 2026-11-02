@@ -436,6 +436,27 @@ Categories should be usable to find related items. Clicking an item's category s
 
 ---
 
+### UX-008: Search by clicking tags ✅ COMPLETED 2026-11-02
+**Priority:** Medium
+
+**Description:**
+Tags on items should be usable to find related items. Clicking a tag shows the search results for that tag; clicking further tags narrows the results to items that have all selected tags.
+
+**Acceptance Criteria:**
+- [x] Tags are clickable wherever they are shown
+- [x] Clicking a tag opens the search with that tag as a filter
+- [x] Clicking more tags adds them to the filter; results contain only items with all selected tags
+- [x] Active tag filters are visible on the search page and can be removed one by one
+- [x] All tag filters can be removed at once
+
+**Implementation Notes:**
+- Tags on the item page link to the search with `tag:"Name"`; the search syntax is shared with categories (UX-019), including `*` wildcards
+- Several tag filters must all match (unlike categories, where any may match)
+- Further tags are clicked in an "Eingrenzen" row on the results page: the most frequent tags among the results, without the active ones and without tags every result already has
+- Active tag filters show as chips, each removable; "Alle Schlagwort-Filter entfernen" appears from two tag filters on and keeps category filters and search text
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.

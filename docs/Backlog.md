@@ -149,21 +149,6 @@ Items without a location are hard to find in the inventory. The item list should
 
 ---
 
-### UX-008: Search by clicking tags
-**Priority:** Medium
-
-**Description:**
-Tags on items should be usable to find related items. Clicking a tag shows the search results for that tag; clicking further tags narrows the results to items that have all selected tags.
-
-**Acceptance Criteria:**
-- [ ] Tags are clickable wherever they are shown
-- [ ] Clicking a tag opens the search with that tag as a filter
-- [ ] Clicking more tags adds them to the filter; results contain only items with all selected tags
-- [ ] Active tag filters are visible on the search page and can be removed one by one
-- [ ] All tag filters can be removed at once
-
----
-
 ### UX-009: Search by photo
 **Priority:** Medium
 
