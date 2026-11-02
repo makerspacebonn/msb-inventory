@@ -1,12 +1,18 @@
 import { ItemList } from "@components/ItemList"
-import { Badge } from "@components/ui/badge"
+import { Badge, badgeVariants } from "@components/ui/badge"
 import { Button } from "@components/ui/button"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { XIcon } from "lucide-react"
+import { PlusIcon, XIcon } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
 import { fetchPaginatedItems, searchItems } from "@/src/actions/itemActions"
 import type { Item, PaginatedResult } from "@/src/app/types"
-import { buildSearchQuery, parseSearchQuery } from "@/src/lib/searchQuery"
+import {
+  buildSearchQuery,
+  narrowingTags,
+  type ParsedSearch,
+  parseSearchQuery,
+} from "@/src/lib/searchQuery"
 
 export const Route = createFileRoute("/items/")({
   component: RouteComponent,
@@ -48,8 +54,12 @@ function RouteComponent() {
 }
 
 function SearchResults({ q, results }: { q: string; results: Item[] }) {
-  const { text, categories } = parseSearchQuery(q)
+  const parsed = parseSearchQuery(q)
+  const { text, categories, tags } = parsed
   const resultCount = `${results.length} Ergebnis${results.length !== 1 ? "se" : ""}`
+  const narrowing = narrowingTags(results, tags)
+  const searchWith = (changes: Partial<ParsedSearch>) =>
+    buildSearchQuery({ ...parsed, ...changes }) || undefined
 
   return (
     <>
@@ -57,29 +67,32 @@ function SearchResults({ q, results }: { q: string; results: Item[] }) {
         <p className="text-sm text-muted-foreground">
           {text ? `${resultCount} für "${text}"` : resultCount}
         </p>
-        {categories.map((category) => {
-          const remaining = buildSearchQuery({
-            text,
-            categories: categories.filter((c) => c !== category),
-          })
-          return (
-            <Badge
-              key={category}
-              variant="secondary"
-              className="gap-1 pr-1 font-normal"
-            >
-              Kategorie: {category}
-              <Link
-                to="/items"
-                search={{ q: remaining || undefined }}
-                aria-label={`Kategorie-Filter "${category}" entfernen`}
-                className="rounded-sm p-0.5 hover:bg-muted-foreground/20"
-              >
-                <XIcon className="h-3 w-3" />
-              </Link>
-            </Badge>
-          )
-        })}
+        {categories.map((category) => (
+          <FilterChip
+            key={`cat:${category}`}
+            label={`Kategorie: ${category}`}
+            removeLabel={`Kategorie-Filter "${category}" entfernen`}
+            searchWithout={searchWith({
+              categories: categories.filter((c) => c !== category),
+            })}
+          />
+        ))}
+        {tags.map((tag) => (
+          <FilterChip
+            key={`tag:${tag}`}
+            label={`Schlagwort: ${tag}`}
+            removeLabel={`Schlagwort-Filter "${tag}" entfernen`}
+            searchWithout={searchWith({ tags: tags.filter((t) => t !== tag) })}
+          />
+        ))}
+        {tags.length > 1 && (
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/items" search={{ q: searchWith({ tags: [] }) }}>
+              <XIcon className="h-4 w-4 mr-1" />
+              Alle Schlagwort-Filter entfernen
+            </Link>
+          </Button>
+        )}
         <Button variant="ghost" size="sm" asChild>
           <Link to="/items">
             <XIcon className="h-4 w-4 mr-1" />
@@ -87,8 +100,56 @@ function SearchResults({ q, results }: { q: string; results: Item[] }) {
           </Link>
         </Button>
       </div>
+      {narrowing.length > 0 && (
+        <nav
+          aria-label="Nach Schlagwort eingrenzen"
+          className="flex flex-wrap items-center gap-2 mb-4"
+        >
+          <span className="text-sm text-muted-foreground">Eingrenzen:</span>
+          {narrowing.map((tag) => (
+            <Link
+              key={tag}
+              to="/items"
+              search={{ q: searchWith({ tags: [...tags, tag] }) }}
+              aria-label={`Nach Schlagwort "${tag}" eingrenzen`}
+              className={cn(
+                badgeVariants({ variant: "outline" }),
+                "font-normal text-muted-foreground hover:bg-muted",
+              )}
+            >
+              <PlusIcon className="h-3 w-3 mr-1" />
+              {tag}
+            </Link>
+          ))}
+        </nav>
+      )}
       <ItemList items={results} />
     </>
+  )
+}
+
+// An active search filter with a button that removes just this filter
+function FilterChip({
+  label,
+  removeLabel,
+  searchWithout,
+}: {
+  label: string
+  removeLabel: string
+  searchWithout: string | undefined
+}) {
+  return (
+    <Badge variant="secondary" className="gap-1 pr-1 font-normal">
+      {label}
+      <Link
+        to="/items"
+        search={{ q: searchWithout }}
+        aria-label={removeLabel}
+        className="rounded-sm p-0.5 hover:bg-muted-foreground/20"
+      >
+        <XIcon className="h-3 w-3" />
+      </Link>
+    </Badge>
   )
 }
 

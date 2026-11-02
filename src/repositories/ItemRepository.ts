@@ -12,7 +12,7 @@ import {
 import type { Item, PaginatedResult } from "../app/types"
 import { db } from "../db"
 import { type ItemInsert, ItemTable, LocationTable } from "../drizzle/schema"
-import { categoryPatternToLike, parseSearchQuery } from "../lib/searchQuery"
+import { parseSearchQuery, patternToLike } from "../lib/searchQuery"
 
 // Item columns plus the name of the item's direct location, for item lists
 const itemWithLocationName = {
@@ -117,12 +117,12 @@ export class ItemRepository {
 
   /**
    * Full-text search over items. The query may contain category filters
-   * (`cat:"Name"`, `cat:Elektro*`, see searchQuery.ts) next to free text.
+   * (`cat:"Name"`, `tag:Akku`, `cat:Elektro*`, see searchQuery.ts) next to free text.
    */
   async search(query: string): Promise<Item[]> {
-    const { text, categories } = parseSearchQuery(query)
+    const { text, categories, tags } = parseSearchQuery(query)
 
-    if (!text && categories.length === 0) {
+    if (!text && categories.length === 0 && tags.length === 0) {
       const items = await this.findLatest()
       return items.map((item) => ({ ...item, rank: 0, similarity: 0 }))
     }
@@ -133,19 +133,28 @@ export class ItemRepository {
         ? or(
             ...categories.map(
               (category) =>
-                sql`${ItemTable.category} ILIKE ${categoryPatternToLike(category)}`,
+                sql`${ItemTable.category} ILIKE ${patternToLike(category)}`,
             ),
           )
         : undefined
+
+    // Tags narrow down: an item must have every filtered tag
+    const tagFilters = tags.map(
+      (tag) => sql`EXISTS (
+        SELECT 1 FROM unnest(${ItemTable.tags}) AS item_tag
+        WHERE item_tag ILIKE ${patternToLike(tag)}
+      )`,
+    )
+    const filters = and(categoryFilter, ...tagFilters)
 
     const results = db
       .select(itemWithLocationName)
       .from(ItemTable)
       .leftJoin(LocationTable, eq(ItemTable.locationId, LocationTable.id))
 
-    // Browsing a category: all of its items, alphabetically
+    // Browsing by category or tags: all matching items, alphabetically
     if (!text) {
-      return results.where(categoryFilter).orderBy(asc(ItemTable.name))
+      return results.where(filters).orderBy(asc(ItemTable.name))
     }
 
     const textFilter: SQL = sql`(search_vector @@ plainto_tsquery('german', ${text})
@@ -157,7 +166,7 @@ export class ItemRepository {
         ))`
 
     return results
-      .where(and(textFilter, categoryFilter))
+      .where(and(textFilter, filters))
       .orderBy(sql`(ts_rank(search_vector, plainto_tsquery('german', ${text})) * 2
                        + similarity(searchable_text, ${text})) DESC,
         ${ItemTable.id} DESC`)
