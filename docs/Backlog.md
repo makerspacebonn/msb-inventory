@@ -205,19 +205,6 @@ Single sign-on is named after Kanidm throughout the app (settings, login route, 
 
 User experience enhancements for common workflows.
 
-### UX-004: Larger item images in the item list
-**Priority:** Medium
-
-**Description:**
-Item images in the item list are too small to recognize items at a glance. Images should be much bigger so users can identify items visually while scrolling.
-
-**Acceptance Criteria:**
-- [ ] Item images in the list are large enough to recognize the item without opening it
-- [ ] Images stay sharp at the larger size
-- [ ] The list remains usable on mobile and desktop
-
----
-
 ### LOC-001: Replace a location image while keeping markers
 **Priority:** Medium
 

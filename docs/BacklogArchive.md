@@ -323,6 +323,23 @@ The one-time migration for curated categories and tag cleanup is only needed unt
 
 ---
 
+### UX-004: Larger item images in the item list ✅ COMPLETED 2026-11-02
+**Priority:** Medium
+
+**Description:**
+Item images in the item list are too small to recognize items at a glance. Images should be much bigger so users can identify items visually while scrolling.
+
+**Acceptance Criteria:**
+- [x] Item images in the list are large enough to recognize the item without opening it
+- [x] Images stay sharp at the larger size
+- [x] The list remains usable on mobile and desktop
+
+**Implementation Notes:**
+- Item list is a grid of square photo tiles (2 columns on phones, up to 6 on wide screens) with name and direct location below
+- New medium image size (`?size=m`, 600px); tiles use `srcset` so the browser picks the smallest sharp image
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.
