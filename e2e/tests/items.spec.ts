@@ -64,9 +64,8 @@ test.describe("Items Page", () => {
   })
 
   test("requires authentication to add items", async ({ page }) => {
-    await page.getByRole("link", { name: "Item hinzufügen" }).click()
+    await page.goto("/items/add")
 
-    await expect(page).toHaveURL("/items/add")
     await expect(page.getByText("Unauthorized")).toBeVisible()
   })
 })

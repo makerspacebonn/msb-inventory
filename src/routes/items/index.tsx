@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react"
 import { fetchPaginatedItems, searchItems } from "@/src/actions/itemActions"
 import type { Item } from "@/src/app/types"
 import { useAuth } from "@/src/context/AuthContext"
+import { useDebounce } from "@/src/hooks/useDebounce"
 
 export const Route = createFileRoute("/items/")({
   component: RouteComponent,
@@ -24,22 +25,6 @@ export const Route = createFileRoute("/items/")({
     meta: [{ title: "Items | MSB Inventar" }],
   }),
 })
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
-
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [value, delay])
-
-  return debouncedValue
-}
 
 function RouteComponent() {
   const initialData = Route.useLoaderData()

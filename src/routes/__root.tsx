@@ -1,3 +1,5 @@
+import { HeaderSearch } from "@components/header/HeaderSearch"
+import { SiteMenu } from "@components/header/SiteMenu"
 import { Button } from "@components/ui/button"
 import { Toaster } from "@components/ui/sonner"
 import {
@@ -8,8 +10,8 @@ import {
   Scripts,
   useRouter,
 } from "@tanstack/react-router"
-import { LogInIcon, LogOutIcon, MenuIcon, PlusIcon, XIcon } from "lucide-react"
-import { type ReactNode, useState } from "react"
+import { LogInIcon, LogOutIcon, PlusIcon } from "lucide-react"
+import type { ReactNode } from "react"
 import { getAuthContext } from "@/src/actions/authActions"
 import { AuthProvider, useAuth } from "@/src/context/AuthContext"
 import appCss from "../styles.css?url"
@@ -130,54 +132,37 @@ function AuthButtons({ onAction }: { onAction?: () => void }) {
   )
 }
 
-function NavLinks({ onClick }: { onClick?: () => void }) {
-  const { isLoggedIn } = useAuth()
+function MainLinks() {
   return (
     <>
-      <Link
-        to="/"
-        className="hover:text-gray-300 transition-colors"
-        onClick={onClick}
-      >
-        Home
-      </Link>
-      <Link
-        to="/items"
-        className="hover:text-gray-300 transition-colors"
-        onClick={onClick}
-      >
+      <Link to="/items" className="hover:text-gray-300 transition-colors">
         Items
       </Link>
-      <Link
-        to="/locations"
-        className="hover:text-gray-300 transition-colors"
-        onClick={onClick}
-      >
+      <Link to="/locations" className="hover:text-gray-300 transition-colors">
         Locations
-      </Link>
-      {isLoggedIn && (
-        <Link
-          to="/printers"
-          className="hover:text-gray-300 transition-colors"
-          onClick={onClick}
-        >
-          Drucker
-        </Link>
-      )}
-      <Link
-        to="/changelog"
-        className="hover:text-gray-300 transition-colors"
-        onClick={onClick}
-      >
-        Changelog
       </Link>
     </>
   )
 }
 
-function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+// Add-item shortcut, only for users who may add items
+function AddItemButton() {
+  const { isLoggedIn } = useAuth()
+  if (!isLoggedIn) return null
+  return (
+    <Button variant="secondary" size="sm" asChild>
+      <Link
+        to="/items/add"
+        aria-label="Item hinzufügen"
+        title="Item hinzufügen"
+      >
+        <PlusIcon className="w-4 h-4" />
+      </Link>
+    </Button>
+  )
+}
 
+function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="de">
       <head>
@@ -188,86 +173,36 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <Toaster richColors position="top-center" expand={true} />
         <div className="flex flex-col min-h-screen">
           <header className="py-2 px-4 shadow border-b border-gray-800">
-            <nav className="flex flex-row justify-between items-center gap-2">
-              {/* Logo and version */}
-              <div className="flex items-center gap-2 flex-1">
-                <a href="/" className="w-10">
-                  <img
-                    src="/img/makerspace-bonn-signet.png"
-                    alt="MakerSpace Bonn e.V."
-                  />
-                </a>
-                <span className="text-[10px] text-gray-500">
-                  v{__APP_VERSION__}
-                </span>
-              </div>
-
-              {/* Center: Add Item button */}
-              <Button variant="secondary" size="sm" asChild>
-                <Link to="/items/add">
-                  <PlusIcon className="w-4 h-4 mr-1" />
-                  Item hinzufügen
-                </Link>
-              </Button>
-
-              {/* Desktop navigation */}
-              <div className="hidden md:flex items-center gap-6 flex-1 justify-end">
-                <NavLinks />
-                <AuthButtons />
-              </div>
-
-              {/* Mobile menu button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="md:hidden"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            <div className="flex flex-row items-center gap-2 md:gap-4">
+              <Link to="/" className="w-10 flex-shrink-0">
+                <img
+                  src="/img/makerspace-bonn-signet.png"
+                  alt="MakerSpace Bonn e.V."
+                />
+              </Link>
+              <nav
+                aria-label="Hauptnavigation"
+                className="hidden md:flex items-center gap-6"
               >
-                {mobileMenuOpen ? (
-                  <XIcon className="w-5 h-5" />
-                ) : (
-                  <MenuIcon className="w-5 h-5" />
-                )}
-              </Button>
-            </nav>
-          </header>
-
-          {/* Mobile navigation overlay */}
-          {mobileMenuOpen && (
-            <>
-              {/* Backdrop */}
-              <button
-                type="button"
-                className="fixed inset-0 bg-black/60 backdrop-blur-md z-40 md:hidden cursor-default"
-                onClick={() => setMobileMenuOpen(false)}
-                onKeyDown={(e) =>
-                  e.key === "Escape" && setMobileMenuOpen(false)
-                }
-                aria-label="Close menu"
-              />
-              {/* Menu panel */}
-              <div className="fixed top-0 right-0 h-full w-64 bg-black z-50 md:hidden shadow-xl">
-                <div className="flex justify-end p-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setMobileMenuOpen(false)}
-                    aria-label="Close menu"
-                  >
-                    <XIcon className="w-5 h-5" />
-                  </Button>
+                <MainLinks />
+              </nav>
+              {/* Search fills the space between the pages and the actions */}
+              <HeaderSearch />
+              <div className="flex flex-shrink-0 items-center justify-end gap-2 md:gap-4">
+                <AddItemButton />
+                <div className="hidden md:block">
+                  <AuthButtons />
                 </div>
-                <div className="flex flex-col gap-4 px-6 py-4">
-                  <NavLinks onClick={() => setMobileMenuOpen(false)} />
-                  <div className="pt-4 mt-4 border-t border-gray-700">
-                    <AuthButtons onAction={() => setMobileMenuOpen(false)} />
-                  </div>
-                </div>
+                <SiteMenu
+                  account={(close) => <AuthButtons onAction={close} />}
+                />
               </div>
-            </>
-          )}
+            </div>
+          </header>
           <main className="flex-grow p-4">{children}</main>
+          <footer className="py-4 px-4 border-t border-gray-800 text-center text-xs text-gray-500">
+            MSB Inventar v{__APP_VERSION__}
+          </footer>
         </div>
         <Scripts />
       </body>
