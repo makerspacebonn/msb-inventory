@@ -52,7 +52,8 @@ test.describe("Items Page", () => {
 
   test("opens an item from the list", async ({ page }) => {
     const link = seededTestItems(page).first()
-    const name = await link.textContent()
+    // textContent also contains hidden placeholder text, so extract the name
+    const name = (await link.textContent())?.match(/Test Item \d+/)?.[0]
 
     await link.click()
 

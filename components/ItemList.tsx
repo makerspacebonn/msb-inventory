@@ -50,7 +50,7 @@ export function ItemList({
 
   return (
     <div className="space-y-6">
-      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
         {items.map((item) => (
           <li key={item.id}>
             <ItemCard item={item} />

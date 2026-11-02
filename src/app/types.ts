@@ -7,6 +7,8 @@ export type Item = {
   parentLocationMarker?: ParentLocationMarker | null
   additionalInfo: (ParentLocationMarker | ItemLink)[] | null
   imagePath: string | null
+  // Name of the item's direct location; only filled in item lists
+  locationName?: string | null
   tags: string[]
   manufacturer: string | null
   model: string | null

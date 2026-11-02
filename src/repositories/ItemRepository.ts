@@ -1,7 +1,13 @@
-import { count, eq, sql } from "drizzle-orm"
+import { count, desc, eq, getTableColumns, sql } from "drizzle-orm"
 import type { Item, PaginatedResult } from "../app/types"
 import { db } from "../db"
-import { type ItemInsert, ItemTable } from "../drizzle/schema"
+import { type ItemInsert, ItemTable, LocationTable } from "../drizzle/schema"
+
+// Item columns plus the name of the item's direct location, for item lists
+const itemWithLocationName = {
+  ...getTableColumns(ItemTable),
+  locationName: LocationTable.name,
+}
 
 export interface SearchResult extends Item {
   rank: number
@@ -38,11 +44,13 @@ export class ItemRepository {
     const offset = (page - 1) * pageSize
 
     const [items, totalResult] = await Promise.all([
-      db.query.ItemTable.findMany({
-        orderBy: (items, { desc }) => [desc(items.createdAt)],
-        limit: pageSize,
-        offset,
-      }),
+      db
+        .select(itemWithLocationName)
+        .from(ItemTable)
+        .leftJoin(LocationTable, eq(ItemTable.locationId, LocationTable.id))
+        .orderBy(desc(ItemTable.createdAt))
+        .limit(pageSize)
+        .offset(offset),
       db.select({ count: count() }).from(ItemTable),
     ])
 
@@ -112,8 +120,9 @@ export class ItemRepository {
     const searchText = query.trim()
 
     const results = await db
-      .select()
+      .select(itemWithLocationName)
       .from(ItemTable)
+      .leftJoin(LocationTable, eq(ItemTable.locationId, LocationTable.id))
       .where(sql`search_vector @@ plainto_tsquery('german', ${searchText})
         OR searchable_text % ${searchText}
         OR searchable_text ILIKE ${`%${searchText}%`}
@@ -123,7 +132,7 @@ export class ItemRepository {
         )`)
       .orderBy(sql`(ts_rank(search_vector, plainto_tsquery('german', ${searchText})) * 2
                        + similarity(searchable_text, ${searchText})) DESC,
-        id DESC`)
+        ${ItemTable.id} DESC`)
       .limit(100)
 
     return results

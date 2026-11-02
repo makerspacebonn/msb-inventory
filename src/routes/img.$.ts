@@ -9,8 +9,10 @@ const imageRootPath = process.env.SAVE_PATH || ""
 const cacheDir = path.join(imageRootPath, ".cache")
 
 const SIZE_CONFIG = {
-  default: { maxSize: 1000, quality: 80 },
-  s: { maxSize: 200, quality: 60 },
+  default: { maxSize: 1000, quality: 80, cacheSubDir: "default" },
+  s: { maxSize: 200, quality: 60, cacheSubDir: "small" },
+  // Item list tiles: sharp on high-density phone screens
+  m: { maxSize: 600, quality: 75, cacheSubDir: "medium" },
 }
 
 async function getResizedImage(
@@ -86,10 +88,12 @@ export const Route = createFileRoute("/img/$")({
         // Parse size parameter from URL
         const url = new URL(request.url)
         const sizeParam = url.searchParams.get("size")
-        const config = sizeParam === "s" ? SIZE_CONFIG.s : SIZE_CONFIG.default
-        const cacheSubDir = sizeParam === "s" ? "small" : "default"
+        const config =
+          sizeParam === "s" || sizeParam === "m"
+            ? SIZE_CONFIG[sizeParam]
+            : SIZE_CONFIG.default
 
-        const cachePath = path.join(cacheDir, cacheSubDir, imagePath)
+        const cachePath = path.join(cacheDir, config.cacheSubDir, imagePath)
 
         try {
           const buffer = await getResizedImage(
