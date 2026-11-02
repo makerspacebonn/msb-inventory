@@ -494,3 +494,39 @@ Extract business logic from route files into dedicated action files, so route fi
 - The item schema is shared between form and server (`src/lib/itemSchema.ts`)
 - Pure helpers `diffFields` and `parseImageDataUrl` in `src/lib/itemChanges.ts` with unit tests
 - Server-only routes (`api/items`, `img/$`) still use repositories directly, as they are HTTP handlers, not UI routes
+
+---
+
+### ARCH-001: Extract shared image utilities ✅ COMPLETED 2026-11-02
+**Priority:** High
+
+**Description:**
+Image upload handling was duplicated in the item and location actions. It should live in one shared place.
+
+**Acceptance Criteria:**
+- [x] `src/lib/imageUtils.ts` created with shared functions
+- [x] All files refactored to use shared utility
+- [x] Unit tests for image utilities
+- [x] No functional changes to image upload behavior
+
+**Implementation Notes:**
+- `parseImageDataUrl`, `storeImage` and `deleteImage`; tests run against a temporary `SAVE_PATH`
+- Intended change: location images now also go through the jpeg/png/webp/gif allowlist and are written before the location is saved, like item images
+
+---
+
+### ARCH-005: Consolidate changelog recording ✅ COMPLETED 2026-11-02
+**Priority:** Medium
+
+**Description:**
+The changelog recording pattern was repeated in every item, location and undo action. It should be one reusable helper.
+
+**Acceptance Criteria:**
+- [x] `recordChange` helper created
+- [x] `detectChangedFields` utility extracted
+- [x] All 4+ duplication sites refactored
+- [x] Changelog E2E tests pass
+
+**Implementation Notes:**
+- `recordChange` lives next to `ChangelogRepository` and takes typed entity snapshots, so the callers need no casts (13 sites)
+- Change detection is `diffFields`/`isSameValue` in `src/lib/changelogUtils.ts`, kept free of database imports so it is unit-testable

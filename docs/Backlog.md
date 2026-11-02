@@ -6,34 +6,6 @@ Open items. Completed items are moved to [BacklogArchive.md](./BacklogArchive.md
 
 Code consolidation and structural improvements identified via architectural review (2026-01-19).
 
-### ARCH-001: Extract shared image utilities
-**Priority:** High
-**Effort:** 1 day
-
-**Description:**
-Extract duplicated image handling code into `src/lib/imageUtils.ts`.
-
-**Current Duplication:**
-- `src/routes/items/add.tsx` - `decodeBase64Image()` function
-- `src/routes/locations.tsx` - `decodeBase64Image()` function
-- `src/actions/locationActions.ts` - `decodeBase64Image()` function (lines 49-58)
-
-**Implementation:**
-```typescript
-// src/lib/imageUtils.ts
-export function decodeBase64Image(base64: string): { buffer: Buffer; mimeType: string }
-export function saveImage(buffer: Buffer, filename: string, directory: string): Promise<string>
-export function deleteImage(path: string): Promise<void>
-```
-
-**Acceptance Criteria:**
-- [ ] `src/lib/imageUtils.ts` created with shared functions
-- [ ] All 3 files refactored to use shared utility
-- [ ] Unit tests for image utilities
-- [ ] No functional changes to image upload behavior
-
----
-
 ### ARCH-002: Standardize error handling
 **Priority:** Medium
 **Effort:** 1 day
@@ -106,56 +78,6 @@ export async function undoEntityChange<T>(
 - [ ] Both `undoItemChange` and `undoLocationChange` use shared handler
 - [ ] Conflict detection logic preserved
 - [ ] Existing undo E2E tests pass
-
----
-
-### ARCH-005: Consolidate changelog recording
-**Priority:** Medium
-**Effort:** 1 day
-
-**Description:**
-Extract repeated changelog recording pattern into reusable helper.
-
-**Current Duplication (4+ locations):**
-- `src/actions/itemActions.ts` lines 67-76, 100-109
-- `src/actions/locationActions.ts` lines 91-101, 180-188, 212-220
-
-**Pattern:**
-```typescript
-await new ChangelogRepository().create({
-  entityType: "item" | "location",
-  entityId: id,
-  changeType: "create" | "update" | "delete",
-  userId: context.userId,
-  beforeValues: ...,
-  afterValues: ...,
-  changedFields: [...]
-})
-```
-
-**Implementation:**
-```typescript
-// src/lib/changelogUtils.ts
-export async function recordChange(params: {
-  entityType: 'item' | 'location'
-  entityId: number
-  changeType: 'create' | 'update' | 'delete'
-  userId: string | null
-  before?: Record<string, unknown>
-  after?: Record<string, unknown>
-}): Promise<void>
-
-export function detectChangedFields(
-  before: Record<string, unknown>,
-  after: Record<string, unknown>
-): string[]
-```
-
-**Acceptance Criteria:**
-- [ ] `recordChange` helper created in `changelogUtils.ts`
-- [ ] `detectChangedFields` utility extracted
-- [ ] All 4+ duplication sites refactored
-- [ ] Changelog E2E tests pass
 
 ---
 
