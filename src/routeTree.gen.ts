@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AidescriptionRouteImport } from './routes/aidescription'
 import { Route as BackupRouteImport } from './routes/backup'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as LocationsRouteImport } from './routes/locations'
@@ -32,11 +31,6 @@ import { Route as ItemsItemIdLocationAddRouteImport } from './routes/items/$item
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AidescriptionRoute = AidescriptionRouteImport.update({
-  id: '/aidescription',
-  path: '/aidescription',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BackupRoute = BackupRouteImport.update({
@@ -127,7 +121,6 @@ const ItemsItemIdLocationAddRoute = ItemsItemIdLocationAddRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/aidescription': typeof AidescriptionRoute
   '/backup': typeof BackupRouteWithChildren
   '/changelog': typeof ChangelogRoute
   '/locations': typeof LocationsRoute
@@ -148,7 +141,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/aidescription': typeof AidescriptionRoute
   '/backup': typeof BackupRouteWithChildren
   '/changelog': typeof ChangelogRoute
   '/locations': typeof LocationsRoute
@@ -170,7 +162,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/aidescription': typeof AidescriptionRoute
   '/backup': typeof BackupRouteWithChildren
   '/changelog': typeof ChangelogRoute
   '/locations': typeof LocationsRoute
@@ -193,7 +184,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/aidescription'
     | '/backup'
     | '/changelog'
     | '/locations'
@@ -214,7 +204,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/aidescription'
     | '/backup'
     | '/changelog'
     | '/locations'
@@ -235,7 +224,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/aidescription'
     | '/backup'
     | '/changelog'
     | '/locations'
@@ -257,7 +245,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AidescriptionRoute: typeof AidescriptionRoute
   BackupRoute: typeof BackupRouteWithChildren
   ChangelogRoute: typeof ChangelogRoute
   LocationsRoute: typeof LocationsRoute
@@ -283,13 +270,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/aidescription': {
-      id: '/aidescription'
-      path: '/aidescription'
-      fullPath: '/aidescription'
-      preLoaderRoute: typeof AidescriptionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/backup': {
@@ -427,7 +407,6 @@ const BackupRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AidescriptionRoute: AidescriptionRoute,
   BackupRoute: BackupRouteWithChildren,
   ChangelogRoute: ChangelogRoute,
   LocationsRoute: LocationsRoute,
