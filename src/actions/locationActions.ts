@@ -227,7 +227,7 @@ export const updateLocation = createServerFn({ method: "POST" })
       changeType: "update",
       userId: context.userId,
       before: beforeLocation,
-      after: updatedLocation,
+      after: updatedLocation ?? null,
       changedFields,
     })
 

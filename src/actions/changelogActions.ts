@@ -266,7 +266,7 @@ async function undoLocationChange(
         changeType: "update",
         userId,
         before: currentLocation,
-        after: updatedLocation,
+        after: updatedLocation ?? null,
         changedFields: entry.changedFields || [],
       })
       return { success: true, action: "restored" }
