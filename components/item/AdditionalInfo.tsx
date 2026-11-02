@@ -1,5 +1,7 @@
+import { Link } from "@tanstack/react-router"
 import { ExternalLinkIcon } from "lucide-react"
 import type { Item } from "@/src/app/types"
+import { categorySearchTerm } from "@/src/lib/searchQuery"
 
 export function AdditionalInfo({ item }: { item: Item }) {
   const hasAdditionalInfos = (item: Item) => {
@@ -34,7 +36,14 @@ export function AdditionalInfo({ item }: { item: Item }) {
             <span className="text-muted-foreground font-medium">
               Kategorie:
             </span>
-            <span>{item.category}</span>
+            <Link
+              to="/items"
+              search={{ q: categorySearchTerm(item.category) }}
+              title="Alle Items dieser Kategorie anzeigen"
+              className="text-blue-500 hover:underline"
+            >
+              {item.category}
+            </Link>
           </div>
         )}
         {item.links && item.links.length > 0 && (

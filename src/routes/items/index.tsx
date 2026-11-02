@@ -1,10 +1,12 @@
 import { ItemList } from "@components/ItemList"
+import { Badge } from "@components/ui/badge"
 import { Button } from "@components/ui/button"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { XIcon } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { fetchPaginatedItems, searchItems } from "@/src/actions/itemActions"
 import type { Item, PaginatedResult } from "@/src/app/types"
+import { buildSearchQuery, parseSearchQuery } from "@/src/lib/searchQuery"
 
 export const Route = createFileRoute("/items/")({
   component: RouteComponent,
@@ -46,12 +48,38 @@ function RouteComponent() {
 }
 
 function SearchResults({ q, results }: { q: string; results: Item[] }) {
+  const { text, categories } = parseSearchQuery(q)
+  const resultCount = `${results.length} Ergebnis${results.length !== 1 ? "se" : ""}`
+
   return (
     <>
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <p className="text-sm text-muted-foreground">
-          {results.length} Ergebnis{results.length !== 1 ? "se" : ""} für "{q}"
+          {text ? `${resultCount} für "${text}"` : resultCount}
         </p>
+        {categories.map((category) => {
+          const remaining = buildSearchQuery({
+            text,
+            categories: categories.filter((c) => c !== category),
+          })
+          return (
+            <Badge
+              key={category}
+              variant="secondary"
+              className="gap-1 pr-1 font-normal"
+            >
+              Kategorie: {category}
+              <Link
+                to="/items"
+                search={{ q: remaining || undefined }}
+                aria-label={`Kategorie-Filter "${category}" entfernen`}
+                className="rounded-sm p-0.5 hover:bg-muted-foreground/20"
+              >
+                <XIcon className="h-3 w-3" />
+              </Link>
+            </Badge>
+          )
+        })}
         <Button variant="ghost" size="sm" asChild>
           <Link to="/items">
             <XIcon className="h-4 w-4 mr-1" />

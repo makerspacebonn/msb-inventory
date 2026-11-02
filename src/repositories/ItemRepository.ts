@@ -1,7 +1,18 @@
-import { count, desc, eq, getTableColumns, sql } from "drizzle-orm"
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm"
 import type { Item, PaginatedResult } from "../app/types"
 import { db } from "../db"
 import { type ItemInsert, ItemTable, LocationTable } from "../drizzle/schema"
+import { categoryPatternToLike, parseSearchQuery } from "../lib/searchQuery"
 
 // Item columns plus the name of the item's direct location, for item lists
 const itemWithLocationName = {
@@ -104,30 +115,52 @@ export class ItemRepository {
     return result[0] ?? null
   }
 
+  /**
+   * Full-text search over items. The query may contain category filters
+   * (`cat:"Name"`, `cat:Elektro*`, see searchQuery.ts) next to free text.
+   */
   async search(query: string): Promise<Item[]> {
-    if (!query || query.trim().length === 0) {
+    const { text, categories } = parseSearchQuery(query)
+
+    if (!text && categories.length === 0) {
       const items = await this.findLatest()
       return items.map((item) => ({ ...item, rank: 0, similarity: 0 }))
     }
 
-    const searchText = query.trim()
+    // An item has one category, so several filters mean "any of them"
+    const categoryFilter =
+      categories.length > 0
+        ? or(
+            ...categories.map(
+              (category) =>
+                sql`${ItemTable.category} ILIKE ${categoryPatternToLike(category)}`,
+            ),
+          )
+        : undefined
 
-    const results = await db
+    const results = db
       .select(itemWithLocationName)
       .from(ItemTable)
       .leftJoin(LocationTable, eq(ItemTable.locationId, LocationTable.id))
-      .where(sql`search_vector @@ plainto_tsquery('german', ${searchText})
-        OR searchable_text % ${searchText}
-        OR searchable_text ILIKE ${`%${searchText}%`}
+
+    // Browsing a category: all of its items, alphabetically
+    if (!text) {
+      return results.where(categoryFilter).orderBy(asc(ItemTable.name))
+    }
+
+    const textFilter: SQL = sql`(search_vector @@ plainto_tsquery('german', ${text})
+        OR searchable_text % ${text}
+        OR searchable_text ILIKE ${`%${text}%`}
         OR EXISTS (
           SELECT 1 FROM unnest(tags) AS tag
-          WHERE tag ILIKE ${`%${searchText}%`}
-        )`)
-      .orderBy(sql`(ts_rank(search_vector, plainto_tsquery('german', ${searchText})) * 2
-                       + similarity(searchable_text, ${searchText})) DESC,
-        ${ItemTable.id} DESC`)
-      .limit(100)
+          WHERE tag ILIKE ${`%${text}%`}
+        ))`
 
     return results
+      .where(and(textFilter, categoryFilter))
+      .orderBy(sql`(ts_rank(search_vector, plainto_tsquery('german', ${text})) * 2
+                       + similarity(searchable_text, ${text})) DESC,
+        ${ItemTable.id} DESC`)
+      .limit(100)
   }
 }
