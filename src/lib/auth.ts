@@ -13,15 +13,7 @@ type OidcProfile = {
   preferred_username?: string
   email?: string | null
   picture?: string
-  sub?: string | number | null
 }
-
-// Check if Authentik is configured
-export const authentikConfigured = !!(
-  process.env.AUTHENTIK_CLIENT_ID &&
-  process.env.AUTHENTIK_CLIENT_SECRET &&
-  process.env.AUTHENTIK_URL
-)
 
 // Check if Kanidm is configured
 export const kanidmConfigured = !!(
@@ -102,10 +94,10 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ["authentik", "kanidm"], // Trust IdP email verification
+      trustedProviders: ["kanidm"], // Trust IdP email verification
       // Allow linking a trusted IdP account to an existing local user even when
-      // that local user's email was never verified (e.g. earlier Authentik or
-      // password signups). Without this, better-auth returns account_not_linked.
+      // that local user's email was never verified (e.g. earlier password
+      // signups). Without this, better-auth returns account_not_linked.
       requireLocalEmailVerified: false,
     },
   },
@@ -141,69 +133,30 @@ export const auth = betterAuth({
     : ["http://localhost:3000"],
   plugins: [
     admin(),
-    // Conditionally add OAuth providers (Authentik and/or Kanidm)
-    ...(authentikConfigured || kanidmConfigured
+    // Kanidm OAuth, only when configured
+    ...(kanidmConfigured
       ? [
           genericOAuth({
             config: [
-              ...(authentikConfigured
-                ? [
-                    {
-                      providerId: "authentik",
-                      clientId: process.env.AUTHENTIK_CLIENT_ID ?? "",
-                      clientSecret: process.env.AUTHENTIK_CLIENT_SECRET ?? "",
-                      discoveryUrl: `${process.env.AUTHENTIK_URL}/application/o/${process.env.AUTHENTIK_APP_SLUG || "msb-inventory"}/.well-known/openid-configuration`,
-                      scopes: [],
-                      mapProfileToUser: (profile: OidcProfile) => {
-                        // DEBUG: Log complete OIDC profile from Authentik
-                        console.log(
-                          "═══════════════════════════════════════════════════════",
-                        )
-                        console.log("🔐 AUTHENTIK OIDC PROFILE DATA")
-                        console.log(
-                          "═══════════════════════════════════════════════════════",
-                        )
-                        console.log(JSON.stringify(profile, null, 2))
-                        console.log(
-                          "═══════════════════════════════════════════════════════",
-                        )
-
-                        return {
-                          name: profile.name || profile.preferred_username,
-                          // Generate synthetic email if not provided by Authentik
-                          // Uses sub (unique user ID) to ensure uniqueness
-                          email:
-                            profile.email || `${profile.sub}@authentik.local`,
-                          image: profile.picture,
-                        }
-                      },
-                      overrideUserInfo: true,
-                    },
-                  ]
-                : []),
-              ...(kanidmConfigured
-                ? [
-                    {
-                      providerId: "kanidm",
-                      clientId: process.env.KANIDM_CLIENT_ID ?? "",
-                      clientSecret: process.env.KANIDM_CLIENT_SECRET ?? "",
-                      // Kanidm OIDC discovery lives under /oauth2/openid/<client-id>/
-                      discoveryUrl: `${process.env.KANIDM_URL}/oauth2/openid/${process.env.KANIDM_CLIENT_ID}/.well-known/openid-configuration`,
-                      // Kanidm emits the group claim via a claim-map (not a custom
-                      // scope), so only standard scopes are requested here.
-                      scopes: ["openid", "email", "profile"],
-                      // Kanidm requires PKCE by default
-                      pkce: true,
-                      mapProfileToUser: (profile: OidcProfile) => ({
-                        name: profile.name || profile.preferred_username,
-                        // Kanidm always returns a real, verified email
-                        email: profile.email,
-                        image: profile.picture,
-                      }),
-                      overrideUserInfo: true,
-                    },
-                  ]
-                : []),
+              {
+                providerId: "kanidm",
+                clientId: process.env.KANIDM_CLIENT_ID ?? "",
+                clientSecret: process.env.KANIDM_CLIENT_SECRET ?? "",
+                // Kanidm OIDC discovery lives under /oauth2/openid/<client-id>/
+                discoveryUrl: `${process.env.KANIDM_URL}/oauth2/openid/${process.env.KANIDM_CLIENT_ID}/.well-known/openid-configuration`,
+                // Kanidm emits the group claim via a claim-map (not a custom
+                // scope), so only standard scopes are requested here.
+                scopes: ["openid", "email", "profile"],
+                // Kanidm requires PKCE by default
+                pkce: true,
+                mapProfileToUser: (profile: OidcProfile) => ({
+                  name: profile.name || profile.preferred_username,
+                  // Kanidm always returns a real, verified email
+                  email: profile.email,
+                  image: profile.picture,
+                }),
+                overrideUserInfo: true,
+              },
             ],
           }),
         ]

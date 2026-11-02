@@ -68,7 +68,7 @@ export const AccountTable = pgTable("accounts", {
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
   accountId: varchar("account_id").notNull(),
-  providerId: varchar("provider_id").notNull(), // "authentik", "credential", etc.
+  providerId: varchar("provider_id").notNull(), // "kanidm", "credential", etc.
   accessToken: text("access_token"),
   refreshToken: text("refresh_token"),
   accessTokenExpiresAt: timestamp("access_token_expires_at"),

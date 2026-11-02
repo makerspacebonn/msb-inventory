@@ -6,11 +6,9 @@ import { signIn } from "@/src/lib/auth-client"
 
 const getAuthConfig = createServerFn().handler(async () => {
   // Import dynamically to avoid bundling server code in client
-  const { authentikConfigured, kanidmConfigured } = await import(
-    "@/src/lib/auth"
-  )
+  const { kanidmConfigured } = await import("@/src/lib/auth")
   const { devLoginEnabled } = await import("@/src/lib/devLogin")
-  return { authentikConfigured, kanidmConfigured, devLoginEnabled }
+  return { kanidmConfigured, devLoginEnabled }
 })
 
 const devAdminLogin = createServerFn({ method: "POST" }).handler(async () => {
@@ -28,7 +26,6 @@ export const Route = createFileRoute("/login")({
   loader: async () => {
     const config = await getAuthConfig()
     return {
-      showAuthentik: config.authentikConfigured,
       showKanidm: config.kanidmConfigured,
       showDevLogin: config.devLoginEnabled,
     }
@@ -36,14 +33,11 @@ export const Route = createFileRoute("/login")({
 })
 
 function LoginPage() {
-  const { showAuthentik, showKanidm, showDevLogin } = Route.useLoaderData()
+  const { showKanidm, showDevLogin } = Route.useLoaderData()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const handleOAuthLogin = async (
-    providerId: "authentik" | "kanidm",
-    label: string,
-  ) => {
+  const handleOAuthLogin = async (providerId: "kanidm", label: string) => {
     setLoading(true)
     setError("")
     try {
@@ -84,17 +78,6 @@ function LoginPage() {
       <h1 className="text-2xl font-bold mb-6 text-center">Anmelden</h1>
       {error && <div>{error}</div>}
       <div className="flex flex-col gap-3">
-        {showAuthentik && (
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={() => handleOAuthLogin("authentik", "Authentik")}
-            disabled={loading}
-          >
-            Mit Authentik anmelden
-          </Button>
-        )}
         {showKanidm && (
           <Button
             type="button"
