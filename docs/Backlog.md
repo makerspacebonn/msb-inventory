@@ -109,34 +109,6 @@ export async function undoEntityChange<T>(
 
 ---
 
-### ARCH-004: Move server logic from route files to actions
-**Priority:** Medium
-**Effort:** 2-3 days
-
-**Description:**
-Extract business logic from route files into dedicated action files.
-
-**Current Issues:**
-- `src/routes/items/add.tsx` contains ~80 lines of server logic including:
-  - `addItem` server function with direct repository calls
-  - File I/O operations
-  - Changelog creation
-- Violates single responsibility principle
-- Harder to test in isolation
-
-**Implementation:**
-1. Move `addItem` logic to `src/actions/itemActions.ts`
-2. Keep route file focused on UI rendering and loader/action wiring
-3. Apply same pattern to any other routes with embedded server logic
-
-**Acceptance Criteria:**
-- [ ] `addItem` moved to `itemActions.ts`
-- [ ] Route file only handles UI and calls action functions
-- [ ] No direct repository instantiation in route files
-- [ ] Existing functionality preserved
-
----
-
 ### ARCH-005: Consolidate changelog recording
 **Priority:** Medium
 **Effort:** 1 day

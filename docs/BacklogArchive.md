@@ -474,3 +474,23 @@ A backup should contain everything needed to restore the inventory completely. T
 - [x] Older backups can still be restored
 
 ---
+
+## Architecture Improvements
+
+### ARCH-004: Move server logic from route files to actions ✅ COMPLETED 2026-11-02
+**Priority:** Medium
+
+**Description:**
+Extract business logic from route files into dedicated action files, so route files only handle UI and server logic can be tested in isolation.
+
+**Acceptance Criteria:**
+- [x] `addItem` moved to `itemActions.ts`
+- [x] Route file only handles UI and calls action functions
+- [x] No direct repository instantiation in route files
+- [x] Existing functionality preserved
+
+**Implementation Notes:**
+- `addItem` became `saveItem`; `fetchItemWithLocation` and `removeItemLocation` moved out of `i.$itemId.tsx`
+- The item schema is shared between form and server (`src/lib/itemSchema.ts`)
+- Pure helpers `diffFields` and `parseImageDataUrl` in `src/lib/itemChanges.ts` with unit tests
+- Server-only routes (`api/items`, `img/$`) still use repositories directly, as they are HTTP handlers, not UI routes
