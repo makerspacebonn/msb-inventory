@@ -21,7 +21,7 @@ export function ItemLocationDeleteButton({
     item.locationChain.length > 0 && (
       <Dialog>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" aria-label="Location entfernen">
             <TrashIcon className="w-4 h-4" />
           </Button>
         </DialogTrigger>

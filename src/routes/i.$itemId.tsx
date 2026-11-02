@@ -83,7 +83,19 @@ function RouteComponent() {
     }
   }
 
-  if (!item) return null
+  if (!item) {
+    return (
+      <div className="max-w-128 mx-auto p-4 text-center">
+        <h1 className="text-2xl font-bold mb-2">Item nicht gefunden</h1>
+        <p className="text-muted-foreground mb-4">
+          Dieses Item gibt es nicht oder es wurde gelöscht.
+        </p>
+        <Button asChild variant="outline">
+          <Link to="/items">Zu allen Items</Link>
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-128 mx-auto p-4">

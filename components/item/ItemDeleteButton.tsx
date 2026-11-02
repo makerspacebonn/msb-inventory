@@ -30,7 +30,7 @@ export function ItemDeleteButton({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" aria-label="Item löschen">
           <Trash2Icon className="w-4 h-4 text-destructive" />
         </Button>
       </DialogTrigger>

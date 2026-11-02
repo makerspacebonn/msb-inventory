@@ -156,7 +156,11 @@ function RouteComponent() {
                   <>
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          aria-label="Bild hinzufügen"
+                        >
                           <ImagePlusIcon className="w-4 h-4" />
                         </Button>
                       </DialogTrigger>
@@ -189,7 +193,11 @@ function RouteComponent() {
                         onOpenChange={setIsDeleteDialogOpen}
                       >
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            aria-label="Location löschen"
+                          >
                             <Trash2Icon className="w-4 h-4 text-destructive" />
                           </Button>
                         </DialogTrigger>

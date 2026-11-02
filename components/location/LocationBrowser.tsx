@@ -72,6 +72,7 @@ export function LocationBrowser({
           <button
             type="button"
             onClick={clearSearch}
+            aria-label="Suche leeren"
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <XIcon className="w-4 h-4" />

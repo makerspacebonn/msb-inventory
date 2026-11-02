@@ -39,7 +39,7 @@ export const ItemDetail = ({ item, onDeleteLocation }: ItemDetailProps) => {
             to="/items/$itemId/location/add"
             params={{ itemId: item.id.toString() }}
           >
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" aria-label="Location ändern">
               <PencilIcon className="w-4 h-4" />
             </Button>
           </Link>

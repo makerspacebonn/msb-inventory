@@ -312,23 +312,27 @@ function ChangeTypeBadge({ type }: { type: ChangeType }) {
   const config = {
     create: {
       label: "+",
+      text: "Erstellt",
       className:
         "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30",
     },
     update: {
       label: "~",
+      text: "Geändert",
       className:
         "bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30",
     },
     delete: {
       label: "−",
+      text: "Gelöscht",
       className:
         "bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30",
     },
   }
 
-  const { label, className } = config[type] || {
+  const { label, text, className } = config[type] || {
     label: "?",
+    text: "Unbekannt",
     className: "bg-gray-500/20",
   }
 
@@ -337,7 +341,8 @@ function ChangeTypeBadge({ type }: { type: ChangeType }) {
       variant="outline"
       className={`${className} px-1.5 py-0 text-xs font-mono`}
     >
-      {label}
+      <span aria-hidden="true">{label}</span>
+      <span className="sr-only">{text}</span>
     </Badge>
   )
 }
@@ -346,17 +351,20 @@ function EntityTypeBadge({ type }: { type: EntityType }) {
   const config = {
     item: {
       icon: BoxIcon,
+      text: "Item",
     },
     location: {
       icon: MapPinIcon,
+      text: "Location",
     },
   }
 
-  const { icon: Icon } = config[type] || { icon: BoxIcon }
+  const { icon: Icon, text } = config[type] || { icon: BoxIcon, text: "Item" }
 
   return (
     <span className="text-muted-foreground">
-      <Icon className="w-4 h-4" />
+      <Icon className="w-4 h-4" aria-hidden="true" />
+      <span className="sr-only">{text}</span>
     </span>
   )
 }

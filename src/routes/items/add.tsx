@@ -425,6 +425,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
               <FieldContent>
                 <FieldLabel htmlFor={field.name}>Name</FieldLabel>
                 <Input
+                  id={field.name}
                   name={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
@@ -454,6 +455,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
                 <FieldLabel htmlFor={field.name}>Beschreibung</FieldLabel>
                 <Textarea
                   ref={descriptionRef}
+                  id={field.name}
                   name={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
@@ -554,6 +556,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
             <FieldContent>
               <FieldLabel htmlFor={field.name}>Hersteller</FieldLabel>
               <Input
+                id={field.name}
                 name={field.name}
                 value={field.state.value ?? ""}
                 onBlur={field.handleBlur}
@@ -579,6 +582,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
             <FieldContent>
               <FieldLabel htmlFor={field.name}>Modell</FieldLabel>
               <Input
+                id={field.name}
                 name={field.name}
                 value={field.state.value ?? ""}
                 onBlur={field.handleBlur}
@@ -758,6 +762,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
               <FieldLabel htmlFor={field.name}>Weitere Infos</FieldLabel>
               <Textarea
                 ref={morestuffRef}
+                id={field.name}
                 name={field.name}
                 value={field.state.value ?? ""}
                 onBlur={field.handleBlur}

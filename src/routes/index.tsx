@@ -36,7 +36,11 @@ interface StatCardProps {
 
 function StatCard({ title, value, description, icon }: StatCardProps) {
   return (
-    <Card className="transition-all hover:shadow-md">
+    <Card
+      className="transition-all hover:shadow-md"
+      role="group"
+      aria-label={title}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 md:p-6 md:pb-2">
         <CardTitle className="text-[11px] uppercase tracking-wide text-muted-foreground md:text-sm md:normal-case md:tracking-normal md:text-foreground font-medium">
           {title}

@@ -156,6 +156,7 @@ function BackupPage() {
                   size="sm"
                   onClick={() => handleDelete(backup.filename)}
                   disabled={deletingFile === backup.filename}
+                  aria-label="Backup löschen"
                 >
                   {deletingFile === backup.filename ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

@@ -96,7 +96,12 @@ function AuthButtons({ onAction }: { onAction?: () => void }) {
           />
         )}
         <span className="text-sm">{user.name || user.email}</span>
-        <Button variant="ghost" size="sm" onClick={handleLogout}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleLogout}
+          aria-label="Abmelden"
+        >
           <LogOutIcon className="w-4 h-4" />
         </Button>
       </div>
@@ -105,7 +110,12 @@ function AuthButtons({ onAction }: { onAction?: () => void }) {
 
   if (isLoggedIn) {
     return (
-      <Button variant="ghost" size="sm" onClick={handleLogout}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleLogout}
+        aria-label="Abmelden"
+      >
         <LogOutIcon className="w-4 h-4" />
       </Button>
     )
@@ -113,7 +123,7 @@ function AuthButtons({ onAction }: { onAction?: () => void }) {
 
   return (
     <Button variant="ghost" size="sm" asChild>
-      <Link to="/login" onClick={onAction}>
+      <Link to="/login" onClick={onAction} aria-label="Anmelden">
         <LogInIcon className="w-4 h-4" />
       </Link>
     </Button>
