@@ -99,7 +99,7 @@ Use conventional commits format: `type(scope): description`
 - **API route pattern:** TanStack Start uses `createFileRoute` with `server.handlers` for API routes, NOT `createAPIFileRoute`. Export must be `Route`, not `APIRoute`
 - **Catch-all auth route:** `src/routes/api/auth/$.ts` handles all `/api/auth/*` endpoints via `auth.handler(request)`
 - **Generic OAuth sign-in (better-auth ≥1.7):** `genericOAuth` providers are registered as social providers — call `signIn.social({ provider: "<providerId>" })`. `genericOAuthClient()` / `signIn.oauth2()` no longer exist
-- **Conditional plugins:** Check env vars and conditionally add plugins: `plugins: authentikConfigured ? [genericOAuth({...})] : []`
+- **Conditional plugins:** Check env vars and conditionally add plugins: `plugins: kanidmConfigured ? [genericOAuth({...})] : []`
 - **useSession hook:** better-auth's `useSession` returns `{ data: session, isPending, refetch }` - replaces all manual JWT/cookie logic
 - **OIDC discovery:** `discoveryUrl` auto-configures authorization, token, and userinfo endpoints from `.well-known/openid-configuration`
 - **E2E auth testing:** Use unique timestamped emails (e.g., `test-${Date.now()}@example.com`) to avoid conflicts between test runs
@@ -108,12 +108,11 @@ Use conventional commits format: `type(scope): description`
 - **Server code in client:** Importing server-only code (like `auth.ts` with `process.env`) directly into client components causes "Buffer is not defined" errors. Use `createServerFn` with dynamic imports instead:
   ```typescript
   const getAuthConfig = createServerFn().handler(async () => {
-    const { authentikConfigured } = await import("@/src/lib/auth")
-    return { authentikConfigured }
+    const { kanidmConfigured } = await import("@/src/lib/auth")
+    return { kanidmConfigured }
   })
   ```
-- **OAuth redirect URIs:** better-auth's `genericOAuth` plugin uses callback pattern `/api/auth/callback/{providerId}` (was `/api/auth/oauth2/callback/{providerId}` before 1.7). This exact URI must be whitelisted in the OAuth provider (e.g., Authentik)
-- **Configurable app slugs:** Use env vars like `AUTHENTIK_APP_SLUG` for provider-specific paths: `discoveryUrl: \`\${AUTHENTIK_URL}/application/o/\${AUTHENTIK_APP_SLUG}/.well-known/openid-configuration\``
+- **OAuth redirect URIs:** better-auth's `genericOAuth` plugin uses callback pattern `/api/auth/callback/{providerId}` (was `/api/auth/oauth2/callback/{providerId}` before 1.7). This exact URI must be whitelisted in the OAuth provider (e.g., Kanidm)
 - **Dev server logging:** Use `bun run dev:bg` to restart dev server in background with logging to `logs/dev.log`
 
 ### 2026-01-17 - TanStack Start Server/Client Boundary & Authorization
@@ -131,12 +130,11 @@ Use conventional commits format: `type(scope): description`
 - **tanstackStartCookies plugin:** Required for TanStack Start cookie handling - MUST be the LAST plugin in the array:
   ```typescript
   plugins: [
-    ...(authentikConfigured ? [genericOAuth({...})] : []),
+    ...(kanidmConfigured ? [genericOAuth({...})] : []),
     tanstackStartCookies(), // MUST be last
   ]
   ```
 - **Root route auth context:** Use `createRootRouteWithContext<RouterContext>()` with `beforeLoad` calling a server function to provide auth state to child routes
-- **OAuth email workaround:** When OAuth provider doesn't return email, generate synthetic: `email: profile.email || \`\${profile.sub}@authentik.local\``
 
 ### 2026-01-17 - Post-Migration Cleanup
 - **Schema migration side effects:** After migrating auth systems, audit codebase for references to removed schema fields. Example: `discordName` was removed from UserTable but `ChangelogRepository` still selected it, breaking the `/changelog` route.
@@ -154,16 +152,11 @@ Use conventional commits format: `type(scope): description`
 - **Auth verification:** Check for user name in header (`text=${TEST_USER.name}`) instead of feature-specific buttons that may not exist on all pages
 - **Test commands:** Use `bun run test` (Vitest) for unit tests, `bun run e2e` (Playwright) for E2E tests. Note: `bun test` uses Bun's native runner which conflicts with Playwright
 
-### 2026-01-18 - Authentik OIDC Claims & Role Mapping
-- **Authentik groups claim:** Use `user.ak_groups.all()` in Scope Mapping expressions to expose groups:
-  ```python
-  return {"groups": [group.name for group in user.ak_groups.all()]}
-  ```
+### 2026-01-18 - OIDC Claims & Role Mapping
 - **better-auth mapProfileToUser:** Receives full OIDC profile including custom claims. Use with `overrideUserInfo: true` to update user on each login
 - **Session cache gotcha:** With `session.cookieCache.enabled: true`, role changes from OAuth may require 2 logins to take effect ([Issue #5772](https://github.com/better-auth/better-auth/issues/5772))
-- **Account linking:** Enable with `account.accountLinking.enabled: true` and `trustedProviders: ["authentik"]` to link OAuth accounts to existing email users
+- **Account linking:** Enable with `account.accountLinking.enabled: true` and `trustedProviders: ["kanidm"]` to link OAuth accounts to existing email users
 - **Debugging OIDC claims:** Add `console.log(JSON.stringify(profile, null, 2))` in `mapProfileToUser` to see all claims from provider
-- **Authentik avatars:** Standard `picture` claim in `profile` scope, or custom via `user.attributes.get("avatar")` in Property Mapping
 
 ### 2026-02-05 - Recent Locations Feature (UX-002)
 - **localStorage pattern:** For client-side persistence, create utilities in `lib/` with SSR guards (`if (typeof window === "undefined") return`)
