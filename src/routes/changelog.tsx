@@ -220,9 +220,13 @@ function ChangelogEntryCard({
             {formattedDate}, {formattedTime}
             {entry.user && <> · {entry.user.name || "?"}</>}
             {!entry.user && entry.userId === "admin" && <> · Admin</>}
-            {!entry.user && entry.userId && entry.userId !== "admin" && (
-              <span title={entry.userId}> · {entry.userId.slice(0, 6)}…</span>
-            )}
+            {!entry.user && entry.userId === "migration" && <> · Migration</>}
+            {!entry.user &&
+              entry.userId &&
+              entry.userId !== "admin" &&
+              entry.userId !== "migration" && (
+                <span title={entry.userId}> · {entry.userId.slice(0, 6)}…</span>
+              )}
           </span>
 
           {hasDiffData && (

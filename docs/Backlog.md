@@ -574,31 +574,42 @@ When a location's picture is replaced (e.g. after rearranging a shelf), all exis
 
 ---
 
-### AI-001: More relevant AI item descriptions and tags
+### AI-001: More relevant AI item descriptions and tags ✅ COMPLETED 2026-11-02
 **Priority:** Medium
 
 **Description:**
 The AI description from an item photo includes too much generic information. It should focus on information that helps find and identify the item. Tags should not contain general attributes like unimportant colors or the material an item is made of.
 
 **Acceptance Criteria:**
-- [ ] AI-generated descriptions only contain relevant information
-- [ ] Tags no longer contain generic attributes (e.g. color, material) unless they distinguish the item
-- [ ] Tags help when searching for the item
+- [x] AI-generated descriptions only contain relevant information
+- [x] Tags no longer contain generic attributes (e.g. color, material) unless they distinguish the item
+- [x] Tags help when searching for the item
+
+**Implementation Notes:**
+- Prompt and response format in `src/lib/aiItemPrompt.ts`; the 100 most used tags are passed in so the AI reuses existing spellings
+- Gemini `responseSchema` enforces the reply format
+- `src/lib/tagRules.ts` (stop list for colors, materials, generic words; spelling unification) filters AI tags and was used for the one-time cleanup of existing tags
 
 ---
 
-### AI-002: Curated item categories
+### AI-002: Curated item categories ✅ COMPLETED 2026-11-02
 **Priority:** Medium
 
 **Description:**
 Item categories have grown into an inconsistent list. Categories should be reduced to a meaningful set, e.g. a fixed list, with the option to add a new category when no existing one fits. The AI identification should pick from this list.
 
 **Acceptance Criteria:**
-- [ ] A defined list of meaningful categories exists
-- [ ] Users choose a category from the list when adding/editing an item
-- [ ] A new category can be added when no existing one fits
-- [ ] AI identification suggests a category from the existing list
-- [ ] Existing items are mapped to the curated categories
+- [x] A defined list of meaningful categories exists
+- [x] Users choose a category from the list when adding/editing an item
+- [x] A new category can be added when no existing one fits
+- [x] AI identification suggests a category from the existing list
+- [x] Existing items are mapped to the curated categories
+
+**Implementation Notes:**
+- `categories` table; `items.category` keeps the name (not an id) so the generated search columns keep working
+- Category picker `components/form/CategoryCombobox.tsx`; saving an item with a new category adds it (case-insensitive reuse)
+- AI picks from the list via enum, or proposes `kategorie_neu` when nothing fits
+- One-time migration (16 curated categories + tag cleanup) via temporary admin page `/admin/migration`, see CLEANUP-001
 
 ---
 
@@ -625,3 +636,17 @@ Items without a location are hard to find in the inventory. The item list should
 - [ ] The item list can be filtered to items without a location
 - [ ] The filter can be combined with the search
 - [ ] From the filtered list, a location can be assigned to an item easily
+
+---
+
+### CLEANUP-001: Remove temporary category/tag migration
+**Priority:** Low
+**Depends on:** AI-002 migration ran on production
+
+**Description:**
+The one-time migration for curated categories and tag cleanup is only needed until it ran on production. Afterwards its code should be removed.
+
+**Acceptance Criteria:**
+- [ ] Migration ran on production (`/admin/migration` shows "bereits ausgeführt")
+- [ ] `src/dataMigration/` and `src/routes/admin/migration.tsx` are removed
+- [ ] `data_migrations` table is removed from the schema (or kept, if a future migration needs it)
