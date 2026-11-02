@@ -413,6 +413,29 @@ Searching is the most common way to find items, but it requires navigating to th
 
 ---
 
+### UX-019: Search by category ✅ COMPLETED 2026-11-02
+**Priority:** High
+
+**Description:**
+Categories should be usable to find related items. Clicking an item's category shows all items in that category as search results. The same search can be typed in the search field as `cat:"category name"`, and with a wildcard (e.g. `cat:"Elektro*"`) it finds items in all matching categories. Clicking a category comes first; the typed syntax builds on it.
+
+**Acceptance Criteria:**
+- [x] Categories are clickable wherever they are shown
+- [x] Clicking a category shows the search results for that category
+- [x] `cat:"category name"` in the search field finds the items of that category, ignoring case
+- [x] `cat:"some*"` finds the items of all categories matching the pattern
+- [x] A category search can be combined with free search text
+- [x] It's visible in the search that a category filter is active
+
+**Implementation Notes:**
+- The category on the item page links to the search with `cat:"Name"` prefilled, so clicking and typing use the same path
+- Query parsing is a pure, unit-tested function (`src/lib/searchQuery.ts`); several `cat:` filters mean "any of them", since an item has one category
+- `*` becomes an `ILIKE` wildcard; `%`, `_` and `\` in a pattern match literally
+- Category-only searches list all matching items alphabetically; with text, the text ranking and the 100-result limit apply
+- Active category filters show as chips on the results page, each removable while keeping the rest of the query
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.
