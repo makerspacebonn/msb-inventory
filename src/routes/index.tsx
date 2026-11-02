@@ -1,8 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { Clock, Image, MapPin, Package, Search } from "lucide-react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { ButtonGroup } from "@/components/ui/button-group"
+import { createFileRoute } from "@tanstack/react-router"
+import { Clock, Image, MapPin, Package } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -10,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import {
   fetchInventoryStats,
   type InventoryStats,
@@ -104,42 +100,6 @@ function StatsGrid({ stats }: { stats: InventoryStats }) {
   )
 }
 
-function HomeSearch() {
-  const navigate = useNavigate()
-  const [query, setQuery] = useState("")
-
-  return (
-    <search className="block w-full max-w-2xl mx-auto mb-8">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          const trimmed = query.trim()
-          // Hand the term to the items page, which reads ?q= and searches.
-          navigate({ to: "/items", search: trimmed ? { q: trimmed } : {} })
-        }}
-      >
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Zeug durchsuchen…"
-            aria-label="Zeug durchsuchen"
-            className="h-14 rounded-full pl-12 pr-28 text-lg shadow-sm"
-          />
-          <Button
-            type="submit"
-            className="absolute right-2 top-1/2 h-10 -translate-y-1/2 rounded-full px-6"
-          >
-            Suchen
-          </Button>
-        </div>
-      </form>
-    </search>
-  )
-}
-
 function RouteComponent() {
   const { stats } = Route.useLoaderData()
 
@@ -152,15 +112,7 @@ function RouteComponent() {
         <p>Willkommen bei unserem MakerSpace Zeug System.</p>
       </div>
 
-      <HomeSearch />
-
       <StatsGrid stats={stats} />
-
-      <ButtonGroup className="mx-auto mt-8">
-        <Button variant="outline">
-          <Link to="/items">Items</Link>
-        </Button>
-      </ButtonGroup>
     </div>
   )
 }

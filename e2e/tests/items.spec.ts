@@ -1,7 +1,5 @@
 import { expect, type Page, test } from "@playwright/test"
 
-const SEARCH_PLACEHOLDER = /^Suchen nach/
-
 // Seed items 11-35 are named "Test Item N". The first page shows 24 of the
 // newest items, so some of them are always visible, even when other tests
 // have added items in parallel.
@@ -18,36 +16,54 @@ test.describe("Items Page", () => {
     await expect(seededTestItems(page).first()).toBeVisible()
   })
 
-  // The search results replace the list asynchronously, so each test first
-  // waits for the unrelated items to disappear before checking the matches.
+  // Searching happens in the header; the items page shows the full results
+  const searchFor = async (page: Page, query: string) => {
+    const search = page.getByRole("searchbox", { name: "Items suchen" })
+    await search.fill(query)
+    await search.press("Enter")
+    await expect(page).toHaveURL(`/items?q=${encodeURIComponent(query)}`)
+  }
 
   test("searches items by name", async ({ page }) => {
-    await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill("Bohrmaschine")
+    await searchFor(page, "Bohrmaschine")
 
     await expect(seededTestItems(page)).toHaveCount(0)
     await expect(
       page.getByRole("link", { name: "Bohrmaschine Makita" }),
     ).toBeVisible()
+    await expect(
+      page.getByText(/Ergebnis(se)? für "Bohrmaschine"/),
+    ).toBeVisible()
   })
 
   test("searches items by manufacturer", async ({ page }) => {
     // "Thunder Laser" is only the manufacturer of the "Lasercutter"
-    await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill("Thunder")
+    await searchFor(page, "Thunder")
 
     await expect(seededTestItems(page)).toHaveCount(0)
     await expect(page.getByRole("link", { name: "Lasercutter" })).toBeVisible()
   })
 
-  test("clears the search", async ({ page }) => {
-    const searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER)
-    await searchInput.fill("Bohrmaschine")
+  test("goes back from the results to all items", async ({ page }) => {
+    await searchFor(page, "Bohrmaschine")
     await expect(seededTestItems(page)).toHaveCount(0)
 
-    await page.getByRole("button", { name: "Suche leeren" }).click()
+    await page.getByRole("link", { name: "Alle Items anzeigen" }).click()
 
-    await expect(searchInput).toHaveValue("")
+    await expect(page).toHaveURL("/items")
     await expect(page.getByText(/Ergebnis/)).toHaveCount(0)
     await expect(seededTestItems(page).first()).toBeVisible()
+  })
+
+  test("offers no own search or add button", async ({ page }) => {
+    await expect(seededTestItems(page).first()).toBeVisible()
+
+    // Both live in the header now
+    await expect(page.getByRole("main").getByRole("textbox")).toHaveCount(0)
+    await expect(page.getByRole("main").getByRole("searchbox")).toHaveCount(0)
+    await expect(
+      page.getByRole("main").getByRole("link", { name: /Add Item/ }),
+    ).toHaveCount(0)
   })
 
   test("opens an item from the list", async ({ page }) => {

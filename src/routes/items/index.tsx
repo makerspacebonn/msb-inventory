@@ -1,90 +1,81 @@
 import { ItemList } from "@components/ItemList"
 import { Button } from "@components/ui/button"
-import { Input } from "@components/ui/input"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { Loader2, PlusIcon, Search, X } from "lucide-react"
+import { XIcon } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { fetchPaginatedItems, searchItems } from "@/src/actions/itemActions"
-import type { Item } from "@/src/app/types"
-import { useAuth } from "@/src/context/AuthContext"
-import { useDebounce } from "@/src/hooks/useDebounce"
+import type { Item, PaginatedResult } from "@/src/app/types"
 
 export const Route = createFileRoute("/items/")({
   component: RouteComponent,
-  // Accept an optional ?q= search term (e.g. from the homepage search field).
+  // Optional ?q= search term, set by the search bar in the header
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
     q:
       typeof search.q === "string" && search.q.trim() !== ""
-        ? search.q
+        ? search.q.trim()
         : undefined,
   }),
-  loader: async () => {
-    return fetchPaginatedItems({ data: { page: 1, pageSize: 24 } })
+  loaderDeps: ({ search: { q } }) => ({ q }),
+  loader: async ({ deps: { q } }) => {
+    if (q) {
+      return { q, results: await searchItems({ data: q }) }
+    }
+    return {
+      q: undefined,
+      firstPage: await fetchPaginatedItems({ data: { page: 1, pageSize: 24 } }),
+    }
   },
-  head: () => ({
-    meta: [{ title: "Items | MSB Inventar" }],
+  head: ({ loaderData }) => ({
+    meta: [
+      {
+        title: loaderData?.q
+          ? `Suche "${loaderData.q}" | Items | MSB Inventar`
+          : "Items | MSB Inventar",
+      },
+    ],
   }),
 })
 
 function RouteComponent() {
-  const initialData = Route.useLoaderData()
-  const { q } = Route.useSearch()
-  const { isLoggedIn } = useAuth()
+  const data = Route.useLoaderData()
 
-  // Seed the search box from the ?q= param so a homepage search lands here
-  // pre-filled; the debounced effect below then runs the search automatically.
-  const [searchQuery, setSearchQuery] = useState(q ?? "")
-  const [items, setItems] = useState<Item[]>(initialData.items)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(
-    initialData.page < initialData.totalPages,
+  if (data.q !== undefined) {
+    return <SearchResults q={data.q} results={data.results} />
+  }
+  return <AllItems firstPage={data.firstPage} />
+}
+
+function SearchResults({ q, results }: { q: string; results: Item[] }) {
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <p className="text-sm text-muted-foreground">
+          {results.length} Ergebnis{results.length !== 1 ? "se" : ""} für "{q}"
+        </p>
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/items">
+            <XIcon className="h-4 w-4 mr-1" />
+            Alle Items anzeigen
+          </Link>
+        </Button>
+      </div>
+      <ItemList items={results} />
+    </>
   )
+}
+
+function AllItems({ firstPage }: { firstPage: PaginatedResult<Item> }) {
+  const [items, setItems] = useState<Item[]>(firstPage.items)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(firstPage.page < firstPage.totalPages)
   const [isLoading, setIsLoading] = useState(false)
-  const [isSearching, setIsSearching] = useState(false)
-  const [searchResults, setSearchResults] = useState<Item[] | null>(null)
 
-  const debouncedQuery = useDebounce(searchQuery, 300)
-
+  // Start over when the loader delivers a fresh first page
   useEffect(() => {
-    setItems(initialData.items)
+    setItems(firstPage.items)
     setPage(1)
-    setHasMore(initialData.page < initialData.totalPages)
-    setSearchResults(null)
-  }, [initialData])
-
-  useEffect(() => {
-    const performSearch = async () => {
-      if (debouncedQuery.trim() === "") {
-        setSearchResults(null)
-        setItems(initialData.items)
-        setPage(1)
-        setHasMore(initialData.page < initialData.totalPages)
-        return
-      }
-
-      setIsSearching(true)
-      try {
-        const results = await searchItems({ data: debouncedQuery })
-        setSearchResults(results)
-        setItems(results)
-        setHasMore(false)
-      } catch (error) {
-        console.error("Search failed:", error)
-      } finally {
-        setIsSearching(false)
-      }
-    }
-
-    performSearch()
-  }, [debouncedQuery, initialData])
-
-  const clearSearch = useCallback(() => {
-    setSearchQuery("")
-    setSearchResults(null)
-    setItems(initialData.items)
-    setPage(1)
-    setHasMore(initialData.page < initialData.totalPages)
-  }, [initialData])
+    setHasMore(firstPage.page < firstPage.totalPages)
+  }, [firstPage])
 
   const loadMore = useCallback(async () => {
     if (isLoading || !hasMore) return
@@ -105,62 +96,10 @@ function RouteComponent() {
     }
   }, [isLoading, hasMore, page])
 
-  const isShowingSearch = searchResults !== null
-
   return (
-    <>
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1 text-xl">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Suchen nach Name, Beschreibung, Hersteller, Tags..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9 "
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={clearSearch}
-              aria-label="Suche leeren"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              {isSearching ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <X className="h-4 w-4" />
-              )}
-            </button>
-          )}
-        </div>
-        {isLoggedIn && (
-          <Button variant="outline" asChild>
-            <Link to="/items/add">
-              <PlusIcon />
-              Add Item
-            </Link>
-          </Button>
-        )}
-      </div>
-      {searchQuery && (
-        <p className="text-sm text-muted-foreground mb-4">
-          {items.length} Ergebnis{items.length !== 1 ? "se" : ""} für "
-          {searchQuery}"
-        </p>
-      )}
-      <ItemList
-        items={items}
-        infiniteScroll={
-          isShowingSearch
-            ? undefined
-            : {
-                hasMore,
-                isLoading,
-                onLoadMore: loadMore,
-              }
-        }
-      />
-    </>
+    <ItemList
+      items={items}
+      infiniteScroll={{ hasMore, isLoading, onLoadMore: loadMore }}
+    />
   )
 }
