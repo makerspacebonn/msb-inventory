@@ -269,6 +269,30 @@ Tags on items should be usable to find related items. Clicking a tag shows the s
 
 ---
 
+## Access Control
+
+Who may do what in the inventory.
+
+### ACCESS-001: Restrict administrative actions to admins
+**Priority:** Medium
+
+**Description:**
+Every logged-in user can currently do everything, including actions that are hard to undo or affect the whole inventory. Users get an admin role via Kanidm (`KANIDM_ADMIN_GROUP`), but the app doesn't check it. Administrative actions should only be available to admins; everyday work (adding and editing items and locations) stays open to all logged-in users.
+
+**Candidates for admin-only (to be decided):**
+- Backups: create, download, restore, delete
+- Deleting locations and items
+- Undoing changes in the changelog
+- Printer status page
+
+**Acceptance Criteria:**
+- [ ] It's decided and documented which actions are admin-only
+- [ ] Non-admins can't run these actions, also not by calling the server directly
+- [ ] Non-admins don't see controls for actions they can't run
+- [ ] Admins can do everything as before
+
+---
+
 ## Operations
 
 Backups, releases and running the app.
