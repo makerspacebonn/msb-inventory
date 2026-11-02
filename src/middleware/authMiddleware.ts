@@ -1,4 +1,5 @@
 import { createMiddleware } from "@tanstack/react-start"
+import { isAdmin } from "@/src/lib/roles"
 
 /**
  * Auth middleware that provides isLoggedIn and userId context to server functions.
@@ -18,6 +19,7 @@ export const authMiddleware = createMiddleware({ type: "function" }).server(
     return next({
       context: {
         isLoggedIn: !!session?.user,
+        isAdmin: isAdmin(session?.user),
         userId: session?.user?.id ?? null,
         user: session?.user ?? null,
       },
@@ -37,6 +39,22 @@ export const authGuardMiddleware = createMiddleware({ type: "function" })
   .server(async ({ next, context }) => {
     if (!context.isLoggedIn) {
       throw new Error("Unauthorized")
+    }
+    return next()
+  })
+
+/**
+ * Admin guard middleware that throws an error unless the user has the admin
+ * role (synced from Kanidm group membership on login).
+ */
+export const adminGuardMiddleware = createMiddleware({ type: "function" })
+  .middleware([authMiddleware])
+  .server(async ({ next, context }) => {
+    if (!context.isLoggedIn) {
+      throw new Error("Unauthorized")
+    }
+    if (!context.isAdmin) {
+      throw new Error("Forbidden")
     }
     return next()
   })

@@ -11,8 +11,14 @@ export const TEST_USER = {
   name: "E2E Test User",
 }
 
+export const TEST_ADMIN = {
+  email: "e2e-admin@example.com",
+  name: "E2E Admin",
+}
+
 export type TestFixtures = {
   authenticatedPage: Page
+  adminPage: Page
   logoutTestPage: Page
   testUserEmail: string
 }
@@ -22,6 +28,8 @@ export type TestFixtures = {
 const E2E_SESSION_TOKEN = "e2e-test-session-token-12345"
 // Separate session for logout test - can be safely invalidated without affecting other tests
 const E2E_LOGOUT_SESSION_TOKEN = "e2e-logout-session-token-67890"
+// Session for the seeded e2e-admin, for admin-only actions
+const E2E_ADMIN_SESSION_TOKEN = "e2e-admin-session-token-24680"
 
 /**
  * Sign a session token using HMAC-SHA256 with BETTER_AUTH_SECRET.
@@ -86,6 +94,16 @@ export const test = base.extend<TestFixtures>({
     await expect(page.locator("header").getByText(TEST_USER.name)).toBeVisible({
       timeout: 5000,
     })
+
+    await use(page)
+  },
+  adminPage: async ({ page, context }, use) => {
+    await setAuthCookie(context, E2E_ADMIN_SESSION_TOKEN)
+
+    await page.goto("/")
+    await expect(page.locator("header").getByText(TEST_ADMIN.name)).toBeVisible(
+      { timeout: 5000 },
+    )
 
     await use(page)
   },

@@ -1,9 +1,11 @@
 import { createContext, type ReactNode, useContext } from "react"
 import type { User } from "@/src/drizzle/schema"
 import { signOut, useSession } from "@/src/lib/auth-client"
+import { isAdmin } from "@/src/lib/roles"
 
 type AuthContextType = {
   isLoggedIn: boolean
+  isAdmin: boolean
   isLoading: boolean
   user: User | null
   logout: () => Promise<void>
@@ -17,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isLoggedIn = !!session?.user
   const user = session?.user as User | null
+  const isAdminUser = isAdmin(user)
 
   const logout = async () => {
     await signOut()
@@ -31,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         isLoggedIn,
+        isAdmin: isAdminUser,
         isLoading: isPending,
         user,
         logout,

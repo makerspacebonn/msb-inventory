@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { createFileRoute } from "@tanstack/react-router"
+import { isAdmin } from "@/src/lib/roles"
 
 const SAVE_PATH = process.env.SAVE_PATH || ""
 const BACKUPS_DIR = path.join(SAVE_PATH, "backups")
@@ -9,12 +10,15 @@ export const Route = createFileRoute("/backup/download/$")({
   server: {
     handlers: {
       GET: async ({ params, request }) => {
-        // Auth check - only authenticated users can download backups
+        // Auth check - only admins can download backups
         // Dynamic import to avoid bundling server code in client
         const { auth } = await import("@/src/lib/auth")
         const session = await auth.api.getSession({ headers: request.headers })
         if (!session?.user) {
           return new Response("Unauthorized", { status: 401 })
+        }
+        if (!isAdmin(session.user)) {
+          return new Response("Forbidden", { status: 403 })
         }
 
         const filename = params._splat

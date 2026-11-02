@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start"
+import { isAdmin } from "@/src/lib/roles"
 
 // Server function to get auth context - uses dynamic imports to avoid client bundling issues
 export const getAuthContext = createServerFn().handler(async () => {
@@ -8,6 +9,7 @@ export const getAuthContext = createServerFn().handler(async () => {
   const session = await auth.api.getSession({ headers: request.headers })
   return {
     isLoggedIn: !!session?.user,
+    isAdmin: isAdmin(session?.user),
     userId: session?.user?.id ?? null,
   }
 })

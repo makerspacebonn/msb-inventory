@@ -32,6 +32,7 @@ import type {
   ChangeType,
   EntityType,
 } from "@/src/app/types"
+import { useAuth } from "@/src/context/AuthContext"
 
 export const Route = createFileRoute("/changelog")({
   component: ChangelogPage,
@@ -132,6 +133,7 @@ function ChangelogEntryCard({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [showDiff, setShowDiff] = useState(false)
   const router = useRouter()
+  const { isAdmin } = useAuth()
 
   const handleUndoClick = () => {
     setShowConfirmDialog(true)
@@ -204,11 +206,14 @@ function ChangelogEntryCard({
       <div
         className={`border-b transition-all ${isHighlighted ? "bg-blue-500/10" : ""}`}
         id={`changelog-${entry.id}`}
+        data-testid="changelog-entry"
       >
         <button
           type="button"
           className="flex w-full items-center gap-1.5 py-1.5 px-2 text-left cursor-pointer hover:bg-muted/50"
           onClick={() => hasDiffData && setShowDiff(!showDiff)}
+          aria-expanded={hasDiffData ? showDiff : undefined}
+          aria-controls={hasDiffData ? `changelog-${entry.id}-diff` : undefined}
         >
           <ChangeTypeBadge type={entry.changeType} />
           <EntityTypeBadge type={entry.entityType} />
@@ -237,7 +242,11 @@ function ChangelogEntryCard({
         </button>
 
         {showDiff && hasDiffData && (
-          <div className="px-2 pb-2 pt-1 border-t bg-muted/30">
+          <div
+            id={`changelog-${entry.id}-diff`}
+            data-testid="changelog-diff"
+            className="px-2 pb-2 pt-1 border-t bg-muted/30"
+          >
             <ValueDiff
               changeType={entry.changeType}
               beforeValues={entry.beforeValues}
@@ -254,20 +263,22 @@ function ChangelogEntryCard({
                   Konflikt anzeigen
                 </Link>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 text-xs ml-auto"
-                onClick={handleUndoClick}
-                disabled={undoState === "checking" || undoState === "undoing"}
-              >
-                {undoState === "checking" || undoState === "undoing" ? (
-                  <Loader2Icon className="w-3 h-3 mr-1 animate-spin" />
-                ) : (
-                  <Undo2Icon className="w-3 h-3 mr-1" />
-                )}
-                Rückgängig
-              </Button>
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs ml-auto"
+                  onClick={handleUndoClick}
+                  disabled={undoState === "checking" || undoState === "undoing"}
+                >
+                  {undoState === "checking" || undoState === "undoing" ? (
+                    <Loader2Icon className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <Undo2Icon className="w-3 h-3 mr-1" />
+                  )}
+                  Rückgängig
+                </Button>
+              )}
             </div>
           </div>
         )}

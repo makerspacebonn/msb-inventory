@@ -3,7 +3,7 @@ import path from "node:path"
 import { createServerFn } from "@tanstack/react-start"
 import { eq, sql } from "drizzle-orm"
 import PizZip from "pizzip"
-import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
+import { adminGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { db } from "../db"
 import {
   CategoryTable,
@@ -48,7 +48,7 @@ function addImagesToZip(zip: PizZip, dir: string, zipFolder: string): void {
 }
 
 export const generateBackup = createServerFn()
-  .middleware([authGuardMiddleware])
+  .middleware([adminGuardMiddleware])
   .handler(async (): Promise<BackupInfo> => {
     // Ensure backups directory exists
     if (!fs.existsSync(BACKUPS_DIR)) {
@@ -102,8 +102,9 @@ export const generateBackup = createServerFn()
     }
   })
 
-export const listBackups = createServerFn().handler(
-  async (): Promise<BackupInfo[]> => {
+export const listBackups = createServerFn()
+  .middleware([adminGuardMiddleware])
+  .handler(async (): Promise<BackupInfo[]> => {
     if (!fs.existsSync(BACKUPS_DIR)) {
       return []
     }
@@ -128,11 +129,10 @@ export const listBackups = createServerFn().handler(
     backups.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 
     return backups
-  },
-)
+  })
 
 export const deleteBackup = createServerFn()
-  .middleware([authGuardMiddleware])
+  .middleware([adminGuardMiddleware])
   .validator((filename: string) => filename)
   .handler(async ({ data: filename }): Promise<{ success: boolean }> => {
     const filePath = path.join(BACKUPS_DIR, filename)
@@ -172,7 +172,7 @@ function chunk<T>(rows: T[]): T[][] {
 }
 
 export const restoreBackup = createServerFn()
-  .middleware([authGuardMiddleware])
+  .middleware([adminGuardMiddleware])
   .validator((filename: string) => filename)
   .handler(async ({ data: filename }): Promise<RestoreResult> => {
     const filePath = path.join(BACKUPS_DIR, filename)

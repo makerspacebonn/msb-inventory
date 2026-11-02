@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test"
 import { expect, test } from "../fixtures/auth.fixture"
 
 test.describe("Changelog / Audit Log", () => {
@@ -75,20 +76,9 @@ test.describe("Changelog / Audit Log", () => {
   }) => {
     await page.goto("/changelog")
 
-    // Click on an entry to expand it
-    const entry = page.locator(".border-b").first()
-    await entry.click()
+    await expandFirstEntry(page)
 
-    // After clicking, should show diff view or undo button
-    const diffView = page.locator("text=Rückgängig")
-
-    // ToDo: there should be a proper test for the diff view
-    // Diff view may or may not be present depending on UI design
-    await expect(diffView)
-      .toBeVisible({ timeout: 3000 })
-      .catch(() => {
-        // It's okay if diff view doesn't show - entry might not be expandable
-      })
+    await expect(page.getByTestId("changelog-diff").first()).toBeVisible()
   })
 
   test("should show changed fields in diff", async ({
@@ -114,51 +104,55 @@ test.describe("Changelog / Audit Log", () => {
       })
   })
 
-  test("should have undo functionality", async ({
-    authenticatedPage: page,
-  }) => {
+  test("should offer undo to admins", async ({ adminPage: page }) => {
     await page.goto("/changelog")
 
-    // Click on first entry to expand
-    const entry = page.locator(".border-b").first()
-    await entry.click()
+    const entry = await expandFirstEntry(page)
 
-    // Look for undo button ("Rückgängig")
-    const undoButton = page.locator("text=Rückgängig")
-
-    // ToDo: tunr this into a proper test
-    // Undo button should be present for reversible changes
-    await expect(undoButton.first())
-      .toBeVisible({ timeout: 30 })
-      .catch(() => {
-        // Not all entries may have undo button visible
-      })
+    await expect(
+      entry.getByRole("button", { name: "Rückgängig" }),
+    ).toBeVisible()
   })
 
-  test("should show undo confirmation dialog", async ({
+  test("should show undo confirmation dialog", async ({ adminPage: page }) => {
+    await page.goto("/changelog")
+
+    const entry = await expandFirstEntry(page)
+    await entry.getByRole("button", { name: "Rückgängig" }).click()
+
+    const dialog = page.getByRole("dialog")
+    await expect(dialog).toBeVisible()
+
+    // Cancel, so the shared seed data stays unchanged
+    await dialog.getByRole("button", { name: "Abbrechen" }).click()
+    await expect(dialog).toBeHidden()
+  })
+
+  test("should not offer undo to non-admins", async ({
     authenticatedPage: page,
   }) => {
     await page.goto("/changelog")
 
-    // First expand an entry
-    const entry = page.locator(".border-b").first()
-    await entry.click()
-    await page.waitForTimeout(500)
+    const entry = await expandFirstEntry(page)
 
-    const undoButton = page.locator('button:has-text("Rückgängig")').first()
-
-    if (await undoButton.isVisible()) {
-      await undoButton.click()
-
-      // Should show confirmation dialog
-      const confirmDialog = page.locator('[role="dialog"]')
-      await expect(confirmDialog.first()).toBeVisible({ timeout: 5000 })
-
-      // Cancel the undo
-      const cancelButton = page.locator('button:has-text("Abbrechen")')
-      if (await cancelButton.isVisible()) {
-        await cancelButton.click()
-      }
-    }
+    await expect(entry.getByTestId("changelog-diff")).toBeVisible()
+    await expect(entry.getByRole("button", { name: "Rückgängig" })).toHaveCount(
+      0,
+    )
   })
 })
+
+// Expands the first changelog entry that has a diff and returns it
+async function expandFirstEntry(page: Page) {
+  // Pin the entry by id: the filter below stops matching once it's expanded
+  const id = await page
+    .getByTestId("changelog-entry")
+    .filter({ has: page.getByRole("button", { expanded: false }) })
+    .first()
+    .getAttribute("id")
+  const entry = page.locator(`#${id}`)
+
+  await entry.getByRole("button", { expanded: false }).click()
+  await expect(entry.getByRole("button", { expanded: true })).toBeVisible()
+  return entry
+}

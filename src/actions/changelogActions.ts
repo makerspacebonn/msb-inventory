@@ -5,7 +5,10 @@ import type {
   PaginatedResult,
   UndoResult,
 } from "@/src/app/types"
-import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
+import {
+  adminGuardMiddleware,
+  authGuardMiddleware,
+} from "@/src/middleware/authMiddleware"
 import { ChangelogRepository } from "@/src/repositories/ChangelogRepository"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
@@ -30,7 +33,7 @@ export const fetchChangelogEntry = createServerFn()
   })
 
 export const checkUndoConflict = createServerFn()
-  .middleware([authGuardMiddleware])
+  .middleware([adminGuardMiddleware])
   .validator((changelogId: number) => changelogId)
   .handler(
     async ({
@@ -68,7 +71,7 @@ export const checkUndoConflict = createServerFn()
   )
 
 export const undoChange = createServerFn({ method: "POST" })
-  .middleware([authGuardMiddleware])
+  .middleware([adminGuardMiddleware])
   .validator((changelogId: number) => changelogId)
   .handler(async ({ data: changelogId, context }): Promise<UndoResult> => {
     const changelogRepo = new ChangelogRepository()

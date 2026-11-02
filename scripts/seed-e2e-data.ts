@@ -52,6 +52,15 @@ const LOGOUT_TEST_SESSION = {
   expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 }
 
+// Session for the admin user, to test admin-only actions
+export const E2E_ADMIN_SESSION_TOKEN = "e2e-admin-session-token-24680"
+const ADMIN_TEST_SESSION = {
+  id: "e2e-admin-session-id",
+  userId: "e2e-admin",
+  token: E2E_ADMIN_SESSION_TOKEN,
+  expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+}
+
 // Hierarchical Locations (3 levels deep)
 const TEST_LOCATIONS = [
   // Root Level (IDs 1-3)
@@ -286,6 +295,18 @@ async function seed() {
       )
     `)
     console.log(`  Inserted 2 sessions for e2e-user (main + logout test)`)
+    await db.execute(sql`
+      INSERT INTO sessions (id, user_id, token, expires_at, created_at, updated_at)
+      VALUES (
+        ${ADMIN_TEST_SESSION.id},
+        ${ADMIN_TEST_SESSION.userId},
+        ${ADMIN_TEST_SESSION.token},
+        ${ADMIN_TEST_SESSION.expiresAt},
+        NOW(),
+        NOW()
+      )
+    `)
+    console.log(`  Inserted 1 session for e2e-admin`)
 
     // 3. Insert locations (with explicit IDs using OVERRIDING SYSTEM VALUE)
     console.log("Inserting locations...")

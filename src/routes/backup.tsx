@@ -16,6 +16,9 @@ export const Route = createFileRoute("/backup")({
     if (!context.isLoggedIn) {
       throw new Error("Unauthorized")
     }
+    if (!context.isAdmin) {
+      throw new Error("Forbidden")
+    }
   },
   loader: () => listBackups(),
   head: () => ({
@@ -119,6 +122,7 @@ function BackupPage() {
           {backups.map((backup) => (
             <div
               key={backup.filename}
+              data-testid="backup-row"
               className="flex items-center justify-between p-4 border rounded-lg"
             >
               <div>

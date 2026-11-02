@@ -17,6 +17,7 @@ import appCss from "../styles.css?url"
 // Define the router context type
 type RouterContext = {
   isLoggedIn: boolean
+  isAdmin: boolean
   userId: string | null
 }
 
