@@ -10,7 +10,7 @@ import {
   Scripts,
   useRouter,
 } from "@tanstack/react-router"
-import { LogInIcon, LogOutIcon, PlusIcon } from "lucide-react"
+import { CameraIcon, LogInIcon, LogOutIcon, PlusIcon } from "lucide-react"
 import type { ReactNode } from "react"
 import { toast } from "sonner"
 import { getAuthContext } from "@/src/actions/authActions"
@@ -170,6 +170,23 @@ function AddItemButton() {
   )
 }
 
+// Photo search shortcut; the search uses an AI call, so logged-in users only
+function PhotoSearchButton() {
+  const { isLoggedIn } = useAuth()
+  if (!isLoggedIn) return null
+  return (
+    <Button variant="ghost" size="sm" asChild>
+      <Link
+        to="/items/photo"
+        aria-label="Mit Foto suchen"
+        title="Mit Foto suchen"
+      >
+        <CameraIcon className="w-4 h-4" />
+      </Link>
+    </Button>
+  )
+}
+
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="de">
@@ -197,6 +214,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               {/* Search fills the space between the pages and the actions */}
               <HeaderSearch />
               <div className="flex flex-shrink-0 items-center justify-end gap-2 md:gap-4">
+                <PhotoSearchButton />
                 <AddItemButton />
                 <div className="hidden md:block">
                   <AuthButtons />

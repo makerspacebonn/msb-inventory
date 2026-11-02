@@ -21,6 +21,7 @@ import { Route as IItemIdRouteImport } from './routes/i.$itemId'
 import { Route as ImgSplatRouteImport } from './routes/img.$'
 import { Route as ItemsIndexRouteImport } from './routes/items/index'
 import { Route as ItemsAddRouteImport } from './routes/items/add'
+import { Route as ItemsPhotoRouteImport } from './routes/items/photo'
 import { Route as SsoKanidmRouteImport } from './routes/sso.kanidm'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiE2eCreateSessionRouteImport } from './routes/api/e2e/create-session'
@@ -88,6 +89,11 @@ const ItemsAddRoute = ItemsAddRouteImport.update({
   path: '/items/add',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ItemsPhotoRoute = ItemsPhotoRouteImport.update({
+  id: '/items/photo',
+  path: '/items/photo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SsoKanidmRoute = SsoKanidmRouteImport.update({
   id: '/sso/kanidm',
   path: '/sso/kanidm',
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
+  '/items/photo': typeof ItemsPhotoRoute
   '/sso/kanidm': typeof SsoKanidmRoute
   '/items/': typeof ItemsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
+  '/items/photo': typeof ItemsPhotoRoute
   '/sso/kanidm': typeof SsoKanidmRoute
   '/items': typeof ItemsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
   '/items/add': typeof ItemsAddRoute
+  '/items/photo': typeof ItemsPhotoRoute
   '/sso/kanidm': typeof SsoKanidmRoute
   '/items/': typeof ItemsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/i/$itemId'
     | '/img/$'
     | '/items/add'
+    | '/items/photo'
     | '/sso/kanidm'
     | '/items/'
     | '/api/auth/$'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/i/$itemId'
     | '/img/$'
     | '/items/add'
+    | '/items/photo'
     | '/sso/kanidm'
     | '/items'
     | '/api/auth/$'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/i/$itemId'
     | '/img/$'
     | '/items/add'
+    | '/items/photo'
     | '/sso/kanidm'
     | '/items/'
     | '/api/auth/$'
@@ -255,6 +267,7 @@ export interface RootRouteChildren {
   IItemIdRoute: typeof IItemIdRoute
   ImgSplatRoute: typeof ImgSplatRoute
   ItemsAddRoute: typeof ItemsAddRoute
+  ItemsPhotoRoute: typeof ItemsPhotoRoute
   SsoKanidmRoute: typeof SsoKanidmRoute
   ItemsIndexRoute: typeof ItemsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ItemsAddRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/items/photo': {
+      id: '/items/photo'
+      path: '/items/photo'
+      fullPath: '/items/photo'
+      preLoaderRoute: typeof ItemsPhotoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sso/kanidm': {
       id: '/sso/kanidm'
       path: '/sso/kanidm'
@@ -417,6 +437,7 @@ const rootRouteChildren: RootRouteChildren = {
   IItemIdRoute: IItemIdRoute,
   ImgSplatRoute: ImgSplatRoute,
   ItemsAddRoute: ItemsAddRoute,
+  ItemsPhotoRoute: ItemsPhotoRoute,
   SsoKanidmRoute: SsoKanidmRoute,
   ItemsIndexRoute: ItemsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

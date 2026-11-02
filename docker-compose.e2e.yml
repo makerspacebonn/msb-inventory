@@ -36,6 +36,8 @@ services:
       - SAVE_PATH=/tmp/uploads/
       - BASE_URL=http://app-e2e:3000
       - BETTER_AUTH_URL=http://app-e2e:3000
+      # Fixed AI answer for the photo search, instead of calling Gemini
+      - 'GEMINI_STUB_RESPONSE={"bezeichnung":"Akkuschrauber","kategorie":"Elektrowerkzeug","kategorie_neu":null,"schlagworte":["Werkzeug","Schrauben","Elektro"],"hersteller":"Bosch","modell":null}'
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
       interval: 5s

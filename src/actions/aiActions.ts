@@ -6,9 +6,11 @@ import {
   buildItemPrompt,
   buildItemResponseSchema,
 } from "@/src/lib/aiItemPrompt"
+import { rankPhotoMatches, toPhotoDescription } from "@/src/lib/photoMatch"
 import { cleanTags } from "@/src/lib/tagRules"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { CategoryRepository } from "@/src/repositories/CategoryRepository"
+import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { TagsRepository } from "@/src/repositories/TagsRepository"
 
 type AiItemResponse = {
@@ -67,128 +69,166 @@ export const describeImageFn = createServerFn({ method: "POST" })
       throw new Error("Either base64Image or imagePath must be provided")
     }
 
-    const [categories, topTags] = await Promise.all([
-      new CategoryRepository().findAllNames(),
-      new TagsRepository().findTopTags(100),
-    ])
-
-    const model = genAI.getGenerativeModel({
-      model: geminiModel,
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: buildItemResponseSchema(categories),
-      },
-    })
-
-    const prompt = buildItemPrompt({
-      categories,
-      topTags,
-    })
-
-    const imageParts = [
-      {
-        inlineData: { data: base64Image.split(",")[1], mimeType: "image/jpeg" },
-      },
-    ]
-
-    try {
-      const result = await model.generateContent([prompt, ...imageParts])
-      console.log(result.response.text())
-      return postProcess(JSON.parse(result.response.text()), categories)
-    } catch (error: unknown) {
-      console.error("AI Analysis error:", error)
-
-      const statusCode = (error as { status?: number })?.status
-      const message = (error as { message?: string })?.message || ""
-      const errorDetails = (
-        error as {
-          errorDetails?: Array<{
-            "@type"?: string
-            retryDelay?: string
-            violations?: Array<{ quotaId?: string }>
-          }>
-        }
-      )?.errorDetails
-
-      if (
-        statusCode === 429 ||
-        message.includes("429") ||
-        message.includes("RESOURCE_EXHAUSTED")
-      ) {
-        // Check if it's a daily quota exhaustion
-        const quotaFailure = errorDetails?.find((d) =>
-          d["@type"]?.includes("QuotaFailure"),
-        )
-        const isDailyQuota =
-          quotaFailure?.violations?.some((v) =>
-            v.quotaId?.includes("PerDay"),
-          ) ||
-          message.includes("PerDay") ||
-          message.includes("per day")
-
-        if (isDailyQuota) {
-          // Midnight PT is 08:00 UTC (PST) or 07:00 UTC (PDT)
-          // In German time: ~09:00 CET/CEST (varies slightly during DST transitions)
-          throw new Error(
-            "Tägliches API-Limit erreicht. Versuche es ab ca. 09:00 Uhr erneut.",
-          )
-        }
-
-        // Try to extract retry delay from errorDetails (structured data from SDK)
-        const retryInfo = errorDetails?.find((d) =>
-          d["@type"]?.includes("RetryInfo"),
-        )
-        if (retryInfo?.retryDelay) {
-          const seconds = Math.ceil(parseFloat(retryInfo.retryDelay))
-          throw new Error(
-            `API-Limit erreicht. Versuche es in ${seconds} Sekunden erneut.`,
-          )
-        }
-
-        // Fallback: try to extract from error message
-        const retryMatch = message.match(/retry in (\d+(?:\.\d+)?)/i)
-        if (retryMatch) {
-          const seconds = Math.ceil(parseFloat(retryMatch[1]))
-          throw new Error(
-            `API-Limit erreicht. Versuche es in ${seconds} Sekunden erneut.`,
-          )
-        }
-
-        throw new Error(
-          "API-Limit erreicht. Bitte warte einen Moment und versuche es erneut.",
-        )
-      }
-
-      if (statusCode === 402 || message.includes("402")) {
-        throw new Error(
-          "KI-Guthaben aufgebraucht. Bitte das Gemini-Konto aufladen.",
-        )
-      }
-
-      if (statusCode === 404 || message.includes("404")) {
-        throw new Error(
-          `KI-Modell "${geminiModel}" ist nicht verfügbar. Bitte GEMINI_MODEL anpassen.`,
-        )
-      }
-
-      if (statusCode === 431 || message.includes("431")) {
-        throw new Error(
-          "Das Bild ist zu groß. Bitte verwende ein kleineres Bild.",
-        )
-      }
-
-      if (statusCode === 400 || message.includes("400")) {
-        throw new Error(
-          "Ungültige Anfrage. Das Bild konnte nicht verarbeitet werden.",
-        )
-      }
-
-      if (statusCode === 503 || message.includes("503")) {
-        throw new Error(
-          "Der KI-Service ist vorübergehend nicht verfügbar. Bitte versuche es später erneut.",
-        )
-      }
-
-      throw new Error("KI-Analyse fehlgeschlagen. Bitte versuche es erneut.")
-    }
+    return describeItemImage(base64Image)
   })
+
+/**
+ * Searches the inventory with a photo: the AI describes what's on it, and
+ * items are ranked by how well they match that description.
+ */
+export const searchByPhotoFn = createServerFn({ method: "POST" })
+  .middleware([authGuardMiddleware])
+  .validator(z.object({ base64Image: z.string().startsWith("data:image/") }))
+  .handler(async ({ data }) => {
+    const description = toPhotoDescription(
+      await describeItemImage(data.base64Image),
+    )
+    const candidates = await new ItemRepository().findPhotoCandidates(
+      description,
+    )
+    const results = rankPhotoMatches(candidates, description).map(
+      // The database allows tags to be NULL; the Item type doesn't
+      ({ textRank, nameSimilarity, score, ...item }) => ({
+        ...item,
+        tags: item.tags ?? [],
+      }),
+    )
+    return { description, results }
+  })
+
+export type ItemImageDescription = Awaited<ReturnType<typeof describeItemImage>>
+
+/**
+ * Describes the item on a photo (name, category, tags, ...), using the
+ * existing categories and most common tags as vocabulary.
+ *
+ * For E2E tests, GEMINI_STUB_RESPONSE (set only in docker-compose.e2e.yml)
+ * replaces the Gemini call with a fixed JSON answer.
+ */
+async function describeItemImage(base64Image: string) {
+  const [categories, topTags] = await Promise.all([
+    new CategoryRepository().findAllNames(),
+    new TagsRepository().findTopTags(100),
+  ])
+
+  const stub = process.env.GEMINI_STUB_RESPONSE
+  if (stub) {
+    return postProcess(JSON.parse(stub) as AiItemResponse, categories)
+  }
+
+  const model = genAI.getGenerativeModel({
+    model: geminiModel,
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: buildItemResponseSchema(categories),
+    },
+  })
+
+  const prompt = buildItemPrompt({
+    categories,
+    topTags,
+  })
+
+  const [header, imageData] = base64Image.split(",")
+  const mimeType = header.match(/^data:([^;]+)/)?.[1] ?? "image/jpeg"
+  const imageParts = [{ inlineData: { data: imageData, mimeType } }]
+
+  try {
+    const result = await model.generateContent([prompt, ...imageParts])
+    console.log(result.response.text())
+    return postProcess(JSON.parse(result.response.text()), categories)
+  } catch (error: unknown) {
+    console.error("AI Analysis error:", error)
+
+    const statusCode = (error as { status?: number })?.status
+    const message = (error as { message?: string })?.message || ""
+    const errorDetails = (
+      error as {
+        errorDetails?: Array<{
+          "@type"?: string
+          retryDelay?: string
+          violations?: Array<{ quotaId?: string }>
+        }>
+      }
+    )?.errorDetails
+
+    if (
+      statusCode === 429 ||
+      message.includes("429") ||
+      message.includes("RESOURCE_EXHAUSTED")
+    ) {
+      // Check if it's a daily quota exhaustion
+      const quotaFailure = errorDetails?.find((d) =>
+        d["@type"]?.includes("QuotaFailure"),
+      )
+      const isDailyQuota =
+        quotaFailure?.violations?.some((v) => v.quotaId?.includes("PerDay")) ||
+        message.includes("PerDay") ||
+        message.includes("per day")
+
+      if (isDailyQuota) {
+        // Midnight PT is 08:00 UTC (PST) or 07:00 UTC (PDT)
+        // In German time: ~09:00 CET/CEST (varies slightly during DST transitions)
+        throw new Error(
+          "Tägliches API-Limit erreicht. Versuche es ab ca. 09:00 Uhr erneut.",
+        )
+      }
+
+      // Try to extract retry delay from errorDetails (structured data from SDK)
+      const retryInfo = errorDetails?.find((d) =>
+        d["@type"]?.includes("RetryInfo"),
+      )
+      if (retryInfo?.retryDelay) {
+        const seconds = Math.ceil(parseFloat(retryInfo.retryDelay))
+        throw new Error(
+          `API-Limit erreicht. Versuche es in ${seconds} Sekunden erneut.`,
+        )
+      }
+
+      // Fallback: try to extract from error message
+      const retryMatch = message.match(/retry in (\d+(?:\.\d+)?)/i)
+      if (retryMatch) {
+        const seconds = Math.ceil(parseFloat(retryMatch[1]))
+        throw new Error(
+          `API-Limit erreicht. Versuche es in ${seconds} Sekunden erneut.`,
+        )
+      }
+
+      throw new Error(
+        "API-Limit erreicht. Bitte warte einen Moment und versuche es erneut.",
+      )
+    }
+
+    if (statusCode === 402 || message.includes("402")) {
+      throw new Error(
+        "KI-Guthaben aufgebraucht. Bitte das Gemini-Konto aufladen.",
+      )
+    }
+
+    if (statusCode === 404 || message.includes("404")) {
+      throw new Error(
+        `KI-Modell "${geminiModel}" ist nicht verfügbar. Bitte GEMINI_MODEL anpassen.`,
+      )
+    }
+
+    if (statusCode === 431 || message.includes("431")) {
+      throw new Error(
+        "Das Bild ist zu groß. Bitte verwende ein kleineres Bild.",
+      )
+    }
+
+    if (statusCode === 400 || message.includes("400")) {
+      throw new Error(
+        "Ungültige Anfrage. Das Bild konnte nicht verarbeitet werden.",
+      )
+    }
+
+    if (statusCode === 503 || message.includes("503")) {
+      throw new Error(
+        "Der KI-Service ist vorübergehend nicht verfügbar. Bitte versuche es später erneut.",
+      )
+    }
+
+    throw new Error("KI-Analyse fehlgeschlagen. Bitte versuche es erneut.")
+  }
+}

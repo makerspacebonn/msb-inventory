@@ -12,6 +12,7 @@ import {
 import type { Item, PaginatedResult } from "../app/types"
 import { db } from "../db"
 import { type ItemInsert, ItemTable, LocationTable } from "../drizzle/schema"
+import { type PhotoDescription, photoSearchTerms } from "../lib/photoMatch"
 import { parseSearchQuery, patternToLike } from "../lib/searchQuery"
 
 // Item columns plus the name of the item's direct location, for item lists
@@ -171,5 +172,52 @@ export class ItemRepository {
                        + similarity(searchable_text, ${text})) DESC,
         ${ItemTable.id} DESC`)
       .limit(100)
+  }
+
+  /**
+   * Items sharing at least one signal with the AI description of a photo
+   * (words, name, category or tags), with the raw text rank and name
+   * similarity. Ranking happens in rankPhotoMatches (photoMatch.ts).
+   */
+  async findPhotoCandidates(description: PhotoDescription) {
+    const terms = photoSearchTerms(description)
+    const query = sql`websearch_to_tsquery('german', ${terms})`
+    const lowerTags = description.tags.map((tag) => tag.trim().toLowerCase())
+
+    const signals: SQL[] = [
+      sql`search_vector @@ ${query}`,
+      sql`word_similarity(${description.name}, ${ItemTable.name}) > 0.4`,
+    ]
+    if (description.category) {
+      signals.push(
+        sql`${ItemTable.category} ILIKE ${patternToLike(description.category)}`,
+      )
+    }
+    if (lowerTags.length > 0) {
+      signals.push(sql`EXISTS (
+        SELECT 1 FROM unnest(${ItemTable.tags}) AS item_tag
+        WHERE lower(item_tag) IN (${sql.join(
+          lowerTags.map((tag) => sql`${tag}`),
+          sql`, `,
+        )})
+      )`)
+    }
+
+    return db
+      .select({
+        ...itemWithLocationName,
+        // Normalized to 0..1 (rank / (rank + 1))
+        textRank: sql<number>`ts_rank(search_vector, ${query}, 32)`.mapWith(
+          Number,
+        ),
+        nameSimilarity:
+          sql<number>`word_similarity(${description.name}, ${ItemTable.name})`.mapWith(
+            Number,
+          ),
+      })
+      .from(ItemTable)
+      .leftJoin(LocationTable, eq(ItemTable.locationId, LocationTable.id))
+      .where(or(...signals))
+      .limit(300)
   }
 }
