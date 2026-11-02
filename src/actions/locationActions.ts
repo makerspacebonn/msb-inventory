@@ -102,6 +102,7 @@ export const createLocation = createServerFn({ method: "POST" })
   .validator(
     (data: {
       name: string
+      description?: string
       image?: string
       parentId: number | null
       parentLocationMarker: ParentLocationMarker | null
@@ -121,7 +122,9 @@ export const createLocation = createServerFn({ method: "POST" })
       imagePath = `${fileName}.${fileExtension}`
     }
     const location = await new LocationRepository().create({
-      name: data.name,
+      name: data.name.trim(),
+      // An empty description is stored as "no description"
+      description: data.description?.trim() || null,
       parentId: data.parentId,
       parentLocationMarker: data.parentLocationMarker,
       imagePath,

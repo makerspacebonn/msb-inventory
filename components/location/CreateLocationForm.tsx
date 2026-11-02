@@ -1,6 +1,7 @@
 import { MyCropper } from "@components/form/MyCropper"
 import { Button } from "@components/ui/button"
 import { Input } from "@components/ui/input"
+import { Textarea } from "@components/ui/textarea"
 import type { Location } from "@server/app/types"
 import { CheckIcon, ChevronLeftIcon } from "lucide-react"
 
@@ -8,6 +9,8 @@ type CreateLocationFormProps = {
   locationPath: Location[]
   name: string
   onNameChange: (name: string) => void
+  description: string
+  onDescriptionChange: (description: string) => void
   onImageChange: (image: string) => void
   onSubmit: () => void
   onCancel: () => void
@@ -17,6 +20,8 @@ export function CreateLocationForm({
   locationPath,
   name,
   onNameChange,
+  description,
+  onDescriptionChange,
   onImageChange,
   onSubmit,
   onCancel,
@@ -53,6 +58,21 @@ export function CreateLocationForm({
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
             placeholder="Name der Location"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="locationDescription"
+            className="block text-sm font-medium mb-1"
+          >
+            Beschreibung
+          </label>
+          <Textarea
+            id="locationDescription"
+            value={description}
+            onChange={(e) => onDescriptionChange(e.target.value)}
+            placeholder="Optional"
           />
         </div>
 

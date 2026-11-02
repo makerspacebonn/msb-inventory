@@ -19,6 +19,21 @@ test.describe("Location Management (Authenticated)", () => {
     await expect(dialog).toBeHidden()
   })
 
+  test("creates a location with a description", async ({
+    authenticatedPage: page,
+  }) => {
+    const name = `E2E Neu ${Date.now()}`
+    await page.goto("/locations")
+
+    await page.getByRole("button", { name: "Neue Location" }).click()
+    await page.getByLabel("Name").fill(name)
+    await page.getByLabel("Beschreibung").fill("Kiste unter dem Tisch")
+    await page.getByRole("button", { name: "Erstellen" }).click()
+
+    await expect(page.getByRole("heading", { name, exact: true })).toBeVisible()
+    await expect(page.getByText("Kiste unter dem Tisch")).toBeVisible()
+  })
+
   test("offers deleting an empty location", async ({
     authenticatedPage: page,
   }) => {

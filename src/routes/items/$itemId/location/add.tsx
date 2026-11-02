@@ -164,6 +164,8 @@ function RouteComponent() {
         locationPath={locationPath}
         name={create.state.name}
         onNameChange={create.setName}
+        description={create.state.description}
+        onDescriptionChange={create.setDescription}
         onImageChange={create.setImage}
         onSubmit={create.submitForm}
         onCancel={create.cancel}

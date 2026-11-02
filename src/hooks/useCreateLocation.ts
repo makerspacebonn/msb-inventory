@@ -5,12 +5,12 @@ import { createLocation } from "@/src/actions/locationActions"
 
 type CreateStep =
   | { step: "idle" }
-  | { step: "form"; name: string; image: string }
-  | { step: "marker"; name: string; image: string }
+  | { step: "form"; name: string; description: string; image: string }
+  | { step: "marker"; name: string; description: string; image: string }
 
 /**
  * Create-sublocation flow shared by all location views:
- * form (name + image) → marker on the parent image (only if it has one) → save
+ * form (name, description, image) → marker on the parent image (only if it has one) → save
  *
  * onCreated receives the new location, e.g. to navigate into it.
  */
@@ -20,11 +20,14 @@ export function useCreateLocation(
 ) {
   const [state, setState] = useState<CreateStep>({ step: "idle" })
 
-  const start = () => setState({ step: "form", name: "", image: "" })
+  const start = () =>
+    setState({ step: "form", name: "", description: "", image: "" })
   const cancel = () => setState({ step: "idle" })
 
   const setName = (name: string) =>
     setState((s) => (s.step === "form" ? { ...s, name } : s))
+  const setDescription = (description: string) =>
+    setState((s) => (s.step === "form" ? { ...s, description } : s))
   const setImage = (image: string) =>
     setState((s) => (s.step === "form" ? { ...s, image } : s))
 
@@ -33,6 +36,7 @@ export function useCreateLocation(
     const result = await createLocation({
       data: {
         name: state.name,
+        description: state.description,
         image: state.image || undefined,
         parentId: parentLocation?.id ?? null,
         parentLocationMarker: marker
@@ -56,5 +60,14 @@ export function useCreateLocation(
     }
   }
 
-  return { state, start, cancel, setName, setImage, submitForm, save }
+  return {
+    state,
+    start,
+    cancel,
+    setName,
+    setDescription,
+    setImage,
+    submitForm,
+    save,
+  }
 }
