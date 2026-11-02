@@ -9,7 +9,7 @@ export type Item = {
   imagePath: string | null
   // Name of the item's direct location; only filled in item lists
   locationName?: string | null
-  tags: string[]
+  tags: string[] | null
   manufacturer: string | null
   model: string | null
   category: string | null
@@ -58,6 +58,17 @@ export type PaginatedResult<T> = {
 export type EntityType = "item" | "location"
 export type ChangeType = "create" | "update" | "delete"
 
+/** A value as stored in a JSON column */
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue }
+
+export type JsonObject = { [key: string]: JsonValue }
+
 export type ChangelogEntry = {
   readonly id: number
   entityType: EntityType
@@ -65,8 +76,9 @@ export type ChangelogEntry = {
   changeType: ChangeType
   userId: string | null
   changedAt: Date
-  beforeValues: Record<string, unknown> | null
-  afterValues: Record<string, unknown> | null
+  // Entity snapshots, stored as JSON (dates become strings)
+  beforeValues: JsonObject | null
+  afterValues: JsonObject | null
   changedFields: string[] | null
 }
 

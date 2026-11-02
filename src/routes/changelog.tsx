@@ -36,7 +36,10 @@ import { useAuth } from "@/src/context/AuthContext"
 
 export const Route = createFileRoute("/changelog")({
   component: ChangelogPage,
-  validateSearch: (search: Record<string, unknown>) => ({
+  // highlight: id of an entry to mark, e.g. when coming from "Konflikt anzeigen"
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { page: number; highlight?: number } => ({
     page: Number(search.page) || 1,
     highlight: search.highlight ? Number(search.highlight) : undefined,
   }),

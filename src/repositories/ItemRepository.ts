@@ -21,11 +21,6 @@ const itemWithLocationName = {
   locationName: LocationTable.name,
 }
 
-export interface SearchResult extends Item {
-  rank: number
-  similarity: number
-}
-
 export class ItemRepository {
   async upsert(item: Partial<Item>): Promise<Item[] | undefined> {
     if (item.id) {
@@ -124,8 +119,7 @@ export class ItemRepository {
     const { text, categories, tags } = parseSearchQuery(query)
 
     if (!text && categories.length === 0 && tags.length === 0) {
-      const items = await this.findLatest()
-      return items.map((item) => ({ ...item, rank: 0, similarity: 0 }))
+      return this.findLatest()
     }
 
     // An item has one category, so several filters mean "any of them"

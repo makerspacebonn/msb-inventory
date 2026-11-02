@@ -4,6 +4,7 @@ import type {
   ChangelogEntryWithUser,
   ChangeType,
   EntityType,
+  JsonObject,
   PaginatedResult,
 } from "../app/types"
 import { db } from "../db"
@@ -19,8 +20,8 @@ type ChangelogCreateInput = {
   entityId: number
   changeType: ChangeType
   userId: string | null
-  beforeValues: Record<string, unknown> | null
-  afterValues: Record<string, unknown> | null
+  beforeValues: JsonObject | null
+  afterValues: JsonObject | null
   changedFields: string[]
 }
 
@@ -158,8 +159,8 @@ export class ChangelogRepository {
       changeType: string
       userId: string | null
       changedAt: Date
-      beforeValues: Record<string, unknown> | null
-      afterValues: Record<string, unknown> | null
+      beforeValues: JsonObject | null
+      afterValues: JsonObject | null
       changedFields: string[] | null
       userName: string | null
     }>,
@@ -241,8 +242,8 @@ export function recordChange(change: {
     entityId: change.entityId,
     changeType: change.changeType,
     userId: change.userId,
-    beforeValues: change.before as Record<string, unknown> | null,
-    afterValues: change.after as Record<string, unknown> | null,
+    beforeValues: change.before as JsonObject | null,
+    afterValues: change.after as JsonObject | null,
     changedFields: change.changedFields,
   })
 }

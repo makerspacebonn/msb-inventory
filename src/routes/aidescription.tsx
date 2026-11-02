@@ -7,6 +7,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import imageCompression from "browser-image-compression"
 import { useState } from "react"
 import { describeImageFn } from "@/src/actions/aiActions"
+import type { AiItemDescription } from "@/src/lib/aiItemPrompt"
 
 const queryClient = new QueryClient()
 
@@ -22,28 +23,14 @@ function RouteComponent() {
   )
 }
 
-type AiSuggestion = {
-  bezeichnung: string
-  hersteller: string | null
-  modell: string | null
-  kategorie: string
-  zustand: string
-  beschreibung_kurz: string
-  zusatzinfos: string
-}
+type AiSuggestion = AiItemDescription
 
 export function ImageUploader() {
   const [data, setData] = useState<AiSuggestion[] | null>(null)
 
   const mutation = useMutation({
     mutationFn: describeImageFn,
-    onSuccess: (res) => {
-      console.log(res)
-      if (!Array.isArray(res)) {
-        res = [res]
-      }
-      setData(res)
-    },
+    onSuccess: (res) => setData([res]),
   })
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

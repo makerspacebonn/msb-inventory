@@ -43,6 +43,23 @@ Beispiel für eine Akku-Bohrmaschine von Makita: ["Bohrmaschine", "Akku", "18V",
 Wenn etwas unbekannt ist, verwende null.`
 }
 
+/** The AI's answer as described by buildItemResponseSchema */
+export type AiItemDescription = {
+  bezeichnung: string
+  // Not required in the schema, so the AI may leave them out
+  hersteller?: string | null
+  modell?: string | null
+  seriennummer?: string | null
+  kategorie: string
+  /** Only set when no existing category fits */
+  kategorie_neu: string | null
+  zustand: "neu" | "gut" | "gebraucht" | "defekt"
+  beschreibung_kurz: string
+  schlagworte: string[]
+  bedienungsanleitungen: string[]
+  zusatzinfos?: string | null
+}
+
 export function buildItemResponseSchema(categories: string[]): ObjectSchema {
   const nullableString = { type: SchemaType.STRING, nullable: true } as const
 

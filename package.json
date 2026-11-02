@@ -15,6 +15,7 @@
     "dev:logs": "tail -f logs/dev.log",
     "build": "bun --bun vite build",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "dev:tests": "docker compose exec app bun --watch --dots test",
     "dev:stop": "docker compose down",
     "db:generate": "drizzle-kit generate",

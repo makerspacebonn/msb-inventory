@@ -17,7 +17,7 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core"
-import type { ItemLink, ParentLocationMarker } from "../app/types"
+import type { ItemLink, JsonObject, ParentLocationMarker } from "../app/types"
 
 const tsVector = customType<{ data: string }>({
   dataType() {
@@ -191,8 +191,8 @@ export const ChangelogTable = pgTable(
     changeType: varchar("change_type", { length: 20 }).notNull(), // 'create' | 'update' | 'delete'
     userId: varchar("user_id"), // No FK constraint - allows "admin" for password login
     changedAt: timestamp("changed_at").defaultNow().notNull(),
-    beforeValues: json("before_values").$type<Record<string, unknown> | null>(),
-    afterValues: json("after_values").$type<Record<string, unknown> | null>(),
+    beforeValues: json("before_values").$type<JsonObject | null>(),
+    afterValues: json("after_values").$type<JsonObject | null>(),
     changedFields: varchar("changed_fields").array(),
   },
   (t) => [

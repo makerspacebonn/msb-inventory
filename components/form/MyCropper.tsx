@@ -16,8 +16,9 @@ import {
   EmptyTitle,
 } from "@components/ui/empty"
 import { ImageIcon, PencilIcon } from "lucide-react"
-import { useRef, useState } from "react"
-import Cropper from "react-easy-crop"
+import { type ChangeEvent, type MouseEvent, useRef, useState } from "react"
+import Cropper, { type Area } from "react-easy-crop"
+import { toast } from "sonner"
 import { getCroppedImg } from "./-canvasUtils"
 
 interface MyCropperProps {
@@ -30,17 +31,17 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [rotation, setRotation] = useState(0)
   const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [croppedImage, setCroppedImage] = useState<string | null>(null)
   const [showExisting, setShowExisting] = useState(!!existingImagePath)
   const [open, setOpen] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const onCropComplete = (_croppedArea, croppedAreaPixels) => {
+  const onCropComplete = (_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels)
   }
 
-  const onFileChange = async (e) => {
+  const onFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0]
       const imageDataUrl = await readFile(file)
@@ -52,29 +53,36 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
     }
   }
 
-  function readFile(file) {
-    return new Promise((resolve) => {
+  function readFile(file: File) {
+    return new Promise<string>((resolve, reject) => {
       const reader = new FileReader()
-      reader.addEventListener("load", () => resolve(reader.result), false)
+      reader.addEventListener("load", () => resolve(reader.result as string))
+      reader.addEventListener("error", () => reject(reader.error))
       reader.readAsDataURL(file)
     })
   }
 
-  const showCroppedImage = async (e) => {
+  const showCroppedImage = async (e: MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    // The crop area is reported once the cropper has measured the image
+    if (!imageSrc || !croppedAreaPixels) return
     try {
       const croppedImage = await getCroppedImg(
         imageSrc,
         croppedAreaPixels,
         rotation,
       )
-      console.log("donee", croppedImage)
+      if (!croppedImage) {
+        toast.error("Das Bild konnte nicht zugeschnitten werden.")
+        return
+      }
       setCroppedImage(croppedImage)
       setOpen(false)
-      onChange ? onChange(croppedImage) : null
+      onChange?.(croppedImage)
     } catch (e) {
       console.error(e)
+      toast.error("Das Bild konnte nicht zugeschnitten werden.")
     }
   }
 
@@ -122,7 +130,12 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
                 Abbrechen
               </Button>
             </DialogClose>
-            <Button onClick={(e) => showCroppedImage(e)}>Nutzen</Button>
+            <Button
+              onClick={(e) => showCroppedImage(e)}
+              disabled={!croppedAreaPixels}
+            >
+              Nutzen
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -136,7 +149,7 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
         <div className="relative">
           <img
             src={croppedImage}
-            alt="cropped"
+            alt="Gewähltes Bild"
             className="rounded-2xl max-w-64"
           />
           <button
@@ -154,6 +167,7 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
           onChange={onFileChange}
           accept="image/*"
           className="hidden"
+          aria-label="Bild auswählen"
         />
       </div>
     )
@@ -166,7 +180,7 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
         <div className="relative">
           <img
             src={`/img/items/${existingImagePath}`}
-            alt="existing"
+            alt="Aktuelles Bild"
             className="rounded-2xl max-w-64"
           />
           <button
@@ -184,6 +198,7 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
           onChange={onFileChange}
           accept="image/*"
           className="hidden"
+          aria-label="Bild auswählen"
         />
       </div>
     )
@@ -201,6 +216,7 @@ export function MyCropper({ onChange, existingImagePath }: MyCropperProps) {
         onChange={onFileChange}
         accept="image/*"
         className="hidden"
+        aria-label="Bild auswählen"
       />
       <EmptyHeader>
         <EmptyMedia>

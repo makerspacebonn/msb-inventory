@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 import { createServerFn } from "@tanstack/react-start"
 import z from "zod/v4"
 import {
+  type AiItemDescription,
   buildItemPrompt,
   buildItemResponseSchema,
 } from "@/src/lib/aiItemPrompt"
@@ -13,18 +14,9 @@ import { CategoryRepository } from "@/src/repositories/CategoryRepository"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { TagsRepository } from "@/src/repositories/TagsRepository"
 
-type AiItemResponse = {
-  kategorie: string
-  kategorie_neu: string | null
-  hersteller: string | null
-  modell: string | null
-  schlagworte: string[]
-  [key: string]: unknown
-}
-
 // Safety net for what the prompt asks: drop stop tags and tags repeating
 // other fields, and reuse an existing category if the AI "invented" one
-function postProcess(data: AiItemResponse, categories: string[]) {
+function postProcess(data: AiItemDescription, categories: string[]) {
   const proposed = data.kategorie_neu?.trim()
   const existing = proposed
     ? categories.find((c) => c.toLowerCase() === proposed.toLowerCase())
@@ -87,11 +79,7 @@ export const searchByPhotoFn = createServerFn({ method: "POST" })
       description,
     )
     const results = rankPhotoMatches(candidates, description).map(
-      // The database allows tags to be NULL; the Item type doesn't
-      ({ textRank, nameSimilarity, score, ...item }) => ({
-        ...item,
-        tags: item.tags ?? [],
-      }),
+      ({ textRank, nameSimilarity, score, ...item }) => item,
     )
     return { description, results }
   })
@@ -113,7 +101,7 @@ async function describeItemImage(base64Image: string) {
 
   const stub = process.env.GEMINI_STUB_RESPONSE
   if (stub) {
-    return postProcess(JSON.parse(stub) as AiItemResponse, categories)
+    return postProcess(JSON.parse(stub) as AiItemDescription, categories)
   }
 
   const model = genAI.getGenerativeModel({

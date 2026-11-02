@@ -51,7 +51,12 @@ export function SiteMenu({
               Drucker
             </Link>
           )}
-          <Link to="/changelog" className={linkClass} onClick={close}>
+          <Link
+            to="/changelog"
+            search={{ page: 1 }}
+            className={linkClass}
+            onClick={close}
+          >
             Changelog
           </Link>
           {isAdmin && (

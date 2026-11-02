@@ -35,7 +35,9 @@ export const EXCLUDED_TABLES = {
 export interface BackupTables {
   users: UserInsert[]
   categories: CategoryInsert[]
-  locations: LocationInsert[]
+  // Insert types leave out generated ids, but backups keep them: restoring
+  // writes the original ids, so references between rows stay valid
+  locations: (LocationInsert & { id?: number })[]
   items: ItemInsert[]
   changelog: ChangelogInsert[]
 }

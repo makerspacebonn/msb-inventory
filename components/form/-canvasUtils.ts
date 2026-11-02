@@ -1,5 +1,7 @@
-export const createImage = (url) =>
-  new Promise((resolve, reject) => {
+import type { Area } from "react-easy-crop"
+
+export const createImage = (url: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
     image.addEventListener("load", () => resolve(image))
     image.addEventListener("error", (error) => reject(error))
@@ -26,17 +28,17 @@ export function rotateSize(width: number, height: number, rotation: number) {
 }
 
 /**
- * This function was adapted from the one in the ReadMe of https://github.com/DominicTobias/react-image-crop
- */
-/**
- * This function was adapted from the one in the ReadMe of https://github.com/DominicTobias/react-image-crop
+ * Crops (and rotates) an image and returns it as a JPEG data URL, or null
+ * if the browser has no 2D canvas.
+ *
+ * Adapted from the README of https://github.com/DominicTobias/react-image-crop
  */
 export async function getCroppedImg(
   imageSrc: string,
-  pixelCrop: { x: number; y: number; width: number; height: number },
+  pixelCrop: Area,
   rotation = 0,
   flip = { horizontal: false, vertical: false },
-) {
+): Promise<string | null> {
   const image = await createImage(imageSrc)
   const canvas = document.createElement("canvas")
   const ctx = canvas.getContext("2d")
@@ -68,7 +70,6 @@ export async function getCroppedImg(
   ctx.drawImage(image, 0, 0)
 
   const croppedCanvas = document.createElement("canvas")
-
   const croppedCtx = croppedCanvas.getContext("2d")
 
   if (!croppedCtx) {
@@ -92,44 +93,5 @@ export async function getCroppedImg(
     pixelCrop.height,
   )
 
-  // return new Promise((resolve, reject) => {
-  //   croppedCanvas.toBlob((file) => {
-  //     resolve(file)
-  //   }, "image/png")
-  // })
-  // As Base64 string
   return croppedCanvas.toDataURL("image/jpeg")
-
-  // As a blob
-  // return new Promise((resolve, reject) => {
-  //   croppedCanvas.toBlob((file) => {
-  //     resolve(URL.createObjectURL(file))
-  //   }, "image/png")
-  // })
-}
-
-export async function getRotatedImage(imageSrc, rotation = 0) {
-  const image = await createImage(imageSrc)
-  const canvas = document.createElement("canvas")
-  const ctx = canvas.getContext("2d")
-
-  const orientationChanged =
-    rotation === 90 || rotation === -90 || rotation === 270 || rotation === -270
-  if (orientationChanged) {
-    canvas.width = image.height
-    canvas.height = image.width
-  } else {
-    canvas.width = image.width
-    canvas.height = image.height
-  }
-
-  ctx.translate(canvas.width / 2, canvas.height / 2)
-  ctx.rotate((rotation * Math.PI) / 180)
-  ctx.drawImage(image, -image.width / 2, -image.height / 2)
-
-  return new Promise((resolve) => {
-    canvas.toBlob((file) => {
-      resolve(URL.createObjectURL(file))
-    }, "image/png")
-  })
 }

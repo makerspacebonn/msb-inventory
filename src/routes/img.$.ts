@@ -54,7 +54,7 @@ async function getResizedImage(
 
   // Apply quality settings based on format
   const format = metadata.format
-  if (format === "jpeg" || format === "jpg") {
+  if (format === "jpeg") {
     resizedImage = resizedImage.jpeg({ quality })
   } else if (format === "png") {
     resizedImage = resizedImage.png({ quality })

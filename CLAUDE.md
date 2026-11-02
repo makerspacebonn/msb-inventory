@@ -14,6 +14,7 @@ bun dev          # Start app + postgres in Docker with hot reload (http://localh
 bun dev:stop     # Stop Docker containers
 bun dev:tests    # Run tests in watch mode
 bun test         # Run tests once
+bun typecheck    # Type check the whole project (tsc --noEmit)
 bun build        # Production build
 bun db:push      # update the db to the expected drizzle format
 bun dev:bg       # Restart dev server in background with logging (logs/dev.log)

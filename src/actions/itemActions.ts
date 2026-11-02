@@ -11,15 +11,12 @@ import { itemSchema } from "@/src/lib/itemSchema"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { CategoryRepository } from "@/src/repositories/CategoryRepository"
 import { recordChange } from "@/src/repositories/ChangelogRepository"
-import {
-  ItemRepository,
-  type SearchResult,
-} from "@/src/repositories/ItemRepository"
+import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
 export const searchItems = createServerFn()
   .validator((query: string) => query)
-  .handler(async ({ data: query }): Promise<SearchResult[]> => {
+  .handler(async ({ data: query }): Promise<Item[]> => {
     return new ItemRepository().search(query)
   })
 

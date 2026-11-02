@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router"
 import { cn } from "@/lib/utils"
 import { tagSearchTerm } from "@/src/lib/searchQuery"
 
-export function Tags(props: { tags: string[] }) {
+export function Tags(props: { tags: string[] | null }) {
   return (
     <>
       {props.tags && props.tags.length > 0 && (

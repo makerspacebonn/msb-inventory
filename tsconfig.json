@@ -9,14 +9,21 @@
     "moduleResolution": "Bundler",
     "strictNullChecks": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
       "@server/*": ["./src/*"],
       "@public/*": ["./public/*"],
-      "@uploads": ["./container/*"],
       "@/*": ["./*"],
       "@components/*": ["./components/*"]
     },
     "types": ["bun-types"]
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/experiment*",
+    "container",
+    "usr",
+    "e2e/playwright-report",
+    "e2e/test-results"
+  ]
 }

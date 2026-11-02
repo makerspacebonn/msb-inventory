@@ -1,5 +1,12 @@
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 import type { Page } from "@playwright/test"
 import { expect, test } from "../fixtures/auth.fixture"
+
+const photo = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../fixtures/photo-search.jpg",
+)
 
 // Creates an item through the form and returns its id
 async function createItem(page: Page, name: string) {
@@ -43,6 +50,36 @@ test.describe("Item CRUD Operations", () => {
 
     test("creates a new item", async ({ authenticatedPage: page }) => {
       await createItem(page, `E2E Test Item ${Date.now()}`)
+    })
+
+    test("creates an item with a cropped photo", async ({
+      authenticatedPage: page,
+    }) => {
+      const name = `E2E Photo Item ${Date.now()}`
+      await page.goto("/items/add")
+      await page.getByLabel("Name", { exact: true }).fill(name)
+
+      await page.getByLabel("Bild auswählen").setInputFiles(photo)
+      const cropper = page.getByRole("dialog", { name: "Bild zuschneiden" })
+      await expect(cropper).toBeVisible()
+      // Enabled once the cropper has measured the image
+      const use = cropper.getByRole("button", { name: "Nutzen" })
+      await expect(use).toBeEnabled()
+      await use.click()
+      await expect(cropper).toBeHidden()
+      await expect(
+        page.getByRole("img", { name: "Gewähltes Bild" }),
+      ).toBeVisible()
+
+      await page.getByRole("button", { name: "Erstellen" }).click()
+
+      await expect(page).toHaveURL(/\/i\/\d+$/)
+      const image = page.getByRole("img", { name, exact: true })
+      await expect(image).toHaveAttribute("src", /^\/img\/items\/.+\.jpg$/)
+      // The stored file is served and decodes as an image
+      await expect
+        .poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth))
+        .toBeGreaterThan(0)
     })
   })
 

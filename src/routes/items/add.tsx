@@ -29,21 +29,10 @@ import { fetchCategories } from "@/src/actions/categoryActions"
 import { fetchItem, saveItem } from "@/src/actions/itemActions"
 import { fetchAutocompleteTags } from "@/src/actions/tagActions"
 import type { Item } from "@/src/app/types"
+import type { AiItemDescription } from "@/src/lib/aiItemPrompt"
 import { type ItemFormData, itemSchema } from "@/src/lib/itemSchema"
 
-type AiData = {
-  bezeichnung: string
-  hersteller: string | null
-  modell: string | null
-  seriennummer: string | null
-  kategorie: string
-  kategorie_neu: string | null // only when no existing category fits
-  zustand: "neu" | "gut" | "gebraucht" | "defekt"
-  beschreibung_kurz: string
-  schlagworte: string[]
-  bedienungsanleitungen: string[]
-  zusatzinfos: string
-}
+type AiData = AiItemDescription
 
 const { fieldContext, formContext } = createFormHookContexts()
 
@@ -82,7 +71,7 @@ function RouteComponent() {
 
   return (
     <div className="container mx-auto px-4 my-6">
-      <ItemForm existingItem={existingItem} />
+      <ItemForm existingItem={existingItem ?? null} />
     </div>
   )
 }
@@ -638,7 +627,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
                   <InlineSuggestion
                     value={aiData.zusatzinfos}
                     onUse={() => {
-                      field.handleChange(aiData.zusatzinfos)
+                      field.handleChange(aiData.zusatzinfos ?? "")
                       dismissSuggestion("morestuff")
                       setTimeout(() => resizeTextarea(morestuffRef.current), 0)
                     }}
