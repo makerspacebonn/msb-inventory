@@ -350,63 +350,9 @@ The app already shows the status of every label printer, but labels are always s
 
 ---
 
-## Access Control
-
-Who may do what in the inventory.
-
-### ACCESS-001: Restrict administrative actions to admins
-**Priority:** Medium
-
-**Description:**
-Every logged-in user can currently do everything, including actions that are hard to undo or affect the whole inventory. Users get an admin role via Kanidm (`KANIDM_ADMIN_GROUP`), but the app doesn't check it. Administrative actions should only be available to admins; everyday work (adding and editing items and locations) stays open to all logged-in users.
-
-**Decision (2026-11-02):**
-- Admin-only: backups (page, list, create, download, restore, delete) and undoing changes in the changelog
-- Open to all logged-in users: deleting items and locations, the printer status page
-
-**Acceptance Criteria:**
-- [x] It's decided and documented which actions are admin-only
-- [x] Non-admins can't run these actions, also not by calling the server directly
-- [x] Non-admins don't see controls for actions they can't run
-- [x] Admins can do everything as before
-
----
-
-## Testing
-
-Confidence that the tests catch real problems.
-
-### TEST-001: Reliable E2E tests
-**Priority:** Medium
-
-**Description:**
-Several E2E tests pass even when the feature they check is broken: they swallow failed assertions or skip their checks when an element isn't found. Others find elements by styling classes, so a visual change breaks them or makes them check the wrong element. Tests should fail when, and only when, the behavior they describe is broken.
-
-**Acceptance Criteria:**
-- [ ] No test passes when the element or behavior it checks is missing
-- [ ] Tests find elements the way users do (role, label, visible text), or by dedicated test markers where that's not possible
-- [ ] Changing styling alone doesn't break tests
-- [ ] The approach is documented, so new tests follow it
-
----
-
 ## Operations
 
 Backups, releases and running the app.
-
-### OPS-001: Complete backups
-**Priority:** High
-
-**Description:**
-A backup should contain everything needed to restore the inventory completely. Today it covers items, locations and images, but not the changelog and other data added since (e.g. categories), so a restore loses history and information.
-
-**Acceptance Criteria:**
-- [x] Backups include the changelog
-- [x] Backups include all other data needed for a complete restore (e.g. categories)
-- [x] A restore brings back the complete state of the backup
-- [x] Older backups can still be restored
-
----
 
 ### OPS-002: New version with every deployment
 **Priority:** Medium
