@@ -1,11 +1,9 @@
-import fs from "node:fs"
 import { CategoryCombobox } from "@components/form/CategoryCombobox"
 import { MyCropper } from "@components/form/MyCropper"
 import { Badge } from "@components/ui/badge"
 import { Button } from "@components/ui/button"
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { createServerFn } from "@tanstack/react-start"
 import { type Tag, TagInput } from "emblor"
 import {
   CheckIcon,
@@ -17,7 +15,6 @@ import {
 } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { v7 as uuidv7 } from "uuid"
 import z from "zod/v4"
 import {
   FieldContent,
@@ -29,12 +26,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { describeImageFn } from "@/src/actions/aiActions"
 import { fetchCategories } from "@/src/actions/categoryActions"
+import { fetchItem, saveItem } from "@/src/actions/itemActions"
 import { fetchAutocompleteTags } from "@/src/actions/tagActions"
 import type { Item } from "@/src/app/types"
-import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
-import { CategoryRepository } from "@/src/repositories/CategoryRepository"
-import { ChangelogRepository } from "@/src/repositories/ChangelogRepository"
-import { ItemRepository } from "@/src/repositories/ItemRepository"
+import { type ItemFormData, itemSchema } from "@/src/lib/itemSchema"
 
 type AiData = {
   bezeichnung: string
@@ -56,12 +51,6 @@ const searchSchema = z.object({
   itemId: z.coerce.number().optional(),
 })
 
-const fetchItemForEdit = createServerFn()
-  .validator((itemId: number) => itemId)
-  .handler(async ({ data: itemId }) => {
-    return new ItemRepository().findById(itemId)
-  })
-
 export const Route = createFileRoute("/items/add")({
   component: RouteComponent,
   validateSearch: searchSchema,
@@ -73,7 +62,7 @@ export const Route = createFileRoute("/items/add")({
   loaderDeps: ({ search }) => ({ itemId: search.itemId }),
   loader: async ({ deps }) => {
     if (deps.itemId) {
-      return fetchItemForEdit({ data: deps.itemId })
+      return fetchItem({ data: deps.itemId })
     }
     return null
   },
@@ -87,134 +76,6 @@ export const Route = createFileRoute("/items/add")({
     ],
   }),
 })
-
-const linkSchema = z.object({
-  url: z.string(),
-  name: z.string(),
-  type: z.string(),
-})
-
-const itemSchema = z.object({
-  id: z.number().optional(),
-  name: z.string().min(1, "Muss mindestens einen Buchstaben haben!"),
-  description: z.string().optional(),
-  image: z.string().optional(),
-  imagePath: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  manufacturer: z.string().optional(),
-  model: z.string().optional(),
-  category: z.string().optional(),
-  links: z.array(linkSchema).optional(),
-  morestuff: z.string().optional(),
-})
-
-function decodeBase64Image(dataString: string) {
-  const matches = dataString.match(/^data:([A-Za-z-+/]+);base64,(.+)$/)
-  const response: {
-    fileType: string | undefined
-    fileBuffer: Buffer | undefined
-  } = {
-    fileType: undefined,
-    fileBuffer: undefined,
-  }
-
-  if (matches?.length !== 3) {
-    throw new Error("Invalid input string")
-  }
-
-  response.fileType = matches[1]
-  response.fileBuffer = Buffer.from(matches[2], "base64")
-
-  return response
-}
-
-const addItem = createServerFn({ method: "POST" })
-  .middleware([authGuardMiddleware])
-  .validator(itemSchema)
-  .handler(
-    async ({
-      data,
-      context,
-    }): Promise<{ success: boolean; item?: Item; error?: string }> => {
-      const itemRepo = new ItemRepository()
-      const isUpdate = !!data.id
-      let beforeItem: Item | undefined
-
-      // Fetch before state if updating
-      if (data.id) {
-        beforeItem = await itemRepo.findById(data.id)
-        if (!beforeItem) {
-          return { success: false, error: "Item not found" }
-        }
-      }
-
-      if (data?.image) {
-        try {
-          const savePath = `${process.env.SAVE_PATH}items/`
-          const { fileType, fileBuffer } = decodeBase64Image(data.image)
-          const fileName = uuidv7()
-          const fileExtension = fileType?.split("/")[1]
-          const filePath = `${savePath}${fileName}.${fileExtension}`
-          const fileStream = fs.createWriteStream(filePath)
-          fileStream.write(fileBuffer)
-          fileStream.end()
-          data.imagePath = `${fileName}.${fileExtension}`
-        } catch (e) {
-          console.error(e)
-        }
-      }
-      // Categories come from the curated list; a new one typed by an editor
-      // is added to it (and an existing one reused, ignoring case)
-      if (data.category?.trim()) {
-        data.category = await new CategoryRepository().ensure(data.category)
-      }
-
-      const newItem = await itemRepo.upsert(data)
-
-      // Log to changelog
-      if (newItem?.[0]) {
-        const savedItem = newItem[0]
-
-        if (isUpdate && beforeItem) {
-          // Determine which fields changed
-          const changedFields = Object.keys(data).filter((key) => {
-            if (key === "image") return false // Don't track the base64 image string
-            const oldValue = beforeItem[key as keyof Item]
-            const newValue = savedItem[key as keyof Item]
-            return JSON.stringify(oldValue) !== JSON.stringify(newValue)
-          })
-
-          if (changedFields.length > 0) {
-            await new ChangelogRepository().create({
-              entityType: "item",
-              entityId: savedItem.id,
-              changeType: "update",
-              userId: context.userId,
-              beforeValues: beforeItem as unknown as Record<string, unknown>,
-              afterValues: savedItem as unknown as Record<string, unknown>,
-              changedFields,
-            })
-          }
-        } else {
-          // New item
-          await new ChangelogRepository().create({
-            entityType: "item",
-            entityId: savedItem.id,
-            changeType: "create",
-            userId: context.userId,
-            beforeValues: null,
-            afterValues: savedItem as unknown as Record<string, unknown>,
-            changedFields: Object.keys(data).filter((k) => k !== "image"),
-          })
-        }
-      }
-
-      return {
-        success: true,
-        item: newItem ? newItem[0] : undefined,
-      }
-    },
-  )
 
 function RouteComponent() {
   const existingItem = Route.useLoaderData()
@@ -336,14 +197,14 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
       category: existingItem?.category ?? undefined,
       links: existingItem?.links ?? [],
       morestuff: existingItem?.morestuff ?? undefined,
-    } as z.infer<typeof itemSchema>,
+    } as ItemFormData,
     validators: {
       onSubmit: itemSchema,
     },
     onSubmit: async ({ value }) => {
       const parsedInput = itemSchema.parse(value)
 
-      const result = await addItem({ data: parsedInput })
+      const result = await saveItem({ data: parsedInput })
       if (result?.success) {
         if (result.item) {
           await navigate({
