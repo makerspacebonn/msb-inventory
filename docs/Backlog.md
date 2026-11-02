@@ -187,6 +187,20 @@ export function detectChangedFields(
 
 ---
 
+### ARCH-006: Provider-neutral login naming
+**Priority:** Low
+
+**Description:**
+Single sign-on is named after Kanidm throughout the app (settings, login route, callback URL, code). The login itself is standard OIDC, so the naming ties the app to one provider without need. Neutral naming would make it clear that any OIDC provider can be used, and make switching providers easier.
+
+**Acceptance Criteria:**
+- [ ] Settings, routes and code use provider-neutral names
+- [ ] The provider's display name on the login button is configurable
+- [ ] Existing deployments keep working, or the migration steps are documented
+- [ ] Setup documentation describes the generic OIDC configuration
+
+---
+
 ## UX Improvements
 
 User experience enhancements for common workflows.
@@ -266,6 +280,73 @@ Tags on items should be usable to find related items. Clicking a tag shows the s
 - [ ] Clicking more tags adds them to the filter; results contain only items with all selected tags
 - [ ] Active tag filters are visible on the search page and can be removed one by one
 - [ ] All tag filters can be removed at once
+
+---
+
+### UX-009: Search by photo
+**Priority:** Medium
+
+**Description:**
+When holding an object, it's often faster to take a picture than to guess its name. Users should be able to search the inventory with a photo and get matching items, e.g. to find out whether an item already exists or where it belongs.
+
+**Acceptance Criteria:**
+- [ ] A search can be started with a photo taken or uploaded on the device
+- [ ] Results show matching items, best matches first
+- [ ] It's clear when no matching item was found
+- [ ] Works on mobile
+
+---
+
+### UX-010: Filter items by photo
+**Priority:** Low
+
+**Description:**
+Items without a photo are hard to recognize and should be completed over time. The item list should offer a filter for items with or without a photo.
+
+**Acceptance Criteria:**
+- [ ] The item list can be filtered to items with a photo and to items without a photo
+- [ ] The filter can be combined with the search and other filters
+- [ ] From the filtered list, a photo can be added to an item easily
+
+---
+
+### UX-011: Latest items on the front page
+**Priority:** Medium
+
+**Description:**
+The front page shows statistics only. Showing the most recently added items lets users see what's new in the inventory and quickly get back to items they just added.
+
+**Acceptance Criteria:**
+- [ ] The front page shows the most recently added items, newest first
+- [ ] Each entry leads to the item's page
+- [ ] The list stays short and doesn't push the rest of the front page away
+
+---
+
+### UX-012: Open locations from an item's location path
+**Priority:** Medium
+
+**Description:**
+An item's page shows the path of locations where it's stored, but the user can't go from there to one of these locations. Each location in the path should offer a way to open its location page, e.g. to see what else is stored there. Zooming into the location images stays as it is.
+
+**Acceptance Criteria:**
+- [ ] Every location in an item's location path can be opened as a location page
+- [ ] Zooming into location images works as before
+- [ ] It's clear which action opens the location and which one zooms
+
+---
+
+### PRINT-001: Choose the label printer
+**Priority:** Low
+
+**Description:**
+The app already shows the status of every label printer, but labels are always sent to one fixed printer. With more than one printer in the space, users should be able to choose which printer prints their label.
+
+**Acceptance Criteria:**
+- [ ] When printing a label, the user can choose among the available printers
+- [ ] Printers that are offline can't be chosen, or are clearly marked
+- [ ] With only one printer, printing works without an extra step
+- [ ] The last used printer is preselected
 
 ---
 
