@@ -208,22 +208,22 @@ Tests only run on desktop Chrome.
 ### Commands
 ```bash
 # Run all E2E tests
-bun e2e
+bun run test:e2e
 
 # Run specific test file
-bun e2e e2e/tests/homepage.spec.ts
+bun run test:e2e e2e/tests/homepage.spec.ts
 
 # Run with custom worker count
-E2E_WORKERS=8 bun e2e
+E2E_WORKERS=8 bun run test:e2e
 
 # Run in headed mode (for debugging)
-bun e2e --headed
+bun run test:e2e --headed
 
 # Open HTML report
-bun e2e:report
+bun run test:e2e:report
 
 # Run Playwright UI mode (local only)
-bun e2e:ui
+bun run test:e2e:ui
 ```
 
 ### File Locations

@@ -4,9 +4,9 @@ Playwright tests that run against the app in Docker with seeded data
 (`scripts/seed-e2e-data.ts`).
 
 ```bash
-bun run e2e                     # all tests
-bun run e2e items.spec.ts       # one file
-bun run e2e:report              # open the last HTML report
+bun run test:e2e                # all tests
+bun run test:e2e items.spec.ts  # one file
+bun run test:e2e:report         # open the last HTML report
 ```
 
 ## Writing tests

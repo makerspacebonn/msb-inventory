@@ -116,7 +116,7 @@ main() {
 
     if [ -d "$PROJECT_ROOT/e2e/playwright-report" ]; then
         log_info "HTML report: e2e/playwright-report/index.html"
-        log_info "View report with: bun e2e:report"
+        log_info "View report with: bun run test:e2e:report"
     fi
 
     echo ""

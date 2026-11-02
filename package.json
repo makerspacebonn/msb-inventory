@@ -20,12 +20,12 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "e2e": "bash scripts/e2e-test.sh",
-    "e2e:headed": "bash scripts/e2e-test.sh --headed",
-    "e2e:debug": "bash scripts/e2e-test.sh --debug",
-    "e2e:ui": "bun playwright test --config=e2e/playwright.config.ts --ui",
-    "e2e:report": "bun playwright show-report e2e/playwright-report",
-    "e2e:seed": "bun run scripts/seed-e2e-data.ts"
+    "test:e2e": "bash scripts/e2e-test.sh",
+    "test:e2e:headed": "bash scripts/e2e-test.sh --headed",
+    "test:e2e:debug": "bash scripts/e2e-test.sh --debug",
+    "test:e2e:ui": "bun playwright test --config=e2e/playwright.config.ts --ui",
+    "test:e2e:report": "bun playwright show-report e2e/playwright-report",
+    "test:e2e:seed": "bun run scripts/seed-e2e-data.ts"
   },
   "dependencies": {
     "@elysiajs/cookie": "^0.8.0",

@@ -151,7 +151,7 @@ Use conventional commits format: `type(scope): description`
 - **Pre-seed sessions for fast auth:** Insert user + session in seed script (`scripts/seed-e2e-data.ts`), then set cookie in Playwright fixture - much faster than UI login
 - **Port mapping for local debugging:** Add `ports: "3001:3000"` to `docker-compose.e2e.yml` to access app from host during debugging
 - **Auth verification:** Check for user name in header (`text=${TEST_USER.name}`) instead of feature-specific buttons that may not exist on all pages
-- **Test commands:** Use `bun run test` (Vitest) for unit tests, `bun run e2e` (Playwright) for E2E tests. Note: `bun test` uses Bun's native runner which conflicts with Playwright
+- **Test commands:** Use `bun run test` (Vitest) for unit tests, `bun run test:e2e` (Playwright) for E2E tests. Note: `bun test` uses Bun's native runner which conflicts with Playwright
 
 ### 2026-01-18 - OIDC Claims & Role Mapping
 - **better-auth mapProfileToUser:** Receives full OIDC profile including custom claims. Use with `overrideUserInfo: true` to update user on each login
