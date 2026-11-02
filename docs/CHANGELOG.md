@@ -4,9 +4,81 @@ All notable changes to MSB Inventory will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 2026-11-01 – 2026-11-02
+
+### Added
+- **UX-005: Consistent location selection** - Every location level offers the same options: open sublocations, create a sublocation, jump via breadcrumbs, and choose the location with "Hier ablegen". The current location is shown with its image; tapping it shows existing markers
+- **AI-002: Curated item categories** - New `categories` table with 16 curated categories and a category picker in the item form; a new category can be created when none fits
+- **AI-001: More relevant AI analysis** - The AI reuses existing tags and picks the category from the curated list (or proposes a new one); colors, materials and generic words are filtered from AI tags
+- One-click dev admin login on `/login` (only with `DEV_LOGIN=true`, never in production)
+- Unit tests for tag rules and the AI prompt (`bun run test`)
+- E2E tests for the item location picker
+
+### Changed
+- Item location picker keeps its position in the URL (`?at=<id>`), so back and reload work; it starts at the item's current location
+- Marker step is skipped for locations without an image
+- `/locations` and the item location picker share the marker step, current location card and create-sublocation flow
+- Gemini replies are enforced via `responseSchema`
+- Existing items migrated once to the curated categories, with tags cleaned up (via a temporary admin page, removed after the production run); changes are logged in the changelog as "Migration"
+
+### Fixed
+- Wrong breadcrumb path after opening a search result in the item location picker
+- "Ohne Markierung speichern" saved a previously placed marker anyway
+- Dev server log grew to 20+ GB because devtools console piping echoed logs between server and browser
+
+---
+
+## 2026-10-28 – 2026-10-31
+
+### Added
+- Label printer status page (`/printers`, login only) with live MQTT status: online state, Bluetooth, battery, WiFi, uptime and last print results
+- Clear error messages for depleted AI credits and unavailable AI models
+- Weekly `bun audit` CI workflow that fails on high/critical production findings
+
+### Changed
+- AI model switched to `gemini-3.8-flash` and configurable via `GEMINI_MODEL`
+- Server functions migrated from `inputValidator()` to `validator()` (TanStack Start)
+- better-auth upgraded to 1.7; generic OAuth providers are now signed in via `signIn.social`
+- Biome config migrated to 2.5.1; code formatted and imports sorted
+- Dependabot version-update PRs dropped (alerts only); CI actions bumped to Node 24
+- Start page welcome text simplified
+
+### Fixed
+- Vulnerable dependencies patched (152 of 154 `bun audit` findings, incl. a critical TanStack Start XSS and better-auth OAuth advisories)
+- Client disconnects during SSR streaming no longer logged as unhandled errors
+- AI description page sent the image in the wrong payload shape
+- Clickable location and changelog rows are now buttons (accessibility)
+- "e.V." spelling on the start page
+
+### Removed
+- Unused `testedit` page, `serve` script and unreachable code
+
+---
+
+## 2026-07-13
+
+### Added
+- Kanidm OIDC login ("Mit Kanidm anmelden") with group-based admin role via `KANIDM_ADMIN_GROUP`
+- `/sso/kanidm` landing route so the Kanidm app tile logs users in directly
+- Search field above the stats on the start page (opens `/items?q=…`)
+
+### Fixed
+- Runtime upload directory (`public/container`) excluded from the Docker build context, keeping it out of the image
+- Duplicate `vite-tsconfig-paths` plugin removed from the build
+
+---
+
+## 2026-06-30
+
+### Changed
+- Dependencies upgraded (TanStack, React, better-auth, Drizzle, Vite/Vitest, Playwright 1.61); E2E Docker image aligned with the Playwright version
+
+---
+
 ## 2026-02-05
 
 ### Added
+- **UX-001: Auto-select newly created location** - After creating a location, `/locations` and the item location picker open the new location
 - **UX-003: Add Item Button in Navigation** - Centered "Item hinzufügen" button with plus icon in the main navigation bar for quick access to item creation from any page
 - **UX-002: Recent Locations Feature** - Quick-select chips for recently used locations when adding items
 - `lib/recent-locations.ts` - localStorage utilities for persisting recent locations
