@@ -100,7 +100,7 @@ export function LocationBrowser({
                   {location.imagePath ? (
                     <img
                       src={`/img/locations/${location.imagePath}`}
-                      alt={location.name}
+                      alt=""
                       className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                     />
                   ) : (
@@ -186,7 +186,7 @@ export function LocationBrowser({
                     {location.imagePath ? (
                       <img
                         src={`/img/locations/${location.imagePath}`}
-                        alt={location.name}
+                        alt=""
                         className="w-full aspect-square object-cover rounded-lg"
                       />
                     ) : (

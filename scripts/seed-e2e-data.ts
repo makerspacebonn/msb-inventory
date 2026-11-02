@@ -5,6 +5,8 @@
  * Run this script inside the E2E app container after the database is ready.
  */
 
+import fs from "node:fs"
+import path from "node:path"
 import { sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import pg from "pg"
@@ -61,6 +63,14 @@ const ADMIN_TEST_SESSION = {
   expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 }
 
+// A tiny brown 40x30 PNG, so tests can check location images without
+// depending on image processing in the seed
+const LOCATION_IMAGE = {
+  fileName: "e2e-werkbank-1.png",
+  base64:
+    "iVBORw0KGgoAAAANSUhEUgAAACgAAAAeCAIAAADRv8uKAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAPUlEQVRIie3VQQ0AMAwCwAlDCUqQPxnb45L+mzSUO2uezLG4Tj3hineqApnKDCSKxWCxWBwWg8VicV+xeAFKvvHdDiJYKwAAAABJRU5ErkJggg==",
+}
+
 // Hierarchical Locations (3 levels deep)
 const TEST_LOCATIONS = [
   // Root Level (IDs 1-3)
@@ -69,7 +79,13 @@ const TEST_LOCATIONS = [
   { id: 3, name: "Büro", description: "Büroraum", parentId: null },
 
   // Second Level (IDs 10-21)
-  { id: 10, name: "Werkbank 1", description: "Erste Werkbank", parentId: 1 },
+  {
+    id: 10,
+    name: "Werkbank 1",
+    description: "Erste Werkbank",
+    parentId: 1,
+    imagePath: LOCATION_IMAGE.fileName,
+  },
   { id: 11, name: "Werkbank 2", description: "Zweite Werkbank", parentId: 1 },
   { id: 20, name: "Regal A", description: "Erstes Regal", parentId: 2 },
   { id: 21, name: "Regal B", description: "Zweites Regal", parentId: 2 },
@@ -311,12 +327,19 @@ async function seed() {
     // 3. Insert locations (with explicit IDs using OVERRIDING SYSTEM VALUE)
     console.log("Inserting locations...")
     for (const location of TEST_LOCATIONS) {
+      const imagePath = "imagePath" in location ? location.imagePath : null
       await db.execute(sql`
-        INSERT INTO locations (id, name, description, parent_id)
+        INSERT INTO locations (id, name, description, parent_id, image_path)
         OVERRIDING SYSTEM VALUE
-        VALUES (${location.id}, ${location.name}, ${location.description}, ${location.parentId})
+        VALUES (${location.id}, ${location.name}, ${location.description}, ${location.parentId}, ${imagePath})
       `)
     }
+    const locationImageDir = path.join(process.env.SAVE_PATH || "", "locations")
+    fs.mkdirSync(locationImageDir, { recursive: true })
+    fs.writeFileSync(
+      path.join(locationImageDir, LOCATION_IMAGE.fileName),
+      Buffer.from(LOCATION_IMAGE.base64, "base64"),
+    )
     console.log(`  Inserted ${TEST_LOCATIONS.length} locations`)
 
     // Reset location sequence

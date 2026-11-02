@@ -38,6 +38,55 @@ test.describe("Item Detail Page", () => {
     }
   })
 
+  test("opens a location from the location path", async ({ page }) => {
+    await page.getByRole("link", { name: "Werkbank 1", exact: true }).click()
+
+    await expect(page).toHaveURL("/locations?id=10")
+    await expect(
+      page.getByRole("heading", { name: "Werkbank 1", exact: true }),
+    ).toBeVisible()
+  })
+
+  test("offers opening every location in the path", async ({ page }) => {
+    for (const [name, id] of [
+      ["Werkstatt", 1],
+      ["Werkbank 1", 10],
+      ["Schublade 1", 100],
+    ] as const) {
+      await expect(
+        page.getByRole("link", { name, exact: true }),
+      ).toHaveAttribute("href", `/locations?id=${id}`)
+    }
+  })
+
+  test("zooms a location image without leaving the page", async ({ page }) => {
+    // Werkbank 1 is the only seeded location with an image
+    const zoom = page.getByRole("button", {
+      name: "Bild von Werkbank 1 vergrößern",
+    })
+    await expect(zoom).toHaveAttribute("aria-pressed", "false")
+
+    await zoom.click()
+
+    const shrink = page.getByRole("button", {
+      name: "Bild von Werkbank 1 verkleinern",
+    })
+    await expect(shrink).toHaveAttribute("aria-pressed", "true")
+    await expect(page).toHaveURL("/i/1")
+
+    await shrink.click()
+    await expect(zoom).toHaveAttribute("aria-pressed", "false")
+  })
+
+  test("offers no zoom for locations without an image", async ({ page }) => {
+    await expect(
+      page.getByRole("link", { name: "Werkstatt", exact: true }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: /^Bild von Werkstatt/ }),
+    ).toHaveCount(0)
+  })
+
   test("shows the QR code section", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "QR-Code" })).toBeVisible()
   })
