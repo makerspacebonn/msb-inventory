@@ -11,7 +11,6 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@server": ["./src/app/index.ts"],
       "@server/*": ["./src/*"],
       "@public/*": ["./public/*"],
       "@uploads": ["./container/*"],

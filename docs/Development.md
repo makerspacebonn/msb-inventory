@@ -35,8 +35,7 @@ bun dev:stop
 - [Bun](https://bun.sh/) - to run the app built in typescript
 - [Docker](https://www.docker.com/) - to run the app in a container
 - [drizzle](https://drizzle.team/) - the database connector
-- [elysia](https://elysiajs.com/) - as a web framework
+- [TanStack Start](https://tanstack.com/start) - as a web framework
 - [biome](https://biomejs.dev) - linter und formatter
-- [alpine.js](https://alpinejs.dev)
 
 - https://github.com/dhruvasagar/react-native-image-draw
