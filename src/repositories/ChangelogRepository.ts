@@ -222,3 +222,27 @@ export class ChangelogRepository {
     })
   }
 }
+
+/**
+ * Records a change to an item or location. `before`/`after` are the full
+ * entity snapshots (null for the side that doesn't exist on create/delete).
+ */
+export function recordChange(change: {
+  entityType: EntityType
+  entityId: number
+  changeType: ChangeType
+  userId: string | null
+  before: object | null
+  after: object | null
+  changedFields: string[]
+}): Promise<ChangelogEntry> {
+  return new ChangelogRepository().create({
+    entityType: change.entityType,
+    entityId: change.entityId,
+    changeType: change.changeType,
+    userId: change.userId,
+    beforeValues: change.before as Record<string, unknown> | null,
+    afterValues: change.after as Record<string, unknown> | null,
+    changedFields: change.changedFields,
+  })
+}

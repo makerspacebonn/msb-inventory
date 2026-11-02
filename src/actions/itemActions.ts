@@ -1,25 +1,21 @@
-import fs from "node:fs"
-import path from "node:path"
 import type {
   Item,
   PaginatedResult,
   ParentLocationMarker,
 } from "@server/app/types"
 import { createServerFn } from "@tanstack/react-start"
-import { v7 as uuidv7 } from "uuid"
 import z from "zod/v4"
-import { diffFields, parseImageDataUrl } from "@/src/lib/itemChanges"
+import { diffFields } from "@/src/lib/changelogUtils"
+import { deleteImage, storeImage } from "@/src/lib/imageUtils"
 import { itemSchema } from "@/src/lib/itemSchema"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { CategoryRepository } from "@/src/repositories/CategoryRepository"
-import { ChangelogRepository } from "@/src/repositories/ChangelogRepository"
+import { recordChange } from "@/src/repositories/ChangelogRepository"
 import {
   ItemRepository,
   type SearchResult,
 } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
-
-const imagePath = process.env.SAVE_PATH || ""
 
 export const searchItems = createServerFn()
   .validator((query: string) => query)
@@ -53,16 +49,6 @@ export const fetchItemWithLocation = createServerFn()
     return { item, baseUrl }
   })
 
-/** Writes an uploaded base64 image to disk and returns its file name */
-async function storeItemImage(dataUrl: string): Promise<string> {
-  const { extension, buffer } = parseImageDataUrl(dataUrl)
-  const dir = path.join(imagePath, "items")
-  await fs.promises.mkdir(dir, { recursive: true })
-  const fileName = `${uuidv7()}.${extension}`
-  await fs.promises.writeFile(path.join(dir, fileName), buffer)
-  return fileName
-}
-
 /** Creates a new item or updates an existing one (when `id` is set) */
 export const saveItem = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
@@ -85,7 +71,7 @@ export const saveItem = createServerFn({ method: "POST" })
       // A failed image upload must not silently save the item without it
       if (data.image) {
         try {
-          data.imagePath = await storeItemImage(data.image)
+          data.imagePath = await storeImage(data.image, "items")
         } catch (e) {
           console.error(e)
           const message = e instanceof Error ? e.message : String(e)
@@ -113,24 +99,24 @@ export const saveItem = createServerFn({ method: "POST" })
       if (beforeItem) {
         const changedFields = diffFields(beforeItem, savedItem, submittedFields)
         if (changedFields.length > 0) {
-          await new ChangelogRepository().create({
+          await recordChange({
             entityType: "item",
             entityId: savedItem.id,
             changeType: "update",
             userId: context.userId,
-            beforeValues: beforeItem as unknown as Record<string, unknown>,
-            afterValues: savedItem as unknown as Record<string, unknown>,
+            before: beforeItem,
+            after: savedItem,
             changedFields,
           })
         }
       } else {
-        await new ChangelogRepository().create({
+        await recordChange({
           entityType: "item",
           entityId: savedItem.id,
           changeType: "create",
           userId: context.userId,
-          beforeValues: null,
-          afterValues: savedItem as unknown as Record<string, unknown>,
+          before: null,
+          after: savedItem,
           changedFields: submittedFields,
         })
       }
@@ -166,13 +152,13 @@ async function updateItemLocation(
       "parentLocationMarker",
     ])
     if (changedFields.length > 0) {
-      await new ChangelogRepository().create({
+      await recordChange({
         entityType: "item",
         entityId: itemId,
         changeType: "update",
         userId,
-        beforeValues: beforeItem as unknown as Record<string, unknown>,
-        afterValues: updatedItem as unknown as Record<string, unknown>,
+        before: beforeItem,
+        after: updatedItem,
         changedFields,
       })
     }
@@ -217,22 +203,19 @@ export const deleteItem = createServerFn({ method: "POST" })
       return { success: false, message: "Item not found" }
     }
 
-    // Store full item state before deletion for changelog
-    const beforeValues = { ...item } as unknown as Record<string, unknown>
-
     // Delete the item first
     const deleted = await itemRepo.delete(itemId)
 
     if (deleted) {
       // Log to changelog
-      await new ChangelogRepository().create({
+      await recordChange({
         entityType: "item",
         entityId: itemId,
         changeType: "delete",
         userId: context.userId,
-        beforeValues,
-        afterValues: null,
-        changedFields: Object.keys(beforeValues),
+        before: item,
+        after: null,
+        changedFields: Object.keys(item),
       })
 
       // Handle image cleanup
@@ -241,11 +224,7 @@ export const deleteItem = createServerFn({ method: "POST" })
         const usageCount = await itemRepo.countByImagePath(item.imagePath)
 
         if (usageCount === 0) {
-          // Delete the image file
-          const fullPath = `${imagePath}items/${item.imagePath}`
-          if (fs.existsSync(fullPath)) {
-            fs.unlinkSync(fullPath)
-          }
+          await deleteImage(item.imagePath, "items")
         }
       }
     }

@@ -9,7 +9,10 @@ import {
   adminGuardMiddleware,
   authGuardMiddleware,
 } from "@/src/middleware/authMiddleware"
-import { ChangelogRepository } from "@/src/repositories/ChangelogRepository"
+import {
+  ChangelogRepository,
+  recordChange,
+} from "@/src/repositories/ChangelogRepository"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
@@ -99,9 +102,9 @@ export const undoChange = createServerFn({ method: "POST" })
 
     // Perform the undo based on entity type
     if (entry.entityType === "item") {
-      return undoItemChange(entry, context.userId, changelogRepo)
+      return undoItemChange(entry, context.userId)
     } else if (entry.entityType === "location") {
-      return undoLocationChange(entry, context.userId, changelogRepo)
+      return undoLocationChange(entry, context.userId)
     }
 
     return { success: false, error: "Unbekannter Entity-Typ" }
@@ -110,7 +113,6 @@ export const undoChange = createServerFn({ method: "POST" })
 async function undoItemChange(
   entry: ChangelogEntry,
   userId: string | null,
-  changelogRepo: ChangelogRepository,
 ): Promise<UndoResult> {
   const itemRepo = new ItemRepository()
 
@@ -122,13 +124,13 @@ async function undoItemChange(
         return { success: false, error: "Item existiert nicht mehr" }
       }
       await itemRepo.delete(entry.entityId)
-      await changelogRepo.create({
+      await recordChange({
         entityType: "item",
         entityId: entry.entityId,
         changeType: "delete",
         userId,
-        beforeValues: itemToDelete as unknown as Record<string, unknown>,
-        afterValues: null,
+        before: itemToDelete,
+        after: null,
         changedFields: Object.keys(itemToDelete),
       })
       return { success: true, action: "deleted" }
@@ -153,13 +155,13 @@ async function undoItemChange(
 
       const [updatedItem] = (await itemRepo.upsert(updateData)) || []
 
-      await changelogRepo.create({
+      await recordChange({
         entityType: "item",
         entityId: entry.entityId,
         changeType: "update",
         userId,
-        beforeValues: currentItem as unknown as Record<string, unknown>,
-        afterValues: updatedItem as unknown as Record<string, unknown>,
+        before: currentItem,
+        after: updatedItem,
         changedFields: entry.changedFields || [],
       })
       return { success: true, action: "restored" }
@@ -194,13 +196,13 @@ async function undoItemChange(
         return { success: false, error: "Fehler beim Wiederherstellen" }
       }
 
-      await changelogRepo.create({
+      await recordChange({
         entityType: "item",
         entityId: restoredItem.id,
         changeType: "create",
         userId,
-        beforeValues: null,
-        afterValues: restoredItem as unknown as Record<string, unknown>,
+        before: null,
+        after: restoredItem,
         changedFields: Object.keys(insertData),
       })
       return { success: true, action: "restored", newId: restoredItem.id }
@@ -214,7 +216,6 @@ async function undoItemChange(
 async function undoLocationChange(
   entry: ChangelogEntry,
   userId: string | null,
-  changelogRepo: ChangelogRepository,
 ): Promise<UndoResult> {
   const locationRepo = new LocationRepository()
 
@@ -226,13 +227,13 @@ async function undoLocationChange(
         return { success: false, error: "Location existiert nicht mehr" }
       }
       await locationRepo.delete(entry.entityId)
-      await changelogRepo.create({
+      await recordChange({
         entityType: "location",
         entityId: entry.entityId,
         changeType: "delete",
         userId,
-        beforeValues: locationToDelete as unknown as Record<string, unknown>,
-        afterValues: null,
+        before: locationToDelete,
+        after: null,
         changedFields: Object.keys(locationToDelete),
       })
       return { success: true, action: "deleted" }
@@ -259,13 +260,13 @@ async function undoLocationChange(
         updateData,
       )
 
-      await changelogRepo.create({
+      await recordChange({
         entityType: "location",
         entityId: entry.entityId,
         changeType: "update",
         userId,
-        beforeValues: currentLocation as unknown as Record<string, unknown>,
-        afterValues: updatedLocation as unknown as Record<string, unknown>,
+        before: currentLocation,
+        after: updatedLocation,
         changedFields: entry.changedFields || [],
       })
       return { success: true, action: "restored" }
@@ -290,13 +291,13 @@ async function undoLocationChange(
         return { success: false, error: "Fehler beim Wiederherstellen" }
       }
 
-      await changelogRepo.create({
+      await recordChange({
         entityType: "location",
         entityId: restoredLocation.id,
         changeType: "create",
         userId,
-        beforeValues: null,
-        afterValues: restoredLocation as unknown as Record<string, unknown>,
+        before: null,
+        after: restoredLocation,
         changedFields: Object.keys(locationData),
       })
       return { success: true, action: "restored", newId: restoredLocation.id }

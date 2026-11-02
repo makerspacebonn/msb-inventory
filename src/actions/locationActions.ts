@@ -1,9 +1,9 @@
-import fs from "node:fs"
 import type { Item, Location, ParentLocationMarker } from "@server/app/types"
 import { createServerFn } from "@tanstack/react-start"
-import { v7 as uuidv7 } from "uuid"
+import { isSameValue } from "@/src/lib/changelogUtils"
+import { deleteImage, storeImage } from "@/src/lib/imageUtils"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
-import { ChangelogRepository } from "@/src/repositories/ChangelogRepository"
+import { recordChange } from "@/src/repositories/ChangelogRepository"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
 
@@ -86,17 +86,6 @@ export const searchLocations = createServerFn()
     return locationsWithPath
   })
 
-function decodeBase64Image(dataString: string) {
-  const matches = dataString.match(/^data:([A-Za-z-+/]+);base64,(.+)$/)
-  if (matches?.length !== 3) {
-    throw new Error("Invalid input string")
-  }
-  return {
-    fileType: matches[1],
-    fileBuffer: Buffer.from(matches[2], "base64"),
-  }
-}
-
 export const createLocation = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
   .validator(
@@ -109,18 +98,9 @@ export const createLocation = createServerFn({ method: "POST" })
     }) => data,
   )
   .handler(async ({ data, context }) => {
-    let imagePath: string | undefined
-    if (data.image) {
-      const savePath = `${process.env.SAVE_PATH}locations/`
-      const { fileType, fileBuffer } = decodeBase64Image(data.image)
-      const fileName = uuidv7()
-      const fileExtension = fileType?.split("/")[1]
-      const filePath = `${savePath}${fileName}.${fileExtension}`
-      const fileStream = fs.createWriteStream(filePath)
-      fileStream.write(fileBuffer)
-      fileStream.end()
-      imagePath = `${fileName}.${fileExtension}`
-    }
+    const imagePath = data.image
+      ? await storeImage(data.image, "locations")
+      : undefined
     const location = await new LocationRepository().create({
       name: data.name.trim(),
       // An empty description is stored as "no description"
@@ -131,13 +111,13 @@ export const createLocation = createServerFn({ method: "POST" })
     })
 
     // Log to changelog
-    await new ChangelogRepository().create({
+    await recordChange({
       entityType: "location",
       entityId: location.id,
       changeType: "create",
       userId: context.userId,
-      beforeValues: null,
-      afterValues: location as unknown as Record<string, unknown>,
+      before: null,
+      after: location,
       changedFields: [
         "name",
         "parentId",
@@ -218,8 +198,10 @@ export const updateLocation = createServerFn({ method: "POST" })
     }
     if (
       data.parentLocationMarker !== undefined &&
-      JSON.stringify(data.parentLocationMarker) !==
-        JSON.stringify(beforeLocation.parentLocationMarker)
+      !isSameValue(
+        data.parentLocationMarker,
+        beforeLocation.parentLocationMarker,
+      )
     ) {
       changedFields.push("parentLocationMarker")
       updateData.parentLocationMarker = data.parentLocationMarker
@@ -227,23 +209,11 @@ export const updateLocation = createServerFn({ method: "POST" })
 
     // Handle image upload
     if (data.image) {
-      const savePath = `${process.env.SAVE_PATH}locations/`
-      const { fileType, fileBuffer } = decodeBase64Image(data.image)
-      const fileName = uuidv7()
-      const fileExtension = fileType?.split("/")[1]
-      const filePath = `${savePath}${fileName}.${fileExtension}`
-      const fileStream = fs.createWriteStream(filePath)
-      fileStream.write(fileBuffer)
-      fileStream.end()
-      updateData.imagePath = `${fileName}.${fileExtension}`
+      updateData.imagePath = await storeImage(data.image, "locations")
       changedFields.push("imagePath")
 
-      // Delete old image if it exists
       if (beforeLocation.imagePath) {
-        const oldPath = `${process.env.SAVE_PATH}locations/${beforeLocation.imagePath}`
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath)
-        }
+        await deleteImage(beforeLocation.imagePath, "locations")
       }
     }
 
@@ -254,13 +224,13 @@ export const updateLocation = createServerFn({ method: "POST" })
     const updatedLocation = await locationRepo.update(data.id, updateData)
 
     // Log to changelog
-    await new ChangelogRepository().create({
+    await recordChange({
       entityType: "location",
       entityId: data.id,
       changeType: "update",
       userId: context.userId,
-      beforeValues: beforeLocation as unknown as Record<string, unknown>,
-      afterValues: updatedLocation as unknown as Record<string, unknown>,
+      before: beforeLocation,
+      after: updatedLocation,
       changedFields,
     })
 
@@ -278,30 +248,24 @@ export const deleteLocation = createServerFn({ method: "POST" })
       return { success: false, message: "Location not found" }
     }
 
-    // Store full location state before deletion
-    const beforeValues = { ...location } as unknown as Record<string, unknown>
-
     // Delete the location
     const deleted = await locationRepo.delete(locationId)
 
     if (deleted) {
       // Log to changelog
-      await new ChangelogRepository().create({
+      await recordChange({
         entityType: "location",
         entityId: locationId,
         changeType: "delete",
         userId: context.userId,
-        beforeValues,
-        afterValues: null,
-        changedFields: Object.keys(beforeValues),
+        before: location,
+        after: null,
+        changedFields: Object.keys(location),
       })
 
       // Delete the image file if it exists
       if (location.imagePath) {
-        const imagePath = `${process.env.SAVE_PATH}locations/${location.imagePath}`
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath)
-        }
+        await deleteImage(location.imagePath, "locations")
       }
     }
 
