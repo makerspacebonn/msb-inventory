@@ -2,7 +2,6 @@ import fs from "node:fs"
 import path from "node:path"
 import { createServerFn } from "@tanstack/react-start"
 import { eq, sql } from "drizzle-orm"
-import PizZip from "pizzip"
 import { adminGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { db } from "../db"
 import {
@@ -13,6 +12,11 @@ import {
   UserTable,
 } from "../drizzle/schema"
 import {
+  extractBackupImages,
+  readBackupDatabase,
+  writeBackupArchive,
+} from "../lib/backupArchive"
+import {
   BACKUP_FORMAT_VERSION,
   type BackupData,
   parseBackupData,
@@ -20,6 +24,10 @@ import {
 
 const SAVE_PATH = process.env.SAVE_PATH || ""
 const BACKUPS_DIR = path.join(SAVE_PATH, "backups")
+const IMAGE_FOLDERS = [
+  { name: "items", dir: path.join(SAVE_PATH, "items") },
+  { name: "locations", dir: path.join(SAVE_PATH, "locations") },
+]
 
 export interface BackupInfo {
   filename: string
@@ -32,19 +40,6 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function addImagesToZip(zip: PizZip, dir: string, zipFolder: string): void {
-  if (fs.existsSync(dir)) {
-    const files = fs.readdirSync(dir)
-    for (const file of files) {
-      const filePath = path.join(dir, file)
-      if (fs.statSync(filePath).isFile()) {
-        const buffer = fs.readFileSync(filePath)
-        zip.file(`${zipFolder}/${file}`, buffer)
-      }
-    }
-  }
 }
 
 export const generateBackup = createServerFn()
@@ -74,22 +69,13 @@ export const generateBackup = createServerFn()
       tables: { users, categories, locations, items, changelog },
     }
 
-    // Create zip
-    const zip = new PizZip()
-
-    // Add database.json
-    zip.file("database.json", JSON.stringify(databaseExport, null, 2))
-
-    // Add images
-    addImagesToZip(zip, path.join(SAVE_PATH, "items"), "items")
-    addImagesToZip(zip, path.join(SAVE_PATH, "locations"), "locations")
-
-    // Generate zip buffer and write to file
-    const zipBuffer = zip.generate({
-      type: "nodebuffer",
-      compression: "DEFLATE",
-    })
-    fs.writeFileSync(zipPath, zipBuffer)
+    // Streams the images from disk into the zip, so the backup size isn't
+    // limited by the server's memory
+    await writeBackupArchive(
+      zipPath,
+      JSON.stringify(databaseExport, null, 2),
+      IMAGE_FOLDERS,
+    )
 
     // Get file size
     const stats = fs.statSync(zipPath)
@@ -186,18 +172,13 @@ export const restoreBackup = createServerFn()
       throw new Error("Backup file not found")
     }
 
-    // Read and parse zip file
-    const zipBuffer = fs.readFileSync(filePath)
-    const zip = new PizZip(zipBuffer)
-
-    // Parse database.json
-    const databaseFile = zip.file("database.json")
-    if (!databaseFile) {
+    const databaseJson = await readBackupDatabase(filePath)
+    if (databaseJson === null) {
       throw new Error("Invalid backup: database.json not found")
     }
 
     // Parse before touching anything, so a broken backup changes nothing
-    const backupData = parseBackupData(databaseFile.asText())
+    const backupData = parseBackupData(databaseJson)
     const { users, categories, locations, items, changelog } = backupData.tables
 
     // All-or-nothing: if any insert fails, the current data stays untouched
@@ -258,32 +239,9 @@ export const restoreBackup = createServerFn()
       return added
     })
 
-    // Images only after the database commit, so a failed restore leaves them as they were
-    // Ensure image directories exist
-    const itemsImageDir = path.join(SAVE_PATH, "items")
-    const locationsImageDir = path.join(SAVE_PATH, "locations")
-    fs.mkdirSync(itemsImageDir, { recursive: true })
-    fs.mkdirSync(locationsImageDir, { recursive: true })
-
-    // Extract images
-    let imagesRestored = 0
-    const zipFiles = zip.files
-    for (const relativePath of Object.keys(zipFiles)) {
-      const file = zipFiles[relativePath]
-      if (file.dir) continue
-
-      if (relativePath.startsWith("items/")) {
-        const imgFilename = path.basename(relativePath)
-        const destPath = path.join(itemsImageDir, imgFilename)
-        fs.writeFileSync(destPath, file.asNodeBuffer())
-        imagesRestored++
-      } else if (relativePath.startsWith("locations/")) {
-        const imgFilename = path.basename(relativePath)
-        const destPath = path.join(locationsImageDir, imgFilename)
-        fs.writeFileSync(destPath, file.asNodeBuffer())
-        imagesRestored++
-      }
-    }
+    // Images only after the database commit, so a failed restore leaves
+    // them as they were
+    const imagesRestored = await extractBackupImages(filePath, IMAGE_FOLDERS)
 
     return {
       success: true,
