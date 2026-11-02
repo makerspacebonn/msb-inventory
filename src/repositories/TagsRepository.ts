@@ -9,7 +9,8 @@ let tagsCache: {
 } | null = null
 
 export class TagsRepository {
-  async findUniqueTags(search?: string): Promise<string[]> {
+  // All tags, most used first (cached)
+  private async findAllByUsage(): Promise<string[]> {
     const now = Date.now()
 
     // Cache all tags with their counts for filtering
@@ -23,10 +24,18 @@ export class TagsRepository {
 
       tagsCache = { tags, timestamp: now }
     }
+    return tagsCache.tags
+  }
 
-    let filteredTags = tagsCache.tags
+  async findTopTags(limit: number): Promise<string[]> {
+    return (await this.findAllByUsage()).slice(0, limit)
+  }
+
+  async findUniqueTags(search?: string): Promise<string[]> {
+    const allTags = await this.findAllByUsage()
+    let filteredTags = allTags
     if (search) {
-      filteredTags = tagsCache.tags.filter((tag) =>
+      filteredTags = allTags.filter((tag) =>
         tag.toLowerCase().includes(search.toLowerCase()),
       )
     }

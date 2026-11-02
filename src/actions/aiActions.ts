@@ -1,10 +1,44 @@
-// src/funcs/describeImage.ts
-
 import fs from "node:fs"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { createServerFn } from "@tanstack/react-start"
 import z from "zod/v4"
+import {
+  buildItemPrompt,
+  buildItemResponseSchema,
+} from "@/src/lib/aiItemPrompt"
+import { cleanTags } from "@/src/lib/tagRules"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
+import { CategoryRepository } from "@/src/repositories/CategoryRepository"
+import { TagsRepository } from "@/src/repositories/TagsRepository"
+
+type AiItemResponse = {
+  kategorie: string
+  kategorie_neu: string | null
+  hersteller: string | null
+  modell: string | null
+  schlagworte: string[]
+  [key: string]: unknown
+}
+
+// Safety net for what the prompt asks: drop stop tags and tags repeating
+// other fields, and reuse an existing category if the AI "invented" one
+function postProcess(data: AiItemResponse, categories: string[]) {
+  const proposed = data.kategorie_neu?.trim()
+  const existing = proposed
+    ? categories.find((c) => c.toLowerCase() === proposed.toLowerCase())
+    : undefined
+  const kategorie = existing ?? data.kategorie
+  const kategorie_neu = existing ? null : proposed || null
+
+  return {
+    ...data,
+    kategorie,
+    kategorie_neu,
+    schlagworte: cleanTags(data.schlagworte ?? [], {
+      redundant: [kategorie, kategorie_neu, data.hersteller, data.modell],
+    }),
+  }
+}
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "")
 const geminiModel = process.env.GEMINI_MODEL || "gemini-3.8-flash"
@@ -32,30 +66,24 @@ export const describeImageFn = createServerFn({ method: "POST" })
     } else {
       throw new Error("Either base64Image or imagePath must be provided")
     }
-    //console.log(base64Image)
+
+    const [categories, topTags] = await Promise.all([
+      new CategoryRepository().findAllNames(),
+      new TagsRepository().findTopTags(100),
+    ])
+
     const model = genAI.getGenerativeModel({
       model: geminiModel,
-      generationConfig: { responseMimeType: "application/json" },
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: buildItemResponseSchema(categories),
+      },
     })
 
-    const prompt = `Analysiere dieses Bild für ein Inventarsystem: 
-    
-    Erstelle ein JSON mit diesen Feldern: 
-    { 
-      "bezeichnung": string, 
-      "hersteller": string | null, 
-      "modell": string | null, 
-      "seriennummer": string | null, 
-      "kategorie": string, 
-      "zustand": "neu" | "gut" | "gebraucht" | "defekt", 
-      "beschreibung_kurz": string, 
-      "schlagworte": string[] // Liste von Suchbegriffen wie Farbe, Material, Typ, Einsatzbereich, 
-      "bedienungsanleitungen": string[] // Links zu PDF Dateien oder anderen Quellen, 
-      "zusatzinfos": string // weitere infos, die du dazu packen würdest. Struktur bleibt dir überlassen. 
-     } 
-     
-     Beispiel für Schlagworte bei einer Bohrmaschine: ["Werkzeug", "Blau", "Metall", "Elektrowerkzeug", "Akku", "Heimwerken"]
-     wenn unbekannt, dann null als wert`
+    const prompt = buildItemPrompt({
+      categories,
+      topTags,
+    })
 
     const imageParts = [
       {
@@ -66,7 +94,7 @@ export const describeImageFn = createServerFn({ method: "POST" })
     try {
       const result = await model.generateContent([prompt, ...imageParts])
       console.log(result.response.text())
-      return JSON.parse(result.response.text())
+      return postProcess(JSON.parse(result.response.text()), categories)
     } catch (error: unknown) {
       console.error("AI Analysis error:", error)
 
