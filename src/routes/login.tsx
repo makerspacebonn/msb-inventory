@@ -11,12 +11,17 @@ const getAuthConfig = createServerFn().handler(async () => {
   return { kanidmConfigured, devLoginEnabled }
 })
 
-const devAdminLogin = createServerFn({ method: "POST" }).handler(async () => {
-  const { getRequest } = await import("@tanstack/react-start/server")
-  const { signInAsDevAdmin } = await import("@/src/lib/devLogin")
-  await signInAsDevAdmin(getRequest().headers)
-  return { success: true }
-})
+const devLogin = createServerFn({ method: "POST" })
+  .validator((role: "admin" | "user") => {
+    if (role !== "admin" && role !== "user") throw new Error("Invalid role")
+    return role
+  })
+  .handler(async ({ data: role }) => {
+    const { getRequest } = await import("@tanstack/react-start/server")
+    const { signInAsDevUser } = await import("@/src/lib/devLogin")
+    await signInAsDevUser(role, getRequest().headers)
+    return { success: true }
+  })
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -59,11 +64,11 @@ function LoginPage() {
     }
   }
 
-  const handleDevLogin = async () => {
+  const handleDevLogin = async (role: "admin" | "user") => {
     setLoading(true)
     setError("")
     try {
-      await devAdminLogin()
+      await devLogin({ data: role })
       // Full reload so root context and session cache pick up the new cookie
       window.location.href = "/"
     } catch (err) {
@@ -90,15 +95,26 @@ function LoginPage() {
           </Button>
         )}
         {showDevLogin && (
-          <Button
-            type="button"
-            variant="secondary"
-            className="w-full"
-            onClick={handleDevLogin}
-            disabled={loading}
-          >
-            Als Dev-Admin anmelden
-          </Button>
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={() => handleDevLogin("admin")}
+              disabled={loading}
+            >
+              Als Dev-Admin anmelden
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={() => handleDevLogin("user")}
+              disabled={loading}
+            >
+              Als Dev-User anmelden
+            </Button>
+          </>
         )}
       </div>
     </div>
