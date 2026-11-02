@@ -340,6 +340,79 @@ Item images in the item list are too small to recognize items at a glance. Image
 
 ---
 
+### UX-012: Open locations from an item's location path ✅ COMPLETED 2026-11-02
+**Priority:** Medium
+
+**Description:**
+An item's page shows the path of locations where it's stored, but the user can't go from there to one of these locations. Each location in the path should offer a way to open its location page, e.g. to see what else is stored there. Zooming into the location images stays as it is.
+
+**Acceptance Criteria:**
+- [x] Every location in an item's location path can be opened as a location page
+- [x] Zooming into location images works as before
+- [x] It's clear which action opens the location and which one zooms
+
+**Implementation Notes:**
+- Each location in the path has a link to its location page below the photo; the photo itself only zooms and shows a zoom icon
+
+---
+
+### UX-013: Compact add-item button in the header ✅ COMPLETED 2026-11-02
+**Priority:** Medium
+
+**Description:**
+The add-item button takes up a lot of room in the header and is shown even to visitors who can't add items. It should be a compact icon and only appear for logged-in users.
+
+**Acceptance Criteria:**
+- [x] The add-item button in the header is shown as an icon only
+- [x] The icon is still recognizable as "add item" (e.g. via label or tooltip)
+- [x] Visitors who are not logged in don't see the button
+- [x] Logged-in users can still add an item from every page
+
+**Implementation Notes:**
+- Icon-only link with label and tooltip "Item hinzufügen", next to the account on the right
+
+---
+
+### UX-014: Rarely used pages in a menu ✅ COMPLETED 2026-11-02
+**Priority:** Medium
+
+**Description:**
+Admin and rarely used pages such as backup, changelog and printers compete for space in the header with everyday actions. They should always be reachable through a menu (hamburger icon) instead of being shown directly, so the header stays focused on common tasks.
+
+**Acceptance Criteria:**
+- [x] Backup, changelog, printers and other rarely used pages are reachable through a menu
+- [x] These pages are no longer shown directly in the header, on any screen size
+- [x] The menu only contains pages the current user is allowed to open
+- [x] The menu works on mobile and desktop
+
+**Implementation Notes:**
+- Menu panel (dialog) behind the hamburger icon on every screen size: Drucker (logged in), Changelog, Backup (admins; wasn't linked anywhere before)
+- On phones the menu also holds Items, Locations and the account
+
+---
+
+### UX-015: Search bar in the header with live results ✅ COMPLETED 2026-11-02
+**Priority:** Medium
+
+**Description:**
+Searching is the most common way to find items, but it requires navigating to the search first. The header should always contain a search bar that shows results while typing. To make room, the version info moves from the logo to a footer.
+
+**Acceptance Criteria:**
+- [x] A search bar is visible in the header on every page
+- [x] Results appear while typing, without submitting the search
+- [x] Selecting a result opens it directly
+- [x] The full search results can still be opened from the search bar
+- [x] The search bar is usable on mobile
+- [x] The logo no longer shows version info
+- [x] The version info is shown in a footer on every page
+
+**Implementation Notes:**
+- Search fills the space between the main pages and the actions; shows up to 6 items with photo and location while typing
+- Enter or "Alle Ergebnisse anzeigen" opens `/items?q=…`
+- Version shown in a footer on every page
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.
