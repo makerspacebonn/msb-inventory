@@ -1,197 +1,123 @@
+import type { Page } from "@playwright/test"
 import { expect, test } from "../fixtures/auth.fixture"
+
+// Creates an item through the form and returns its id
+async function createItem(page: Page, name: string) {
+  await page.goto("/items/add")
+  await page.getByLabel("Name", { exact: true }).fill(name)
+  await page.getByRole("button", { name: "Erstellen" }).click()
+
+  await expect(page).toHaveURL(/\/i\/\d+$/)
+  await expect(
+    page.getByRole("heading", { level: 1, name, exact: true }),
+  ).toBeVisible()
+  return page.url().match(/\/i\/(\d+)$/)?.[1]
+}
 
 test.describe("Item CRUD Operations", () => {
   test.describe("Create Item", () => {
-    test("should navigate to add item page when authenticated", async ({
+    test("opens the add item page from the navigation", async ({
       authenticatedPage: page,
     }) => {
       await page.goto("/items")
 
-      // Use navbar button (first match) - there's also one in the items page content
-      const addButton = page.locator('a[href="/items/add"]').first()
-      await expect(addButton).toBeVisible()
+      await page
+        .getByRole("banner")
+        .getByRole("link", { name: "Item hinzufügen" })
+        .click()
 
-      await addButton.click()
+      await expect(page).toHaveURL("/items/add")
+      await expect(page.getByLabel("Name", { exact: true })).toBeVisible()
+    })
+
+    test("requires an item name", async ({ authenticatedPage: page }) => {
+      await page.goto("/items/add")
+
+      await page.getByRole("button", { name: "Erstellen" }).click()
+
+      await expect(
+        page.getByText("Muss mindestens einen Buchstaben haben!"),
+      ).toBeVisible()
       await expect(page).toHaveURL("/items/add")
     })
 
-    test("should display item form", async ({ authenticatedPage: page }) => {
-      await page.goto("/items/add")
-
-      await expect(page.locator('input[name="name"]')).toBeVisible()
-    })
-
-    test("should require item name", async ({ authenticatedPage: page }) => {
-      await page.goto("/items/add")
-
-      const submitButton = page.locator('button:has-text("Erstellen")')
-      await expect(submitButton).toBeVisible()
-      await submitButton.click()
-
-      // Form should still be on the same page (validation prevents navigation)
-      await expect(page).toHaveURL(/\/items\/add/)
-    })
-
-    test("should create new item", async ({ authenticatedPage: page }) => {
-      await page.goto("/items/add")
-
-      const testItemName = `E2E Test Item ${Date.now()}`
-
-      const nameInput = page.locator('input[name="name"]')
-      await expect(nameInput).toBeVisible()
-      await nameInput.fill(testItemName)
-
-      await page.locator('button:has-text("Erstellen")').click()
-
-      // Should redirect to item detail page
-      await page.waitForURL(/\/i\/\d+/)
-
-      await expect(page.locator("h1").first()).toContainText(testItemName)
+    test("creates a new item", async ({ authenticatedPage: page }) => {
+      await createItem(page, `E2E Test Item ${Date.now()}`)
     })
   })
 
   test.describe("Edit Item", () => {
-    test("should show edit button on item detail when authenticated", async ({
+    test("opens the edit form from the item page", async ({
       authenticatedPage: page,
     }) => {
       await page.goto("/i/1")
 
-      const editButton = page.locator("text=Bearbeiten")
-      await expect(editButton.first()).toBeVisible()
+      await page.getByRole("link", { name: "Bearbeiten" }).click()
+
+      await expect(page).toHaveURL("/items/add?itemId=1")
+      await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
+        "Bohrmaschine Makita",
+      )
     })
 
-    test("should navigate to edit form", async ({
-      authenticatedPage: page,
-    }) => {
-      await page.goto("/i/1")
+    test("saves an edited item", async ({ authenticatedPage: page }) => {
+      // Uses its own item, so other tests reading seed items aren't affected
+      const originalName = `Edit Test ${Date.now()}`
+      const id = await createItem(page, originalName)
 
-      const editButton = page.locator("text=Bearbeiten")
-      await editButton.first().click()
+      await page.goto(`/items/add?itemId=${id}`)
+      const nameInput = page.getByLabel("Name", { exact: true })
+      await expect(nameInput).toHaveValue(originalName)
+      await nameInput.fill(`${originalName} (edited)`)
+      await page.getByRole("button", { name: "Speichern" }).click()
 
-      await expect(page).toHaveURL(/\/items\/add\?itemId=1/)
-    })
-
-    test("should pre-fill form with existing data", async ({
-      authenticatedPage: page,
-    }) => {
-      await page.goto("/items/add?itemId=1")
-
-      const nameInput = page.locator('input[name="name"]')
-      await expect(nameInput).toHaveValue(/Bohrmaschine/)
-    })
-
-    test("should save edited item", async ({ authenticatedPage: page }) => {
-      await page.goto("/items/add?itemId=2") // Edit Lötstation
-
-      const nameInput = page.locator('input[name="name"]')
-      await expect(nameInput).toBeVisible()
-      await expect(nameInput).not.toHaveValue("")
-
-      const originalName = await nameInput.inputValue()
-
-      const modifiedName = `${originalName} (edited)`
-      await nameInput.clear()
-      await nameInput.fill(modifiedName)
-
-      // Edit mode uses "Speichern" button
-      await page.locator('button:has-text("Speichern")').click()
-
-      await page.waitForURL(/\/i\/\d+/)
-
-      await expect(page.locator("h1").first()).toContainText("edited")
-
-      // Revert the change for other tests
-      await page.goto("/items/add?itemId=2")
-      const revertInput = page.locator('input[name="name"]')
-      await expect(revertInput).toBeVisible()
-      await revertInput.clear()
-      await revertInput.fill(originalName)
-      await page.locator('button:has-text("Speichern")').click()
-      await page.waitForURL(/\/i\/\d+/)
+      await expect(page).toHaveURL(`/i/${id}`)
+      await expect(
+        page.getByRole("heading", {
+          level: 1,
+          name: `${originalName} (edited)`,
+        }),
+      ).toBeVisible()
     })
   })
 
   test.describe("Delete Item", () => {
-    test("should show delete button when authenticated", async ({
+    test("asks for confirmation and keeps the item on cancel", async ({
       authenticatedPage: page,
     }) => {
-      await page.goto("/i/1")
+      const name = `Delete Test ${Date.now()}`
+      const id = await createItem(page, name)
 
-      const deleteButton = page
-        .locator("button")
-        .filter({ has: page.locator("svg.lucide-trash-2") })
-      await expect(deleteButton.first()).toBeVisible()
+      await page.getByRole("button", { name: "Item löschen" }).click()
+      const dialog = page.getByRole("dialog")
+      await expect(dialog).toContainText(name)
+
+      await dialog.getByRole("button", { name: "Abbrechen" }).click()
+
+      await expect(dialog).toBeHidden()
+      await page.reload()
+      await expect(page).toHaveURL(`/i/${id}`)
+      await expect(
+        page.getByRole("heading", { level: 1, name, exact: true }),
+      ).toBeVisible()
     })
 
-    test("should require confirmation before deleting", async ({
+    test("deletes the item after confirmation", async ({
       authenticatedPage: page,
     }) => {
-      // Create a test item to delete
-      await page.goto("/items/add")
+      const id = await createItem(page, `Delete Me ${Date.now()}`)
 
-      const nameInput = page.locator('input[name="name"]')
-      await expect(nameInput).toBeVisible()
+      await page.getByRole("button", { name: "Item löschen" }).click()
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "Löschen" })
+        .click()
 
-      const testItemName = `Delete Test ${Date.now()}`
-      await nameInput.fill(testItemName)
-      await page.locator('button:has-text("Erstellen")').click()
-
-      await page.waitForURL(/\/i\/\d+/)
-
-      const deleteButton = page
-        .locator("button")
-        .filter({ has: page.locator("svg.lucide-trash-2") })
-      await expect(deleteButton.first()).toBeVisible()
-      await deleteButton.first().click()
-
-      // Should show confirmation dialog
-      await expect(page.locator('[role="dialog"]')).toBeVisible()
-
-      // Cancel
-      await page.locator('button:has-text("Abbrechen")').click()
-    })
-
-    test("should delete item after confirmation", async ({
-      authenticatedPage: page,
-    }) => {
-      // Create a test item to delete
-      await page.goto("/items/add")
-
-      const nameInput = page.locator('input[name="name"]')
-      await expect(nameInput).toBeVisible()
-
-      const testItemName = `Delete Me ${Date.now()}`
-      await nameInput.fill(testItemName)
-      await page.locator('button:has-text("Erstellen")').click()
-
-      await page.waitForURL(/\/i\/\d+/)
-      const itemUrl = page.url()
-      const itemId = itemUrl.match(/\/i\/(\d+)/)?.[1]
-
-      const deleteButton = page
-        .locator("button")
-        .filter({ has: page.locator("svg.lucide-trash-2") })
-      await expect(deleteButton.first()).toBeVisible()
-      await deleteButton.first().click()
-
-      await expect(page.locator('[role="dialog"]')).toBeVisible()
-
-      const confirmButton = page.locator(
-        '[role="dialog"] button:has-text("Löschen")',
-      )
-      await confirmButton.click()
-
-      // Should redirect to items list
-      await page.waitForURL("/items")
-
-      // Item should no longer exist
-      if (itemId) {
-        const response = await page.goto(`/i/${itemId}`)
-        const is404 = response?.status() === 404
-        const hasNoContent = (await page.locator("h1").count()) === 0
-
-        expect(is404 || hasNoContent).toBeTruthy()
-      }
+      await expect(page).toHaveURL("/items")
+      await page.goto(`/i/${id}`)
+      await expect(
+        page.getByRole("heading", { name: "Item nicht gefunden" }),
+      ).toBeVisible()
     })
   })
 })

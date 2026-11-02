@@ -24,9 +24,11 @@ test.describe("Backup", () => {
     expect(Number(changelogCount)).toBeGreaterThan(0)
 
     await page.goto("/changelog")
-    await expect(page.locator(".border-b").first()).toBeVisible({
-      timeout: 10000,
-    })
+    await expect(
+      page
+        .getByTestId("changelog-entry")
+        .filter({ hasText: "Bohrmaschine Makita" }),
+    ).toBeVisible()
   })
 
   test("is not available to non-admins", async ({

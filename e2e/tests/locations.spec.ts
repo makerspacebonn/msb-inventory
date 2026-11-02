@@ -1,66 +1,82 @@
 import { expect, test } from "@playwright/test"
 
+// Seed: Werkstatt (1) → Werkbank 1 (10) → Schublade 1 (100);
+// root locations are Werkstatt, Lager and Büro
 test.describe("Locations Page", () => {
-  test("should load locations page", async ({ page }) => {
+  test("shows the root locations", async ({ page }) => {
     await page.goto("/locations")
 
-    await expect(page).toHaveTitle(/Locations|MSB/)
+    for (const name of ["Werkstatt", "Lager", "Büro"]) {
+      await expect(
+        page.getByRole("button", { name, exact: true }),
+      ).toBeVisible()
+    }
   })
 
-  test("should display root locations", async ({ page }) => {
+  test("navigates down three levels of the hierarchy", async ({ page }) => {
     await page.goto("/locations")
 
-    // Root locations from seed data
-    await expect(page.locator("text=Werkstatt")).toBeVisible()
-    await expect(page.locator("text=Lager")).toBeVisible()
-    await expect(page.locator("text=Büro")).toBeVisible()
+    await page.getByRole("button", { name: "Werkstatt", exact: true }).click()
+    await expect(page).toHaveURL("/locations?id=1")
+    await expect(
+      page.getByRole("heading", { name: "Werkstatt", exact: true }),
+    ).toBeVisible()
+
+    await page.getByRole("button", { name: "Werkbank 1", exact: true }).click()
+    await expect(page).toHaveURL("/locations?id=10")
+    await expect(
+      page.getByRole("heading", { name: "Werkbank 1", exact: true }),
+    ).toBeVisible()
+
+    await page.getByRole("button", { name: "Schublade 1", exact: true }).click()
+    await expect(page).toHaveURL("/locations?id=100")
+    await expect(
+      page.getByRole("heading", { name: "Schublade 1", exact: true }),
+    ).toBeVisible()
   })
 
-  test("should navigate to child locations", async ({ page }) => {
-    await page.goto("/locations")
+  test("shows the path to the current location", async ({ page }) => {
+    await page.goto("/locations?id=100")
 
-    // Click on Werkstatt to see child locations (uses query param ?id=X)
-    await page.locator("text=Werkstatt").first().click()
-
-    // Should show child locations - wait for URL to change
-    await expect(page).toHaveURL(/\?id=1/)
-    // Use first() since there are Werkbank 1 and Werkbank 2
-    await expect(page.locator("text=Werkbank").first()).toBeVisible({
-      timeout: 5000,
-    })
+    // The breadcrumb offers every level above the current location
+    for (const name of ["Start", "Werkstatt", "Werkbank 1"]) {
+      await expect(
+        page.getByRole("button", { name, exact: true }),
+      ).toBeVisible()
+    }
   })
 
-  test("should show breadcrumb navigation", async ({ page }) => {
-    // Navigate to Werkstatt location directly
-    await page.goto("/locations?id=1")
+  test("navigates back via the breadcrumb", async ({ page }) => {
+    await page.goto("/locations?id=100")
 
-    // Should show breadcrumb with current location (use first() since appears multiple times)
-    await expect(page.locator("text=Werkstatt").first()).toBeVisible()
-    // Should show "Start" breadcrumb link to navigate back to root
-    await expect(page.locator("text=Start")).toBeVisible()
-  })
+    await page.getByRole("button", { name: "Werkstatt", exact: true }).click()
+    await expect(page).toHaveURL("/locations?id=1")
 
-  test("should navigate back to parent location", async ({ page }) => {
-    // Navigate to Werkstatt first
-    await page.goto("/locations?id=1")
-
-    // Click "Start" breadcrumb to navigate back to root
-    const startLink = page.locator("text=Start")
-    await expect(startLink).toBeVisible()
-    await startLink.click()
-
-    // Should navigate back to root (no id param)
+    await page.getByRole("button", { name: "Start", exact: true }).click()
     await expect(page).toHaveURL("/locations")
-    await expect(page.locator("text=Lager")).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "Lager", exact: true }),
+    ).toBeVisible()
   })
 
-  test("should display items at location", async ({ page }) => {
-    // Navigate to Werkbank 1 (id=10) which has items
-    await page.goto("/locations?id=10")
+  test("shows the items stored at a location", async ({ page }) => {
+    // Schublade 1 holds the Bohrmaschine (item 1) among others
+    await page.goto("/locations?id=100")
 
-    // Should see "Items an diesem Ort" heading with count
-    await expect(page.locator("text=Items an diesem Ort")).toBeVisible({
-      timeout: 5000,
-    })
+    await expect(
+      page.getByRole("heading", { name: /^Items an diesem Ort \(\d+\)$/ }),
+    ).toBeVisible()
+    await page.getByRole("link", { name: /Bohrmaschine Makita/ }).click()
+    await expect(page).toHaveURL("/i/1")
+  })
+
+  test("shows when a location holds no items", async ({ page }) => {
+    // Büro has neither sublocations nor items
+    await page.goto("/locations?id=3")
+
+    await expect(
+      page.getByRole("heading", { name: "Items an diesem Ort (0)" }),
+    ).toBeVisible()
+    await expect(page.getByText("Keine Items an diesem Ort")).toBeVisible()
   })
 })

@@ -9,7 +9,7 @@ test.describe("Item Location Picker", () => {
     await page.goto("/items/30/location/add")
 
     await expect(
-      page.locator("h2").filter({ hasText: "Regal A" }),
+      page.getByRole("heading", { name: "Regal A", exact: true }),
     ).toBeVisible()
     await expect(
       page.getByRole("button", { name: "Hier ablegen" }),
@@ -25,7 +25,7 @@ test.describe("Item Location Picker", () => {
 
     await expect(page).toHaveURL(/at=200/)
     await expect(
-      page.locator("h2").filter({ hasText: "Fach A1" }),
+      page.getByRole("heading", { name: "Fach A1", exact: true }),
     ).toBeVisible()
   })
 
@@ -50,7 +50,12 @@ test.describe("Item Location Picker", () => {
 
     await page.getByRole("button", { name: "Hier ablegen" }).click()
 
+    // The URL changes before the item page replaces the picker, so wait for
+    // the item page before checking its location path
     await expect(page).toHaveURL(/\/i\/35$/)
-    await expect(page.locator("text=Werkbank 2").first()).toBeVisible()
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Test Item 35" }),
+    ).toBeVisible()
+    await expect(page.getByText("Werkbank 2", { exact: true })).toBeVisible()
   })
 })

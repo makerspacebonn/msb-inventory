@@ -1,46 +1,38 @@
 import { expect, test } from "@playwright/test"
 
 test.describe("Homepage", () => {
-  test("should load successfully", async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/")
+  })
 
+  test("shows title and heading", async ({ page }) => {
     await expect(page).toHaveTitle(/MSB Inventar/)
-    await expect(page.locator("h1")).toContainText("MakerSpace Bonn")
+    await expect(
+      page.getByRole("heading", { level: 1, name: /MakerSpace Bonn/ }),
+    ).toBeVisible()
   })
 
-  test("should display statistics cards", async ({ page }) => {
-    await page.goto("/")
-
-    // Check for the 4 stat cards
-    await expect(page.locator("text=Gesamte Items")).toBeVisible()
-    await expect(page.locator("text=Standorte")).toBeVisible()
-    await expect(page.locator("text=Mit Bildern")).toBeVisible()
-    await expect(page.locator("text=Neu (30 Tage)")).toBeVisible()
+  test("shows a number in every statistic", async ({ page }) => {
+    for (const title of [
+      "Gesamte Items",
+      "Standorte",
+      "Mit Bildern",
+      "Neu (30 Tage)",
+    ]) {
+      await expect(page.getByRole("group", { name: title })).toContainText(/\d/)
+    }
   })
 
-  test("should display stat values as numbers", async ({ page }) => {
-    await page.goto("/")
+  test("navigates to the items page", async ({ page }) => {
+    await page
+      .getByRole("navigation")
+      .getByRole("link", { name: "Items", exact: true })
+      .click()
 
-    // Stats should contain numeric values - look for the stat grid
-    const statValues = page.locator("text=/\\d+/")
-    const count = await statValues.count()
-    expect(count).toBeGreaterThanOrEqual(4)
-  })
-
-  test("should have navigation to items page", async ({ page }) => {
-    await page.goto("/")
-
-    // Use .first() since there may be multiple Items links (nav + button)
-    const itemsButton = page.locator('a[href="/items"]').first()
-    await expect(itemsButton).toBeVisible()
-
-    await itemsButton.click()
     await expect(page).toHaveURL("/items")
   })
 
-  test("should display last updated timestamp", async ({ page }) => {
-    await page.goto("/")
-
-    await expect(page.locator("text=Stand:")).toBeVisible()
+  test("shows when the statistics were updated", async ({ page }) => {
+    await expect(page.getByText(/Stand: \d{2}\.\d{2}\.\d{4}/)).toBeVisible()
   })
 })

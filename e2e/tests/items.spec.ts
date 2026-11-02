@@ -1,85 +1,71 @@
-import { expect, test } from "@playwright/test"
+import { expect, type Page, test } from "@playwright/test"
+
+const SEARCH_PLACEHOLDER = /^Suchen nach/
+
+// Seed items 11-35 are named "Test Item N". The first page shows 24 of the
+// newest items, so some of them are always visible, even when other tests
+// have added items in parallel.
+const seededTestItems = (page: Page) =>
+  page.getByRole("link", { name: /^Test Item \d+$/ })
 
 test.describe("Items Page", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/items")
   })
 
-  test("should display items list", async ({ page }) => {
+  test("lists items", async ({ page }) => {
     await expect(page).toHaveTitle(/Items/)
-
-    // Should have at least one item visible (links to /i/X)
-    const items = page.locator('a[href^="/i/"]')
-    await expect(items.first()).toBeVisible({ timeout: 10000 })
+    await expect(seededTestItems(page).first()).toBeVisible()
   })
 
-  test("should have search input", async ({ page }) => {
-    // Search input placeholder starts with "Suchen nach"
-    const searchInput = page.locator('input[placeholder^="Suchen"]')
-    await expect(searchInput).toBeVisible()
+  // The search results replace the list asynchronously, so each test first
+  // waits for the unrelated items to disappear before checking the matches.
+
+  test("searches items by name", async ({ page }) => {
+    await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill("Bohrmaschine")
+
+    await expect(seededTestItems(page)).toHaveCount(0)
+    await expect(
+      page.getByRole("link", { name: "Bohrmaschine Makita" }),
+    ).toBeVisible()
   })
 
-  test("should search items by name", async ({ page }) => {
-    const searchInput = page.locator('input[placeholder^="Suchen"]')
+  test("searches items by manufacturer", async ({ page }) => {
+    // "Thunder Laser" is only the manufacturer of the "Lasercutter"
+    await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill("Thunder")
 
+    await expect(seededTestItems(page)).toHaveCount(0)
+    await expect(page.getByRole("link", { name: "Lasercutter" })).toBeVisible()
+  })
+
+  test("clears the search", async ({ page }) => {
+    const searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER)
     await searchInput.fill("Bohrmaschine")
-    // Wait for debounce (300ms) and search to complete
-    await page.waitForTimeout(800)
+    await expect(seededTestItems(page)).toHaveCount(0)
 
-    // Should show search results - look for "Ergebnis" text indicating search completed
-    await expect(page.locator("text=Ergebnis").first()).toBeVisible({
-      timeout: 5000,
-    })
-    // And the item should be visible
-    await expect(page.locator("text=Bohrmaschine").first()).toBeVisible()
+    await page.getByRole("button", { name: "Suche leeren" }).click()
+
+    await expect(searchInput).toHaveValue("")
+    await expect(page.getByText(/Ergebnis/)).toHaveCount(0)
+    await expect(seededTestItems(page).first()).toBeVisible()
   })
 
-  test("should search items by manufacturer", async ({ page }) => {
-    const searchInput = page.locator('input[placeholder^="Suchen"]')
+  test("opens an item from the list", async ({ page }) => {
+    const link = seededTestItems(page).first()
+    const name = await link.textContent()
 
-    await searchInput.fill("Makita")
-    // Wait for debounce (300ms) and search to complete
-    await page.waitForTimeout(800)
+    await link.click()
 
-    // Should show the item with Makita in its name
-    await expect(page.locator("text=Makita").first()).toBeVisible({
-      timeout: 5000,
-    })
+    await expect(page).toHaveURL(/\/i\/\d+$/)
+    await expect(
+      page.getByRole("heading", { level: 1, name: name ?? "", exact: true }),
+    ).toBeVisible()
   })
 
-  test("should clear search", async ({ page }) => {
-    const searchInput = page.locator('input[placeholder^="Suchen"]')
+  test("requires authentication to add items", async ({ page }) => {
+    await page.getByRole("link", { name: "Item hinzufügen" }).click()
 
-    await searchInput.fill("Test")
-    await page.waitForTimeout(500)
-
-    // Clear button appears when search has value (X icon)
-    const clearButton = page
-      .locator("button")
-      .filter({ has: page.locator("svg.lucide-x") })
-    if (await clearButton.isVisible()) {
-      await clearButton.click()
-      await expect(searchInput).toHaveValue("")
-    }
-  })
-
-  test("should navigate to item detail on click", async ({ page }) => {
-    // Click on first item link
-    const itemLink = page.locator('a[href^="/i/"]').first()
-    await itemLink.click()
-
-    await expect(page).toHaveURL(/\/i\/\d+/)
-  })
-
-  test("should require authentication to add items", async ({ page }) => {
-    // Add item button is always visible in navbar, but page requires auth
-    const addButton = page.locator('a[href="/items/add"]').first()
-    await expect(addButton).toBeVisible()
-
-    await addButton.click()
     await expect(page).toHaveURL("/items/add")
-
-    // Should show unauthorized error
     await expect(page.getByText("Unauthorized")).toBeVisible()
   })
 })
