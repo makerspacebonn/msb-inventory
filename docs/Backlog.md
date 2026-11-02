@@ -332,3 +332,17 @@ The inventory is meant to manage items only. Leftovers of a former projects feat
 - [ ] No project-related code, routes or data structures remain
 - [ ] The projects table is removed from the database
 - [ ] The app works as before
+
+---
+
+### OPS-004: Clean up unused images
+**Priority:** Low
+
+**Description:**
+Images of deleted items and locations, and images that were replaced, stay on the server so that undoing a change from the changelog brings the image back. Over time, images that nothing can restore anymore pile up. An admin should be able to free that space without breaking anything that's still shown or can still be undone.
+
+**Acceptance Criteria:**
+- [ ] An admin can remove images that no item, location or changelog entry refers to
+- [ ] Images that are shown or can be restored via undo are never removed
+- [ ] The admin sees how many images and how much space would be freed before confirming
+- [ ] Backups and restores keep working as before
