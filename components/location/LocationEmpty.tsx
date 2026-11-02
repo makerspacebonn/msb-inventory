@@ -9,7 +9,7 @@ import {
 import { Link } from "@tanstack/react-router"
 import { MapPinIcon } from "lucide-react"
 
-export function LocationEmpty(props: { itemId: number }) {
+export function LocationEmpty(props: { itemId: number; canAdd: boolean }) {
   return (
     <Empty className="mt-4">
       <EmptyHeader>
@@ -21,12 +21,16 @@ export function LocationEmpty(props: { itemId: number }) {
           Diesem Item wurde noch kein Ort zugewiesen.
         </EmptyDescription>
       </EmptyHeader>
-      <Link
-        to="/items/$itemId/location/add"
-        params={{ itemId: props.itemId.toString() }}
-      >
-        <Button>Ort hinzufügen</Button>
-      </Link>
+      {props.canAdd && (
+        <Button asChild>
+          <Link
+            to="/items/$itemId/location/add"
+            params={{ itemId: props.itemId.toString() }}
+          >
+            Ort hinzufügen
+          </Link>
+        </Button>
+      )}
     </Empty>
   )
 }

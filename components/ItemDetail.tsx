@@ -13,7 +13,14 @@ export type ItemDetailProps = {
   onDeleteLocation?: () => void
 }
 
-export const ItemDetail = ({ item, onDeleteLocation }: ItemDetailProps) => {
+export const ItemDetail = ({
+  item,
+  onDeleteLocation,
+  canEdit,
+}: ItemDetailProps & {
+  /** Shows the buttons to change the item's location (logged-in users) */
+  canEdit: boolean
+}) => {
   const imagePath = `/img/items/${item.imagePath}`
   let marker = item.parentLocationMarker
 
@@ -34,20 +41,23 @@ export const ItemDetail = ({ item, onDeleteLocation }: ItemDetailProps) => {
       <Tags tags={item.tags} />
       <h3 className="text-xl font-bold p-2 border-2 rounded-2xl bg-brand flex items-center justify-between">
         <span>Wo finde ich es?</span>{" "}
-        <div className="flex items-center gap-1">
-          <Link
-            to="/items/$itemId/location/add"
-            params={{ itemId: item.id.toString() }}
-          >
-            <Button variant="ghost" size="sm" aria-label="Location ändern">
-              <PencilIcon className="w-4 h-4" />
+        {canEdit && (
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" asChild>
+              <Link
+                to="/items/$itemId/location/add"
+                params={{ itemId: item.id.toString() }}
+                aria-label="Location ändern"
+              >
+                <PencilIcon className="w-4 h-4" />
+              </Link>
             </Button>
-          </Link>
-          <ItemLocationDeleteButton
-            item={item}
-            onDeleteLocation={onDeleteLocation}
-          />
-        </div>
+            <ItemLocationDeleteButton
+              item={item}
+              onDeleteLocation={onDeleteLocation}
+            />
+          </div>
+        )}
       </h3>
 
       {item?.locationChain && item.locationChain.length > 0 ? (
@@ -66,7 +76,7 @@ export const ItemDetail = ({ item, onDeleteLocation }: ItemDetailProps) => {
           })}
         </div>
       ) : (
-        <LocationEmpty itemId={item.id} />
+        <LocationEmpty itemId={item.id} canAdd={canEdit} />
       )}
     </div>
   )

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { test as authTest } from "../fixtures/auth.fixture"
 
 // Item 1 is "Bohrmaschine Makita" from the seed data, stored in
 // Werkstatt → Werkbank 1 → Schublade 1
@@ -99,6 +100,36 @@ test.describe("Item Detail Page", () => {
     await expect(
       page.getByRole("button", { name: "Item löschen" }),
     ).toHaveCount(0)
+  })
+})
+
+// Changing an item's location is only offered to logged-in users
+test.describe("Item location buttons", () => {
+  const locationHeading = (page: import("@playwright/test").Page) =>
+    page.getByRole("heading", { name: "Wo finde ich es?" })
+
+  test("aren't shown to visitors", async ({ page }) => {
+    await page.goto("/i/1")
+    await expect(locationHeading(page)).toBeVisible()
+
+    await expect(
+      page.getByRole("link", { name: "Location ändern" }),
+    ).toHaveCount(0)
+    await expect(
+      page.getByRole("button", { name: "Location entfernen" }),
+    ).toHaveCount(0)
+  })
+
+  authTest("are shown to logged-in users", async ({ authenticatedPage }) => {
+    await authenticatedPage.goto("/i/1")
+    await expect(locationHeading(authenticatedPage)).toBeVisible()
+
+    await expect(
+      authenticatedPage.getByRole("link", { name: "Location ändern" }),
+    ).toBeVisible()
+    await expect(
+      authenticatedPage.getByRole("button", { name: "Location entfernen" }),
+    ).toBeVisible()
   })
 })
 

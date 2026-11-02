@@ -80,7 +80,11 @@ function RouteComponent() {
           <ItemDeleteButton itemName={item.name} onDelete={handleDelete} />
         </div>
       )}
-      <ItemDetail item={item} onDeleteLocation={handleDeleteLocation} />
+      <ItemDetail
+        item={item}
+        onDeleteLocation={handleDeleteLocation}
+        canEdit={isLoggedIn}
+      />
       <ItemQRCode itemId={item.id} itemName={item.name} baseUrl={baseUrl} />
     </div>
   )
