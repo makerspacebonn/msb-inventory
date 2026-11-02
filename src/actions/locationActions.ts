@@ -166,25 +166,50 @@ export const updateLocation = createServerFn({ method: "POST" })
       return { success: false, message: "Location not found" }
     }
 
+    const name = data.name?.trim()
+    if (data.name !== undefined && !name) {
+      return { success: false, message: "Der Name darf nicht leer sein" }
+    }
+    // An empty description is stored as "no description"
+    const description =
+      data.description === undefined
+        ? undefined
+        : data.description.trim() || null
+
+    const isMove =
+      data.parentId !== undefined && data.parentId !== beforeLocation.parentId
+    if (isMove && data.parentId != null) {
+      // The new parent's chain must not contain the location itself,
+      // otherwise the hierarchy would become a cycle
+      const parentChain = await locationRepo.findChainForId(data.parentId)
+      if (parentChain.length === 0) {
+        return { success: false, message: "Ziel-Location existiert nicht" }
+      }
+      if (parentChain.some((location) => location.id === data.id)) {
+        return {
+          success: false,
+          message:
+            "Eine Location kann nicht in sich selbst oder einen ihrer Unterorte verschoben werden",
+        }
+      }
+    }
+
     // Determine which fields changed
     const changedFields: string[] = []
     const updateData: Record<string, unknown> = {}
 
-    if (data.name !== undefined && data.name !== beforeLocation.name) {
+    if (name !== undefined && name !== beforeLocation.name) {
       changedFields.push("name")
-      updateData.name = data.name
+      updateData.name = name
     }
     if (
-      data.description !== undefined &&
-      data.description !== beforeLocation.description
+      description !== undefined &&
+      description !== beforeLocation.description
     ) {
       changedFields.push("description")
-      updateData.description = data.description
+      updateData.description = description
     }
-    if (
-      data.parentId !== undefined &&
-      data.parentId !== beforeLocation.parentId
-    ) {
+    if (isMove) {
       changedFields.push("parentId")
       updateData.parentId = data.parentId
     }

@@ -120,17 +120,19 @@ export function MarkerStep({
   location,
   markers,
   description,
+  initialPosition = null,
   onConfirm,
   onCancel,
 }: {
   location: Location
   markers: ExistingMarker[]
   description: string
+  initialPosition?: MarkerPosition | null // e.g. the marker being changed
   onConfirm: (marker: MarkerPosition | null) => void
   onCancel: () => void
 }) {
   const [markerPosition, setMarkerPosition] = useState<MarkerPosition | null>(
-    null,
+    initialPosition,
   )
 
   return (

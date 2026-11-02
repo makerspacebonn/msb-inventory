@@ -26,6 +26,7 @@ import { Route as SsoKanidmRouteImport } from './routes/sso.kanidm'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiE2eCreateSessionRouteImport } from './routes/api/e2e/create-session'
 import { Route as BackupDownloadSplatRouteImport } from './routes/backup.download.$'
+import { Route as LocationsLocationIdEditRouteImport } from './routes/locations_.$locationId.edit'
 import { Route as ItemsItemIdLocationAddRouteImport } from './routes/items/$itemId/location/add'
 
 const IndexRoute = IndexRouteImport.update({
@@ -113,6 +114,11 @@ const BackupDownloadSplatRoute = BackupDownloadSplatRouteImport.update({
   path: '/download/$',
   getParentRoute: () => BackupRoute,
 } as any)
+const LocationsLocationIdEditRoute = LocationsLocationIdEditRouteImport.update({
+  id: '/locations_/$locationId/edit',
+  path: '/locations/$locationId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ItemsItemIdLocationAddRoute = ItemsItemIdLocationAddRouteImport.update({
   id: '/items/$itemId/location/add',
   path: '/items/$itemId/location/add',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/e2e/create-session': typeof ApiE2eCreateSessionRoute
   '/backup/download/$': typeof BackupDownloadSplatRoute
+  '/locations/$locationId/edit': typeof LocationsLocationIdEditRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRoutesByTo {
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/e2e/create-session': typeof ApiE2eCreateSessionRoute
   '/backup/download/$': typeof BackupDownloadSplatRoute
+  '/locations/$locationId/edit': typeof LocationsLocationIdEditRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRoutesById {
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/e2e/create-session': typeof ApiE2eCreateSessionRoute
   '/backup/download/$': typeof BackupDownloadSplatRoute
+  '/locations_/$locationId/edit': typeof LocationsLocationIdEditRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRouteTypes {
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/e2e/create-session'
     | '/backup/download/$'
+    | '/locations/$locationId/edit'
     | '/items/$itemId/location/add'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/e2e/create-session'
     | '/backup/download/$'
+    | '/locations/$locationId/edit'
     | '/items/$itemId/location/add'
   id:
     | '__root__'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/e2e/create-session'
     | '/backup/download/$'
+    | '/locations_/$locationId/edit'
     | '/items/$itemId/location/add'
   fileRoutesById: FileRoutesById
 }
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   ItemsIndexRoute: typeof ItemsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiE2eCreateSessionRoute: typeof ApiE2eCreateSessionRoute
+  LocationsLocationIdEditRoute: typeof LocationsLocationIdEditRoute
   ItemsItemIdLocationAddRoute: typeof ItemsItemIdLocationAddRoute
 }
 
@@ -384,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BackupDownloadSplatRouteImport
       parentRoute: typeof BackupRoute
     }
+    '/locations_/$locationId/edit': {
+      id: '/locations_/$locationId/edit'
+      path: '/locations/$locationId/edit'
+      fullPath: '/locations/$locationId/edit'
+      preLoaderRoute: typeof LocationsLocationIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/items/$itemId/location/add': {
       id: '/items/$itemId/location/add'
       path: '/items/$itemId/location/add'
@@ -422,6 +442,7 @@ const rootRouteChildren: RootRouteChildren = {
   ItemsIndexRoute: ItemsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiE2eCreateSessionRoute: ApiE2eCreateSessionRoute,
+  LocationsLocationIdEditRoute: LocationsLocationIdEditRoute,
   ItemsItemIdLocationAddRoute: ItemsItemIdLocationAddRoute,
 }
 export const routeTree = rootRouteImport

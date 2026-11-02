@@ -6,6 +6,7 @@ import {
   collectMarkers,
   MarkerStep,
 } from "@components/location/LocationMarkers"
+import { LocationPathPhotos } from "@components/location/LocationPathPhotos"
 import { Button } from "@components/ui/button"
 import {
   Dialog,
@@ -19,7 +20,12 @@ import {
 } from "@components/ui/dialog"
 import type { Location } from "@server/app/types"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { ImagePlusIcon, PackageIcon, Trash2Icon } from "lucide-react"
+import {
+  ImagePlusIcon,
+  PackageIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { useState } from "react"
 import {
   deleteLocation as deleteLocationAction,
@@ -154,6 +160,15 @@ function RouteComponent() {
               actions={
                 isLoggedIn && (
                   <>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link
+                        to="/locations/$locationId/edit"
+                        params={{ locationId: currentLocation.id.toString() }}
+                        aria-label="Location bearbeiten"
+                      >
+                        <PencilIcon className="w-4 h-4" />
+                      </Link>
+                    </Button>
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                       <DialogTrigger asChild>
                         <Button
@@ -227,7 +242,9 @@ function RouteComponent() {
                   </>
                 )
               }
-            />
+            >
+              <LocationPathPhotos locationPath={locationPath} />
+            </CurrentLocationCard>
           ) : null
         }
         renderFooter={() =>
