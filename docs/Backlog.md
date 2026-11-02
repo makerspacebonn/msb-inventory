@@ -310,6 +310,53 @@ The front page shows statistics only. Showing the most recently added items lets
 
 ---
 
+### UX-016: Report an item as missing
+**Priority:** Medium
+
+**Description:**
+Users regularly go to an item's location and find it isn't there. Today there's no way to tell the inventory, so the next person runs into the same problem. An item should have a "Nicht da" button so the wrong location becomes visible and can be fixed.
+
+**Acceptance Criteria:**
+- [ ] An item can be reported as not found at its location with one click
+- [ ] The item's page shows that it was reported missing, and when
+- [ ] Items reported missing can be listed, so someone can look for them
+- [ ] The report goes away when the item gets a location again or someone confirms it's back
+
+---
+
+### UX-017: Report an item as used up
+**Priority:** Medium
+
+**Description:**
+Consumables (glue, filament, screws, …) run out, and nobody notices until the next person needs them. An item should have a "Leer" button so users can report it as used up and it can be refilled or reordered.
+
+**Acceptance Criteria:**
+- [ ] An item can be reported as used up with one click
+- [ ] The item's page shows that it's used up, and when it was reported
+- [ ] Used-up items can be listed, e.g. as a shopping list
+- [ ] The report can be removed once the item is refilled
+
+---
+
+### UX-018: Group identical items in the search
+**Priority:** Low
+
+**Description:**
+Some things exist several times, e.g. five identical sewing machines. Each one should keep its own item (and label), but a search shouldn't list five identical entries. Identical items should appear once in the search, with a way to see the individual items of the group.
+
+**Acceptance Criteria:**
+- [ ] Identical items can be marked as belonging together
+- [ ] A search shows a group of identical items as one entry, with the number of items
+- [ ] From that entry, the individual items and their locations can be opened
+- [ ] Each item in a group keeps its own page and label
+
+**Open Questions:**
+- What makes items "identical": set by hand, or detected (e.g. same name, manufacturer and model)?
+- Is the group its own page with shared photo and description, or just a view on the items?
+- Where else should groups appear besides the search (item list, location pages)?
+
+---
+
 ### PRINT-001: Choose the label printer
 **Priority:** Low
 
@@ -321,6 +368,45 @@ The app already shows the status of every label printer, but labels are always s
 - [ ] Printers that are offline can't be chosen, or are clearly marked
 - [ ] With only one printer, printing works without an extra step
 - [ ] The last used printer is preselected
+
+---
+
+### PRINT-002: Print location labels
+**Priority:** Medium
+
+**Description:**
+Labels can only be printed for items. Shelves, boxes and drawers need labels too, so people can find locations in the space and open them in the app from the label.
+
+**Acceptance Criteria:**
+- [ ] A label can be printed from a location's page
+- [ ] The label shows the location's name and a code that opens its page in the app
+- [ ] Printing works the same way as for item labels
+- [ ] Only logged-in users can print labels
+
+---
+
+## Lending
+
+Borrowing items from the space.
+
+### LEND-001: Lend out items
+**Priority:** Low
+
+**Description:**
+Members borrow things from the space, but nobody knows who has what or when it comes back. Items should be lendable: users record that they borrowed an item and until when, and both users and admins keep track of what's lent out, with reminders when a return is due.
+
+**Acceptance Criteria:**
+- [ ] A logged-in user can record that they borrowed an item, with a planned return date
+- [ ] An item's page shows that it's lent out, to whom, and until when
+- [ ] Users see an overview of the items they borrowed
+- [ ] Admins see an overview of all lent items, with overdue ones highlighted
+- [ ] Users and admins are reminded when a return is due or overdue
+- [ ] Returning an item ends the lending
+
+**Open Questions:**
+- Which items may be lent out at all, and does lending need an admin's approval?
+- How are reminders sent (email, Discord, a display in the space via MQTT, …)?
+- Should past lendings stay visible as history?
 
 ---
 
