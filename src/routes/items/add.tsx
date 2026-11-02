@@ -1,4 +1,5 @@
 import fs from "node:fs"
+import { CategoryCombobox } from "@components/form/CategoryCombobox"
 import { MyCropper } from "@components/form/MyCropper"
 import { Badge } from "@components/ui/badge"
 import { Button } from "@components/ui/button"
@@ -27,9 +28,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { describeImageFn } from "@/src/actions/aiActions"
+import { fetchCategories } from "@/src/actions/categoryActions"
 import { fetchAutocompleteTags } from "@/src/actions/tagActions"
 import type { Item } from "@/src/app/types"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
+import { CategoryRepository } from "@/src/repositories/CategoryRepository"
 import { ChangelogRepository } from "@/src/repositories/ChangelogRepository"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 
@@ -39,6 +42,7 @@ type AiData = {
   modell: string | null
   seriennummer: string | null
   kategorie: string
+  kategorie_neu: string | null // only when no existing category fits
   zustand: "neu" | "gut" | "gebraucht" | "defekt"
   beschreibung_kurz: string
   schlagworte: string[]
@@ -159,6 +163,12 @@ const addItem = createServerFn({ method: "POST" })
           console.error(e)
         }
       }
+      // Categories come from the curated list; a new one typed by an editor
+      // is added to it (and an existing one reused, ignoring case)
+      if (data.category?.trim()) {
+        data.category = await new CategoryRepository().ensure(data.category)
+      }
+
       const newItem = await itemRepo.upsert(data)
 
       // Log to changelog
@@ -233,6 +243,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
   )
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null)
   const [autocompleteTags, setAutocompleteTags] = useState<Tag[]>([])
+  const [categories, setCategories] = useState<string[]>([])
   const [aiData, setAiData] = useState<AiData | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [currentImage, setCurrentImage] = useState<string>("")
@@ -251,6 +262,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
 
   // Fetch autocomplete suggestions on mount
   useEffect(() => {
+    fetchCategories().then(setCategories)
     fetchAutocompleteTags({ data: undefined }).then((existingTags) => {
       setAutocompleteTags(
         existingTags.map((text, index) => ({
@@ -307,6 +319,9 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
   const dismissSuggestion = (key: string) => {
     setDismissedSuggestions((prev) => new Set([...prev, key]))
   }
+
+  // The AI picks from the list, or proposes a new category if nothing fits
+  const aiCategory = aiData?.kategorie_neu || aiData?.kategorie
 
   const form = useAppForm({
     defaultValues: {
@@ -587,17 +602,22 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
           {(field) => (
             <FieldContent>
               <FieldLabel htmlFor={field.name}>Kategorie</FieldLabel>
-              <Input
-                name={field.name}
+              <CategoryCombobox
+                id={field.name}
                 value={field.state.value ?? ""}
+                categories={categories}
                 onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
+                onChange={field.handleChange}
               />
-              {aiData?.kategorie && !dismissedSuggestions.has("category") && (
+              {aiCategory && !dismissedSuggestions.has("category") && (
                 <InlineSuggestion
-                  value={aiData.kategorie}
+                  value={
+                    aiData?.kategorie_neu
+                      ? `Neue Kategorie: ${aiCategory}`
+                      : aiCategory
+                  }
                   onUse={() => {
-                    field.handleChange(aiData.kategorie)
+                    field.handleChange(aiCategory)
                     dismissSuggestion("category")
                   }}
                   onDismiss={() => dismissSuggestion("category")}

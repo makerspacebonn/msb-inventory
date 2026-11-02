@@ -203,3 +203,13 @@ export const ChangelogTable = pgTable(
 
 export type ChangelogSelect = InferSelectModel<typeof ChangelogTable>
 export type ChangelogInsert = InferInsertModel<typeof ChangelogTable>
+
+// Curated item categories. items.category stores the name (not an id) so the
+// generated search columns keep working; the app keeps both in sync.
+export const CategoryTable = pgTable("categories", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+export type CategorySelect = InferSelectModel<typeof CategoryTable>
