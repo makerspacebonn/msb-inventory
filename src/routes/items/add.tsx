@@ -574,7 +574,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-blue-500 hover:underline block"
+                          className="text-sm text-brand-text hover:underline block"
                         >
                           {url}
                         </a>

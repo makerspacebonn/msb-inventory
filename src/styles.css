@@ -37,6 +37,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* MakerSpace green: fills like the "Wo finde ich es?" banner */
+  --brand: var(--color-green-900);
+  /* The same green as readable text (links) */
+  --brand-text: var(--color-green-800);
 }
 
 .dark {
@@ -72,9 +76,14 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+  --brand: var(--color-green-900);
+  /* Lighter and calmer than green-500, readable on the dark background */
+  --brand-text: oklch(72% 0.12 152.5);
 }
 
 @theme inline {
+  --color-brand: var(--brand);
+  --color-brand-text: var(--brand-text);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

@@ -258,7 +258,7 @@ function ChangelogEntryCard({
                 <Link
                   to="/changelog"
                   search={{ page: 1, highlight: conflictId }}
-                  className="text-xs text-blue-500 hover:underline"
+                  className="text-xs text-brand-text hover:underline"
                 >
                   Konflikt anzeigen
                 </Link>

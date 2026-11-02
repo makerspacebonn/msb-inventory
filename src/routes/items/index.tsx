@@ -114,7 +114,7 @@ function SearchResults({ q, results }: { q: string; results: Item[] }) {
               aria-label={`Nach Schlagwort "${tag}" eingrenzen`}
               className={cn(
                 badgeVariants({ variant: "outline" }),
-                "font-normal text-muted-foreground hover:bg-muted",
+                "font-normal text-muted-foreground hover:border-brand hover:bg-brand hover:text-white",
               )}
             >
               <PlusIcon className="h-3 w-3 mr-1" />

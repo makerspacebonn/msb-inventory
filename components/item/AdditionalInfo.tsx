@@ -40,7 +40,7 @@ export function AdditionalInfo({ item }: { item: Item }) {
               to="/items"
               search={{ q: categorySearchTerm(item.category) }}
               title="Alle Items dieser Kategorie anzeigen"
-              className="text-blue-500 hover:underline"
+              className="text-brand-text hover:underline"
             >
               {item.category}
             </Link>
@@ -59,7 +59,7 @@ export function AdditionalInfo({ item }: { item: Item }) {
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm text-blue-500 hover:underline"
+                      className="inline-flex items-center gap-1 text-sm text-brand-text hover:underline"
                     >
                       <ExternalLinkIcon className="w-3 h-3" />
                       {link.name || link.type || link.url}

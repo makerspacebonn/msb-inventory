@@ -32,7 +32,7 @@ export const ItemDetail = ({ item, onDeleteLocation }: ItemDetailProps) => {
       <div className="mb-4">{item.description}</div>
       <AdditionalInfo item={item} />
       <Tags tags={item.tags} />
-      <h3 className="text-xl font-bold p-2 border-2 rounded-2xl bg-green-900 flex items-center justify-between">
+      <h3 className="text-xl font-bold p-2 border-2 rounded-2xl bg-brand flex items-center justify-between">
         <span>Wo finde ich es?</span>{" "}
         <div className="flex items-center gap-1">
           <Link

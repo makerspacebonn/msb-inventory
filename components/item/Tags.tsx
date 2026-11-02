@@ -18,7 +18,7 @@ export function Tags(props: { tags: string[] }) {
                 title="Alle Items mit diesem Schlagwort anzeigen"
                 className={cn(
                   badgeVariants({ variant: "outline" }),
-                  "text-gray-600 hover:bg-muted",
+                  "text-gray-600 hover:border-brand hover:bg-brand hover:text-white",
                 )}
               >
                 {tag}
