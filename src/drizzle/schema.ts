@@ -213,3 +213,4 @@ export const CategoryTable = pgTable("categories", {
 })
 
 export type CategorySelect = InferSelectModel<typeof CategoryTable>
+export type CategoryInsert = InferInsertModel<typeof CategoryTable>

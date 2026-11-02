@@ -29,6 +29,15 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: /backup\.spec\.ts/,
+    },
+    // Restoring replaces the whole database, so it must not run alongside
+    // other tests
+    {
+      name: "backup",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /backup\.spec\.ts/,
+      dependencies: ["chromium"],
     },
   ],
 

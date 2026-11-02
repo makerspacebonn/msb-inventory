@@ -68,7 +68,7 @@ function BackupPage() {
     try {
       const result = await restoreBackup({ data: filename })
       setRestoreResult(
-        `Wiederherstellung erfolgreich: ${result.locationsRestored} Standorte, ${result.itemsRestored} Items, ${result.imagesRestored} Bilder`,
+        `Wiederherstellung erfolgreich: ${result.locationsRestored} Standorte, ${result.itemsRestored} Items, ${result.categoriesRestored} Kategorien, ${result.changelogRestored} Änderungen, ${result.usersAdded} neue Benutzer, ${result.imagesRestored} Bilder`,
       )
     } catch (error) {
       console.error("Restore failed:", error)

@@ -1,16 +1,22 @@
 import fs from "node:fs"
 import path from "node:path"
 import { createServerFn } from "@tanstack/react-start"
-import { sql } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 import PizZip from "pizzip"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { db } from "../db"
 import {
-  type ItemInsert,
+  CategoryTable,
+  ChangelogTable,
   ItemTable,
-  type LocationInsert,
   LocationTable,
+  UserTable,
 } from "../drizzle/schema"
+import {
+  BACKUP_FORMAT_VERSION,
+  type BackupData,
+  parseBackupData,
+} from "../lib/backupFormat"
 
 const SAVE_PATH = process.env.SAVE_PATH || ""
 const BACKUPS_DIR = path.join(SAVE_PATH, "backups")
@@ -54,17 +60,18 @@ export const generateBackup = createServerFn()
     const zipPath = path.join(BACKUPS_DIR, `${backupName}.zip`)
 
     // Export database tables
-    const [items, locations] = await Promise.all([
-      db.select().from(ItemTable),
+    const [users, categories, locations, items, changelog] = await Promise.all([
+      db.select().from(UserTable),
+      db.select().from(CategoryTable),
       db.select().from(LocationTable),
+      db.select().from(ItemTable),
+      db.select().from(ChangelogTable),
     ])
 
-    const databaseExport = {
+    const databaseExport: BackupData = {
+      formatVersion: BACKUP_FORMAT_VERSION,
       exportedAt: new Date().toISOString(),
-      tables: {
-        items,
-        locations,
-      },
+      tables: { users, categories, locations, items, changelog },
     }
 
     // Create zip
@@ -147,7 +154,21 @@ export interface RestoreResult {
   success: boolean
   itemsRestored: number
   locationsRestored: number
+  categoriesRestored: number
+  changelogRestored: number
+  usersAdded: number
   imagesRestored: number
+}
+
+// Stays well below Postgres' limit of 65535 bind parameters per statement
+const INSERT_CHUNK_SIZE = 500
+
+function chunk<T>(rows: T[]): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < rows.length; i += INSERT_CHUNK_SIZE) {
+    chunks.push(rows.slice(i, i + INSERT_CHUNK_SIZE))
+  }
+  return chunks
 }
 
 export const restoreBackup = createServerFn()
@@ -175,15 +196,69 @@ export const restoreBackup = createServerFn()
       throw new Error("Invalid backup: database.json not found")
     }
 
-    const databaseContent = databaseFile.asText()
-    const backupData = JSON.parse(databaseContent) as {
-      exportedAt: string
-      tables: {
-        items: ItemInsert[]
-        locations: LocationInsert[]
-      }
-    }
+    // Parse before touching anything, so a broken backup changes nothing
+    const backupData = parseBackupData(databaseFile.asText())
+    const { users, categories, locations, items, changelog } = backupData.tables
 
+    // All-or-nothing: if any insert fails, the current data stays untouched
+    const usersAdded = await db.transaction(async (tx) => {
+      // Users are only added, never replaced or deleted: existing users keep
+      // their sessions, and the restoring admin can't lock themselves out
+      let added = 0
+      for (const rows of chunk(users)) {
+        const inserted = await tx
+          .insert(UserTable)
+          .values(rows)
+          .onConflictDoNothing()
+          .returning({ id: UserTable.id })
+        added += inserted.length
+      }
+
+      // Changelog and categories have no FKs; items reference locations
+      await tx.delete(ChangelogTable)
+      await tx.delete(ItemTable)
+      await tx.delete(LocationTable)
+      await tx.delete(CategoryTable)
+
+      for (const rows of chunk(categories)) {
+        await tx.insert(CategoryTable).overridingSystemValue().values(rows)
+      }
+
+      // Locations reference their parent, which may come later in the list:
+      // insert all without parent first, then link them up
+      for (const rows of chunk(locations)) {
+        await tx
+          .insert(LocationTable)
+          .overridingSystemValue()
+          .values(rows.map((loc) => ({ ...loc, parentId: null })))
+      }
+      for (const loc of locations) {
+        if (loc.parentId && loc.id) {
+          await tx
+            .update(LocationTable)
+            .set({ parentId: loc.parentId })
+            .where(eq(LocationTable.id, loc.id))
+        }
+      }
+
+      for (const rows of chunk(items)) {
+        await tx.insert(ItemTable).overridingSystemValue().values(rows)
+      }
+      for (const rows of chunk(changelog)) {
+        await tx.insert(ChangelogTable).overridingSystemValue().values(rows)
+      }
+
+      // Continue ids after the highest restored one
+      for (const table of ["categories", "locations", "items", "changelog"]) {
+        await tx.execute(
+          sql`SELECT setval(pg_get_serial_sequence(${table}, 'id'), COALESCE((SELECT MAX(id) FROM ${sql.identifier(table)}), 0) + 1, false)`,
+        )
+      }
+
+      return added
+    })
+
+    // Images only after the database commit, so a failed restore leaves them as they were
     // Ensure image directories exist
     const itemsImageDir = path.join(SAVE_PATH, "items")
     const locationsImageDir = path.join(SAVE_PATH, "locations")
@@ -210,83 +285,13 @@ export const restoreBackup = createServerFn()
       }
     }
 
-    // Clear existing data and restore from backup
-    // Order matters due to foreign key constraints
-    await db.delete(ItemTable)
-    await db.delete(LocationTable)
-
-    // Reset sequences
-    await db.execute(sql`ALTER SEQUENCE items_id_seq RESTART WITH 1`)
-    await db.execute(sql`ALTER SEQUENCE locations_id_seq RESTART WITH 1`)
-
-    // Insert locations first (items depend on locations)
-    let locationsRestored = 0
-    if (backupData.tables.locations.length > 0) {
-      // Insert locations without parentId first using OVERRIDING SYSTEM VALUE
-      for (const loc of backupData.tables.locations) {
-        await db.execute(sql`
-          INSERT INTO locations (id, name, description, parent_id, "parentLocationMarker", image_path, "additionalInfo")
-          OVERRIDING SYSTEM VALUE
-          VALUES (
-            ${loc.id},
-            ${loc.name},
-            ${loc.description ?? null},
-            NULL,
-            ${loc.parentLocationMarker ? JSON.stringify(loc.parentLocationMarker) : null}::json,
-            ${loc.imagePath ?? null},
-            ${loc.additionalInfo ? JSON.stringify(loc.additionalInfo) : null}::json
-          )
-        `)
-      }
-
-      // Update parentIds
-      for (const loc of backupData.tables.locations) {
-        if (loc.parentId) {
-          await db.execute(
-            sql`UPDATE locations SET parent_id = ${loc.parentId} WHERE id = ${loc.id}`,
-          )
-        }
-      }
-      locationsRestored = backupData.tables.locations.length
-    }
-
-    // Insert items using OVERRIDING SYSTEM VALUE
-    let itemsRestored = 0
-    for (const item of backupData.tables.items) {
-      await db.execute(sql`
-        INSERT INTO items (id, name, description, location_id, "parentLocationMarker", image_path, "additionalInfo", tags, manufacturer, model, category, links, morestuff)
-        OVERRIDING SYSTEM VALUE
-        VALUES (
-          ${item.id},
-          ${item.name},
-          ${item.description ?? null},
-          ${item.locationId ?? null},
-          ${item.parentLocationMarker ? JSON.stringify(item.parentLocationMarker) : null}::json,
-          ${item.imagePath ?? null},
-          ${item.additionalInfo ? JSON.stringify(item.additionalInfo) : null}::json,
-          ${item.tags && item.tags.length > 0 ? `{${item.tags.map((t) => `"${t.replace(/"/g, '\\"')}"`).join(",")}}` : null}::varchar[],
-          ${item.manufacturer ?? null},
-          ${item.model ?? null},
-          ${item.category ?? null},
-          ${item.links ? JSON.stringify(item.links) : null}::json,
-          ${item.morestuff ?? null}
-        )
-      `)
-      itemsRestored++
-    }
-
-    // Update sequences to max id + 1
-    await db.execute(
-      sql`SELECT setval('items_id_seq', COALESCE((SELECT MAX(id) FROM items), 0) + 1, false)`,
-    )
-    await db.execute(
-      sql`SELECT setval('locations_id_seq', COALESCE((SELECT MAX(id) FROM locations), 0) + 1, false)`,
-    )
-
     return {
       success: true,
-      itemsRestored,
-      locationsRestored,
+      itemsRestored: items.length,
+      locationsRestored: locations.length,
+      categoriesRestored: categories.length,
+      changelogRestored: changelog.length,
+      usersAdded,
       imagesRestored,
     }
   })
