@@ -16,15 +16,28 @@ import { toast } from "sonner"
 import { printLabelFn } from "@/src/actions/printActions"
 import { useAuth } from "@/src/context/AuthContext"
 
-type ItemQRCodeProps = {
-  itemId: number
-  itemName: string
-  baseUrl: string
+type QRCodeLabelProps = {
+  /** The link the QR code opens */
+  url: string
+  name: string
+  /** Line under the QR code on the downloaded PNG, e.g. "ID: 12" */
+  caption: string
+  /** Line the label printer prints under the QR code, e.g. "12" */
+  printedId: string
+  /** File name of the downloaded PNG, without extension */
+  fileName: string
 }
 
-export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
+// QR code label for an item or a location: preview, PNG download and,
+// for logged-in users, printing on the label printer
+export function QRCodeLabel({
+  url,
+  name,
+  caption,
+  printedId,
+  fileName,
+}: QRCodeLabelProps) {
   const { isLoggedIn } = useAuth()
-  const url = `${baseUrl}/i/${itemId}`
   const qrRef = useRef<HTMLCanvasElement>(null)
   const outputCanvasRef = useRef<HTMLCanvasElement>(null)
   const [pngUrl, setPngUrl] = useState<string | null>(null)
@@ -63,7 +76,7 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
     const nameY = padding + qrSize + textPadding + 64
 
     // Truncate name if too long
-    let displayName = itemName
+    let displayName = name
     const maxWidth = totalWidth - padding * 2
     while (
       ctx.measureText(displayName).width > maxWidth &&
@@ -73,16 +86,16 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
     }
     ctx.fillText(displayName, totalWidth / 2, nameY)
 
-    // Draw ID
+    // Draw caption (e.g. the ID)
     ctx.font = "56px sans-serif"
     ctx.fillStyle = "#666666"
     const idY = nameY + idHeight
-    ctx.fillText(`ID: ${itemId}`, totalWidth / 2, idY)
+    ctx.fillText(caption, totalWidth / 2, idY)
 
     // Generate PNG URL
     const dataUrl = outputCanvas.toDataURL("image/png")
     setPngUrl(dataUrl)
-  }, [itemId, itemName])
+  }, [name, caption])
 
   useEffect(() => {
     // Wait for QR code to render
@@ -93,7 +106,7 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
   const handleDownload = () => {
     if (!pngUrl) return
     const link = document.createElement("a")
-    link.download = `qr-${itemId}-${itemName.replace(/[^a-zA-Z0-9]/g, "-")}.png`
+    link.download = `${fileName}.png`
     link.href = pngUrl
     link.click()
   }
@@ -106,8 +119,8 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
       const result = await printLabelFn({
         data: {
           link: url,
-          name: itemName,
-          id: itemId.toString(),
+          name,
+          id: printedId,
         },
       })
 
@@ -142,7 +155,7 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
       {pngUrl && (
         <img
           src={pngUrl}
-          alt={`QR code for ${itemName}`}
+          alt={`QR-Code für ${name}`}
           className="rounded border max-w-[160px]"
         />
       )}
@@ -170,7 +183,7 @@ export function ItemQRCode({ itemId, itemName, baseUrl }: ItemQRCodeProps) {
               <DialogHeader>
                 <DialogTitle>Label drucken?</DialogTitle>
                 <DialogDescription>
-                  Ein QR-Code Label für "{itemName}" (ID: {itemId}) wird an den
+                  Ein QR-Code Label für "{name}" ({caption}) wird an den
                   Labeldrucker gesendet.
                 </DialogDescription>
               </DialogHeader>

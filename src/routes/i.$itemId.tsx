@@ -1,6 +1,6 @@
 import { ItemDetail } from "@components/ItemDetail"
 import { ItemDeleteButton } from "@components/item/ItemDeleteButton"
-import { ItemQRCode } from "@components/item/ItemQRCode"
+import { QRCodeLabel } from "@components/QRCodeLabel"
 import { Button } from "@components/ui/button"
 import {
   createFileRoute,
@@ -85,7 +85,13 @@ function RouteComponent() {
         onDeleteLocation={handleDeleteLocation}
         canEdit={isLoggedIn}
       />
-      <ItemQRCode itemId={item.id} itemName={item.name} baseUrl={baseUrl} />
+      <QRCodeLabel
+        url={`${baseUrl}/i/${item.id}`}
+        name={item.name}
+        caption={`ID: ${item.id}`}
+        printedId={item.id.toString()}
+        fileName={`qr-${item.id}-${item.name.replace(/[^a-zA-Z0-9]/g, "-")}`}
+      />
     </div>
   )
 }

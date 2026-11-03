@@ -7,6 +7,7 @@ import {
   MarkerStep,
 } from "@components/location/LocationMarkers"
 import { LocationPathPhotos } from "@components/location/LocationPathPhotos"
+import { QRCodeLabel } from "@components/QRCodeLabel"
 import { Button } from "@components/ui/button"
 import {
   Dialog,
@@ -62,7 +63,7 @@ export const Route = createFileRoute("/locations")({
 })
 
 function RouteComponent() {
-  const { currentLocation, locationPath, childLocations, items } =
+  const { baseUrl, currentLocation, locationPath, childLocations, items } =
     Route.useLoaderData()
   const navigate = useNavigate()
   const { isLoggedIn } = useAuth()
@@ -287,6 +288,15 @@ function RouteComponent() {
                   <p>Keine Items an diesem Ort</p>
                 </div>
               )}
+              {/* "Ort" keeps location labels apart from item labels,
+                  which only show the item's number */}
+              <QRCodeLabel
+                url={`${baseUrl}/l/${currentLocation.id}`}
+                name={currentLocation.name}
+                caption={`Ort ${currentLocation.id}`}
+                printedId={`Ort ${currentLocation.id}`}
+                fileName={`qr-ort-${currentLocation.id}-${currentLocation.name.replace(/[^a-zA-Z0-9]/g, "-")}`}
+              />
             </>
           ) : null
         }

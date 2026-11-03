@@ -39,7 +39,10 @@ export const fetchLocationView = createServerFn()
   .validator((locationId: number | undefined) => locationId)
   .handler(async ({ data: locationId }) => {
     const locationRepo = new LocationRepository()
+    // For QR code labels, which link to the app's public address
+    const baseUrl = process.env.BASE_URL || ""
     const rootView = async () => ({
+      baseUrl,
       currentLocation: null,
       locationPath: [] as Location[],
       childLocations: await locationRepo.findRootLocations(),
@@ -58,6 +61,7 @@ export const fetchLocationView = createServerFn()
     ])
 
     return {
+      baseUrl,
       currentLocation,
       locationPath: locationChain.reverse(),
       childLocations,
