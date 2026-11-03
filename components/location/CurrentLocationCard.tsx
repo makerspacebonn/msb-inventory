@@ -25,7 +25,7 @@ export function CurrentLocationCard({
 
   return (
     <div className="mb-6 p-4 border-2 rounded-lg space-y-4">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         {location.imagePath ? (
           <button
             type="button"
@@ -50,7 +50,7 @@ export function CurrentLocationCard({
             <p className="text-muted-foreground">{location.description}</p>
           )}
         </div>
-        {actions && <div className="flex gap-2">{actions}</div>}
+        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
 
       {enlarged && location.imagePath && (

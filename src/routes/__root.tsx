@@ -1,5 +1,6 @@
 import { HeaderSearch } from "@components/header/HeaderSearch"
 import { SiteMenu } from "@components/header/SiteMenu"
+import { LabelSheetIndicator } from "@components/labels/LabelSheetButtons"
 import { Button } from "@components/ui/button"
 import { Toaster } from "@components/ui/sonner"
 import {
@@ -15,6 +16,7 @@ import type { ReactNode } from "react"
 import { toast } from "sonner"
 import { getAuthContext } from "@/src/actions/authActions"
 import { AuthProvider, useAuth } from "@/src/context/AuthContext"
+import { LabelSheetProvider } from "@/src/context/LabelSheetContext"
 import appCss from "../styles.css?url"
 
 // Define the router context type
@@ -66,9 +68,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootComponent() {
   return (
     <AuthProvider>
-      <RootDocument>
-        <Outlet />
-      </RootDocument>
+      <LabelSheetProvider>
+        <RootDocument>
+          <Outlet />
+        </RootDocument>
+      </LabelSheetProvider>
     </AuthProvider>
   )
 }
@@ -214,6 +218,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               {/* Search fills the space between the pages and the actions */}
               <HeaderSearch />
               <div className="flex flex-shrink-0 items-center justify-end gap-2 md:gap-4">
+                <LabelSheetIndicator />
                 <PhotoSearchButton />
                 <AddItemButton />
                 <div className="hidden md:block">

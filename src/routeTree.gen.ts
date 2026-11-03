@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BackupRouteImport } from './routes/backup'
 import { Route as ChangelogRouteImport } from './routes/changelog'
+import { Route as LabelsRouteImport } from './routes/labels'
 import { Route as LocationsRouteImport } from './routes/locations'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrintersRouteImport } from './routes/printers'
@@ -42,6 +43,11 @@ const BackupRoute = BackupRouteImport.update({
 const ChangelogRoute = ChangelogRouteImport.update({
   id: '/changelog',
   path: '/changelog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LabelsRoute = LabelsRouteImport.update({
+  id: '/labels',
+  path: '/labels',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LocationsRoute = LocationsRouteImport.update({
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/backup': typeof BackupRouteWithChildren
   '/changelog': typeof ChangelogRoute
+  '/labels': typeof LabelsRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/printers': typeof PrintersRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/backup': typeof BackupRouteWithChildren
   '/changelog': typeof ChangelogRoute
+  '/labels': typeof LabelsRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/printers': typeof PrintersRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/backup': typeof BackupRouteWithChildren
   '/changelog': typeof ChangelogRoute
+  '/labels': typeof LabelsRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/printers': typeof PrintersRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/'
     | '/backup'
     | '/changelog'
+    | '/labels'
     | '/locations'
     | '/login'
     | '/printers'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/'
     | '/backup'
     | '/changelog'
+    | '/labels'
     | '/locations'
     | '/login'
     | '/printers'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/'
     | '/backup'
     | '/changelog'
+    | '/labels'
     | '/locations'
     | '/login'
     | '/printers'
@@ -259,6 +271,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BackupRoute: typeof BackupRouteWithChildren
   ChangelogRoute: typeof ChangelogRoute
+  LabelsRoute: typeof LabelsRoute
   LocationsRoute: typeof LocationsRoute
   LoginRoute: typeof LoginRoute
   PrintersRoute: typeof PrintersRoute
@@ -297,6 +310,13 @@ declare module '@tanstack/react-router' {
       path: '/changelog'
       fullPath: '/changelog'
       preLoaderRoute: typeof ChangelogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/labels': {
+      id: '/labels'
+      path: '/labels'
+      fullPath: '/labels'
+      preLoaderRoute: typeof LabelsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/locations': {
@@ -429,6 +449,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BackupRoute: BackupRouteWithChildren,
   ChangelogRoute: ChangelogRoute,
+  LabelsRoute: LabelsRoute,
   LocationsRoute: LocationsRoute,
   LoginRoute: LoginRoute,
   PrintersRoute: PrintersRoute,

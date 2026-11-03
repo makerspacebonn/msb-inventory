@@ -47,6 +47,11 @@ export function SiteMenu({
             </Link>
           </div>
           {isLoggedIn && (
+            <Link to="/labels" className={linkClass} onClick={close}>
+              Etiketten drucken
+            </Link>
+          )}
+          {isLoggedIn && (
             <Link to="/printers" className={linkClass} onClick={close}>
               Drucker
             </Link>

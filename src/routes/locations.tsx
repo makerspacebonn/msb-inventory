@@ -1,4 +1,9 @@
 import { MyCropper } from "@components/form/MyCropper"
+import {
+  LabelSheetItemsButton,
+  LabelSheetSubtreeButton,
+  LabelSheetToggle,
+} from "@components/labels/LabelSheetButtons"
 import { CreateLocationForm } from "@components/location/CreateLocationForm"
 import { CurrentLocationCard } from "@components/location/CurrentLocationCard"
 import { LocationBrowser } from "@components/location/LocationBrowser"
@@ -163,6 +168,13 @@ function RouteComponent() {
               actions={
                 isLoggedIn && (
                   <>
+                    <LabelSheetToggle
+                      kind="location"
+                      id={currentLocation.id}
+                      name={currentLocation.name}
+                    />
+                    <LabelSheetSubtreeButton locationId={currentLocation.id} />
+                    <LabelSheetItemsButton locationId={currentLocation.id} />
                     <Button variant="outline" size="sm" asChild>
                       <Link
                         to="/locations/$locationId/edit"

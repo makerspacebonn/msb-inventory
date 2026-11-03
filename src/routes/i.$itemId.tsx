@@ -1,5 +1,6 @@
 import { ItemDetail } from "@components/ItemDetail"
 import { ItemDeleteButton } from "@components/item/ItemDeleteButton"
+import { LabelSheetToggle } from "@components/labels/LabelSheetButtons"
 import { QRCodeLabel } from "@components/QRCodeLabel"
 import { Button } from "@components/ui/button"
 import {
@@ -70,7 +71,8 @@ function RouteComponent() {
   return (
     <div className="max-w-128 mx-auto p-4">
       {isLoggedIn && (
-        <div className="flex justify-end gap-2 mb-4">
+        <div className="flex flex-wrap justify-end gap-2 mb-4">
+          <LabelSheetToggle kind="item" id={item.id} name={item.name} />
           <Button asChild variant="outline">
             <Link to="/items/add" search={{ itemId: item.id }}>
               <PencilIcon className="w-4 h-4 mr-2" />
