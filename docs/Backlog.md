@@ -149,20 +149,6 @@ Items without a location are hard to find in the inventory. The item list should
 
 ---
 
-### UX-009: Search by photo
-**Priority:** Medium
-
-**Description:**
-When holding an object, it's often faster to take a picture than to guess its name. Users should be able to search the inventory with a photo and get matching items, e.g. to find out whether an item already exists or where it belongs.
-
-**Acceptance Criteria:**
-- [ ] A search can be started with a photo taken or uploaded on the device
-- [ ] Results show matching items, best matches first
-- [ ] It's clear when no matching item was found
-- [ ] Works on mobile
-
----
-
 ### UX-010: Filter items by photo
 **Priority:** Low
 
@@ -236,6 +222,21 @@ Some things exist several times, e.g. five identical sewing machines. Each one s
 
 ---
 
+### UX-020: Suggest possible duplicates when adding an item
+**Priority:** Medium
+
+**Description:**
+Items are sometimes added twice because nobody knows one already exists. When adding a new item, similar items already in the inventory should be shown, so the user can open the existing item instead of creating a duplicate.
+
+**Acceptance Criteria:**
+- [ ] While adding an item, similar existing items are shown (e.g. based on the photo or the entered name)
+- [ ] Each suggestion can be recognized at a glance (photo, name, location)
+- [ ] The user can open a suggested item instead of creating a new one
+- [ ] The user can ignore the suggestions and create the item anyway
+- [ ] No suggestions are shown when nothing similar exists
+
+---
+
 ### PRINT-001: Choose the label printer
 **Priority:** Low
 
@@ -286,6 +287,44 @@ Members borrow things from the space, but nobody knows who has what or when it c
 - Which items may be lent out at all, and does lending need an admin's approval?
 - How are reminders sent (email, Discord, a display in the space via MQTT, …)?
 - Should past lendings stay visible as history?
+
+---
+
+## Briefings
+
+Machines and tools that may only be used after a briefing.
+
+### BRIEF-001: Items that require a briefing
+**Priority:** Medium
+
+**Description:**
+Some machines and tools may only be used after a safety briefing ("Einweisung"). The inventory should show which items need a briefing and who has received it, so members know before using an item whether they are allowed to.
+
+**Acceptance Criteria:**
+- [ ] An item can be marked as requiring a briefing
+- [ ] Items requiring a briefing are recognizable in the item list and on the item page
+- [ ] It can be recorded which members received a briefing for an item, and when
+- [ ] Members can see for which items they have received a briefing
+- [ ] Only authorized people can record a briefing
+
+---
+
+## Stock
+
+Quantities of consumables and small parts.
+
+### STOCK-001: Track stock of consumables
+**Priority:** Medium
+
+**Description:**
+Consumables and small parts (screws, filament, …) exist in quantities. Items should optionally have a stock count: taking something out lowers it, and a warning shows when the stock falls below a minimum, so it can be reordered in time. Related to UX-017 (report an item as used up).
+
+**Acceptance Criteria:**
+- [ ] An item can optionally have a quantity
+- [ ] Taking items out lowers the quantity with little effort (e.g. from the item page)
+- [ ] A minimum stock can be set per item
+- [ ] Items below their minimum stock are flagged and can be listed
+- [ ] Changes to the quantity are traceable in the changelog
 
 ---
 

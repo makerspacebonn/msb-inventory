@@ -457,6 +457,26 @@ Tags on items should be usable to find related items. Clicking a tag shows the s
 
 ---
 
+### UX-009: Search by photo ✅ COMPLETED 2026-11-03
+**Priority:** Medium
+
+**Description:**
+When holding an object, it's often faster to take a picture than to guess its name. Users should be able to search the inventory with a photo and get matching items, e.g. to find out whether an item already exists or where it belongs.
+
+**Acceptance Criteria:**
+- [x] A search can be started with a photo taken or uploaded on the device
+- [x] Results show matching items, best matches first
+- [x] It's clear when no matching item was found
+- [x] Works on mobile
+
+**Implementation Notes:**
+- Camera button in the header (logged-in users only, as each search is an AI call) opens `/items/photo`: take a photo or choose one
+- The AI describes the photo with the same prompt and vocabulary as the item form; items sharing words, name, category or tags are ranked best first (`src/lib/photoMatch.ts`)
+- Tested on 20 inventory photos, each searched with its own photo: 13 found at position 1, 17 within the first five
+- E2E tests use a fixed AI answer (`GEMINI_STUB_RESPONSE` in `docker-compose.e2e.yml`)
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.
