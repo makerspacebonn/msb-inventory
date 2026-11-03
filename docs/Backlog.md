@@ -265,6 +265,25 @@ Labels can only be printed for items. Shelves, boxes and drawers need labels too
 
 ---
 
+### PRINT-003: Print label sheets as PDF
+**Priority:** Medium
+
+**Description:**
+Labelling a whole shelf one label at a time is slow. Users should be able to print many labels at once on standard label sheets (e.g. HERMA 4265): choose the sheet type, the first free label on a partly used sheet, and the items and locations to label, and get a printable PDF. Sheet types differ a lot in label size and in the number of rows and columns, so the labels adapt to the size: the QR code matters most, then the name, then the path for locations.
+
+**Acceptance Criteria:**
+- [ ] The sheet type can be chosen from a list; HERMA 4265 is available to start with
+- [ ] The first free label is chosen on a grid matching the chosen sheet type
+- [ ] Items and locations can be selected on the print page
+- [ ] Items and locations can also be collected while browsing, with the add buttons only shown while a print job is being put together
+- [ ] The selection can be cleared
+- [ ] Each label shows a QR code that opens the item or location; name and (for locations) path are added as space allows
+- [ ] The result is a PDF that prints the labels onto the sheet positions
+- [ ] After printing, the next free label is suggested for the next print
+- [ ] Only logged-in users can print label sheets
+
+---
+
 ## Lending
 
 Borrowing items from the space.
