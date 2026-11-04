@@ -477,6 +477,51 @@ When holding an object, it's often faster to take a picture than to guess its na
 
 ---
 
+### PRINT-002: Print location labels ✅ COMPLETED 2026-11-04
+**Priority:** Medium
+
+**Description:**
+Labels can only be printed for items. Shelves, boxes and drawers need labels too, so people can find locations in the space and open them in the app from the label.
+
+**Acceptance Criteria:**
+- [x] A label can be printed from a location's page
+- [x] The label shows the location's name and a code that opens its page in the app
+- [x] Printing works the same way as for item labels
+- [x] Only logged-in users can print labels
+
+**Implementation Notes:**
+- "Etikett drucken" on the location page sends `{link, name, id}` via MQTT like item labels; the printed id is "Ort N", the link the short URL `/l/N` (redirects to `/locations?id=N`)
+- Shared QR code/label component `components/QRCodeLabel.tsx` for items and locations
+- E2E: `e2e/tests/location-label.spec.ts`
+
+---
+
+### PRINT-003: Print label sheets as PDF ✅ COMPLETED 2026-11-04
+**Priority:** Medium
+
+**Description:**
+Labelling a whole shelf one label at a time is slow. Users should be able to print many labels at once on standard label sheets (e.g. HERMA 4265): choose the sheet type, the first free label on a partly used sheet, and the items and locations to label, and get a printable PDF. Sheet types differ a lot in label size and in the number of rows and columns, so the labels adapt to the size: the QR code matters most, then the name, then the path for locations.
+
+**Acceptance Criteria:**
+- [x] The sheet type can be chosen from a list; HERMA 4265 is available to start with
+- [x] The first free label is chosen on a grid matching the chosen sheet type
+- [x] Items and locations can be selected on the print page
+- [x] Items and locations can also be collected while browsing, with the add buttons only shown while a print job is being put together
+- [x] The selection can be cleared
+- [x] Each label shows a QR code that opens the item or location; name and (for locations) path are added as space allows
+- [x] The result is a PDF that prints the labels onto the sheet positions
+- [x] After printing, the next free label is suggested for the next print
+- [x] Only logged-in users can print label sheets
+
+**Implementation Notes:**
+- Page `/labels` (`src/routes/labels.tsx`); PDF built in the browser with jsPDF and a vector QR code (`src/lib/labelPdf.ts`), loaded on demand
+- Sheet templates and label layout in `src/lib/labelSheets.ts`: HERMA 4265, HERMA 5029 and Niceday 980467; QR code 45 % of the shorter label side (20–50 mm), name across the full width, path shortened from the front
+- Print list in `src/context/LabelSheetContext.tsx` (localStorage); add buttons in `components/labels/LabelSheetButtons.tsx` only show while collecting
+- Test page with numbered frames and label 1 marked "OBEN", plus an offset for printer correction
+- E2E: `e2e/tests/label-sheet.spec.ts`
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.
