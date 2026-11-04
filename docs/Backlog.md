@@ -237,6 +237,43 @@ Items are sometimes added twice because nobody knows one already exists. When ad
 
 ---
 
+### UX-021: Sticky header
+**Priority:** Low
+
+**Description:**
+On long pages (search results, item lists, the changelog) the header with search and menu scrolls out of view. It should stay visible at the top, so search and navigation are always at hand.
+
+**Acceptance Criteria:**
+- [ ] The header stays at the top of the screen while scrolling
+- [ ] It doesn't cover page content, dialogs or menus
+- [ ] It takes little vertical space on phones
+
+---
+
+### UX-022: Fresher statistics on the front page
+**Priority:** Low
+
+**Description:**
+The statistics on the front page are up to a day old, so newly added items don't show up in the numbers for a long time. They should be at most an hour old.
+
+**Acceptance Criteria:**
+- [ ] The front page statistics are at most one hour old
+- [ ] The front page loads as fast as before
+
+---
+
+### UX-023: Remove the front page subtitle
+**Priority:** Low
+
+**Description:**
+The welcome line below the front page heading adds nothing the heading doesn't already say. Removing it makes the front page cleaner.
+
+**Acceptance Criteria:**
+- [ ] The front page shows no subtitle below the heading
+- [ ] The layout of the front page still looks balanced
+
+---
+
 ### PRINT-001: Choose the label printer
 **Priority:** Low
 
@@ -281,6 +318,39 @@ Labelling a whole shelf one label at a time is slow. Users should be able to pri
 - [ ] The result is a PDF that prints the labels onto the sheet positions
 - [ ] After printing, the next free label is suggested for the next print
 - [ ] Only logged-in users can print label sheets
+
+---
+
+## AI Features
+
+Item recognition and suggestions with generative AI.
+
+### AI-003: Suggest new categories
+**Priority:** Low
+
+**Description:**
+Items can only be put into the curated categories. When the AI recognizes an item that fits none of them well, it should be able to suggest a new category, which the user accepts or rejects, so the category list grows with the inventory without becoming cluttered.
+
+**Acceptance Criteria:**
+- [ ] When no existing category fits, the AI can suggest a new one
+- [ ] A suggested category is clearly marked as new
+- [ ] The user can accept the suggestion, which adds the category, or reject it
+- [ ] Rejected suggestions don't create a category
+- [ ] Only authorized users can add categories this way
+
+---
+
+### AI-004: Choose the AI provider
+**Priority:** Low
+
+**Description:**
+Item descriptions and photo search only work with Google Gemini. Being able to use other AI providers (other cloud services or a locally hosted model) avoids depending on one vendor and lets the space choose by cost, quality or privacy.
+
+**Acceptance Criteria:**
+- [ ] The AI provider can be chosen in the configuration
+- [ ] Item descriptions and photo search work with every supported provider
+- [ ] Without a configured provider, the AI features are hidden and the rest of the app works
+- [ ] Setup documentation describes how to configure each provider
 
 ---
 
