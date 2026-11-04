@@ -40,6 +40,38 @@ export const LABEL_TEMPLATES: LabelTemplate[] = [
     gapX: 2.5,
     gapY: 0,
   },
+  {
+    // 21 labels per A4 sheet, centred: 3 × 63.5 + 2 × 2.5 = 195.5 mm wide,
+    // 7 × 38.1 = 266.7 mm high, the same grid as Avery L7160
+    id: "herma-5029",
+    name: "HERMA 5029 (63,5 × 38,1 mm, 21 pro Blatt)",
+    pageWidth: 210,
+    pageHeight: 297,
+    columns: 3,
+    rows: 7,
+    labelWidth: 63.5,
+    labelHeight: 38.1,
+    marginTop: 15.15,
+    marginLeft: 7.25,
+    gapX: 2.5,
+    gapY: 0,
+  },
+  {
+    // 12 labels per A4 sheet: 2 × 105 mm span the full width, 6 × 48 mm
+    // leave 4.5 mm at the top and bottom
+    id: "niceday-980467",
+    name: "Niceday 980467 (105 × 48 mm, 12 pro Blatt)",
+    pageWidth: 210,
+    pageHeight: 297,
+    columns: 2,
+    rows: 6,
+    labelWidth: 105,
+    labelHeight: 48,
+    marginTop: 4.5,
+    marginLeft: 0,
+    gapX: 0,
+    gapY: 0,
+  },
 ]
 
 export function findTemplate(id: string): LabelTemplate | undefined {

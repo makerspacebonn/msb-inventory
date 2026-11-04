@@ -31,6 +31,11 @@ export type LabelPdfOptions = {
   offset?: { x: number; y: number }
   /** Draws the outline of every label, for checking the alignment */
   outlines?: boolean
+  /**
+   * Numbers the outlined labels and marks label 1 with "oben", so a test
+   * print shows which way round the sheet goes into the printer
+   */
+  numbered?: boolean
 }
 
 // Empty modules around the QR code; scanners need some quiet zone, and
@@ -47,6 +52,7 @@ export async function createLabelSheetPdf({
   startIndex,
   offset = { x: 0, y: 0 },
   outlines = false,
+  numbered = false,
 }: LabelPdfOptions): Promise<Blob> {
   const [{ jsPDF }, QRCode] = await Promise.all([
     import("jspdf"),
@@ -78,6 +84,7 @@ export async function createLabelSheetPdf({
       for (let index = 0; index < labelsPerSheet(template); index++) {
         const rect = labelRect(template, index)
         doc.rect(rect.x + offset.x, rect.y + offset.y, rect.width, rect.height)
+        if (numbered) drawLabelNumber(doc, rect, offset, index)
       }
     }
 
@@ -169,4 +176,59 @@ export async function createLabelSheetPdf({
   }
 
   return doc.output("blob")
+}
+
+type PdfDoc = InstanceType<typeof import("jspdf")["jsPDF"]>
+
+/**
+ * Writes the label's number into its outline. Label 1 gets a large number,
+ * an arrow and "OBEN", so the printed test page shows the top edge.
+ */
+function drawLabelNumber(
+  doc: PdfDoc,
+  rect: Rect,
+  offset: { x: number; y: number },
+  index: number,
+) {
+  const x = rect.x + offset.x
+  const y = rect.y + offset.y
+  const centerX = x + rect.width / 2
+
+  if (index > 0) {
+    doc.setTextColor(150)
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(10)
+    doc.text(String(index + 1), centerX, y + rect.height / 2, {
+      align: "center",
+      baseline: "middle",
+    })
+    return
+  }
+
+  // Label 1: arrow pointing to the top edge, "OBEN" and a large "1".
+  // The arrow is drawn, as the PDF standard fonts have no arrow character
+  const unit = Math.min(rect.width, rect.height) / 10
+  doc.setFillColor(0, 0, 0)
+  doc.triangle(
+    centerX,
+    y + unit,
+    centerX - unit,
+    y + 2.2 * unit,
+    centerX + unit,
+    y + 2.2 * unit,
+    "F",
+  )
+  doc.rect(centerX - unit / 3, y + 2.2 * unit, (2 * unit) / 3, unit, "F")
+  doc.setTextColor(0, 0, 0)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(12)
+  doc.text("OBEN", centerX, y + 3.6 * unit, {
+    align: "center",
+    baseline: "top",
+  })
+  doc.setFontSize(28)
+  doc.text("1", centerX, y + rect.height - unit, {
+    align: "center",
+    baseline: "bottom",
+  })
 }

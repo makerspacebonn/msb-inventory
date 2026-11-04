@@ -162,6 +162,7 @@ function LabelsPage() {
         startIndex: start,
         offset: settings.offset,
         outlines: outlines || !labelsOnly,
+        numbered: !labelsOnly,
       })
 
       const link = document.createElement("a")

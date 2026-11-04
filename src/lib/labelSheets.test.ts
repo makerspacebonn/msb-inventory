@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest"
 import {
+  findTemplate,
   fitLabelText,
   fitLabelTextWithPath,
   fitPathText,
   LABEL_TEMPLATES,
   type LabelTemplate,
   labelRect,
+  labelsPerSheet,
   layoutLabel,
   type MeasureText,
   maxFontSizesFor,
@@ -34,6 +36,16 @@ describe("templates", () => {
 })
 
 describe("labelRect", () => {
+  it("places HERMA 5029's 21 labels centred on A4", () => {
+    const herma5029 = findTemplate("herma-5029")
+    if (!herma5029) throw new Error("HERMA 5029 template missing")
+    expect(labelsPerSheet(herma5029)).toBe(21)
+    const last = labelRect(herma5029, 20)
+    // Same distance to the right and bottom edge as to the left and top
+    expect(210 - (last.x + last.width)).toBeCloseTo(herma5029.marginLeft)
+    expect(297 - (last.y + last.height)).toBeCloseTo(herma5029.marginTop)
+  })
+
   it("counts labels row by row", () => {
     expect(labelRect(herma, 0)).toEqual({
       x: 7.25,
