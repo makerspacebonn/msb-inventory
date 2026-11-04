@@ -168,6 +168,30 @@ test.describe("Header: search", () => {
   })
 })
 
+test.describe("Header: sticky", () => {
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test("stays at the top while scrolling a long page", async ({ page }) => {
+    await page.goto("/items")
+    await expect(
+      page.getByRole("searchbox", { name: "Items suchen" }),
+    ).toBeVisible()
+
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    // The page must really have scrolled, or the check below proves nothing
+    await expect
+      .poll(() => page.evaluate(() => window.scrollY))
+      .toBeGreaterThan(300)
+
+    await expect(page.getByRole("banner")).toBeInViewport()
+    await expect(
+      page.getByRole("searchbox", { name: "Items suchen" }),
+    ).toBeInViewport()
+    const box = await page.getByRole("banner").boundingBox()
+    expect(box?.y).toBe(0)
+  })
+})
+
 test.describe("Footer", () => {
   test("shows the version instead of the logo", async ({ page }) => {
     await page.goto("/")

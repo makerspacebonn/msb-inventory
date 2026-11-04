@@ -477,6 +477,53 @@ When holding an object, it's often faster to take a picture than to guess its na
 
 ---
 
+### UX-021: Sticky header ✅ COMPLETED 2026-11-04
+**Priority:** Low
+
+**Description:**
+On long pages (search results, item lists, the changelog) the header with search and menu scrolls out of view. It should stay visible at the top, so search and navigation are always at hand.
+
+**Acceptance Criteria:**
+- [x] The header stays at the top of the screen while scrolling
+- [x] It doesn't cover page content, dialogs or menus
+- [x] It takes little vertical space on phones
+
+**Implementation Notes:**
+- `sticky top-0` header with a solid background in `src/routes/__root.tsx`; no backdrop blur, as a filter would pin the mobile search results (position: fixed) to the header
+- E2E: `e2e/tests/header.spec.ts` ("Header: sticky")
+
+---
+
+### UX-022: Fresher statistics on the front page ✅ COMPLETED 2026-11-04
+**Priority:** Low
+
+**Description:**
+The statistics on the front page are up to a day old, so newly added items don't show up in the numbers for a long time. They should be at most an hour old.
+
+**Acceptance Criteria:**
+- [x] The front page statistics are at most one hour old
+- [x] The front page loads as fast as before
+
+**Implementation Notes:**
+- Cache time of the in-memory statistics cache in `src/actions/statsActions.ts` lowered from 24 hours to 1 hour
+
+---
+
+### UX-023: Remove the front page subtitle ✅ COMPLETED 2026-11-04
+**Priority:** Low
+
+**Description:**
+The welcome line below the front page heading adds nothing the heading doesn't already say. Removing it makes the front page cleaner.
+
+**Acceptance Criteria:**
+- [x] The front page shows no subtitle below the heading
+- [x] The layout of the front page still looks balanced
+
+**Implementation Notes:**
+- Welcome line removed from `src/routes/index.tsx`; the heading keeps the spacing to the statistics
+
+---
+
 ### PRINT-002: Print location labels ✅ COMPLETED 2026-11-04
 **Priority:** Medium
 

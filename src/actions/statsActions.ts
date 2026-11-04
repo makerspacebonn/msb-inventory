@@ -11,8 +11,9 @@ export interface InventoryStats {
   lastUpdated: string
 }
 
-// Simple in-memory cache with TTL
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+// In-memory cache: the counts are cheap but needn't be live; an hour keeps
+// new items showing up the same day
+const CACHE_TTL_MS = 60 * 60 * 1000
 
 let cachedStats: InventoryStats | null = null
 let cacheTimestamp: number | null = null

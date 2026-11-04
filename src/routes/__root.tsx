@@ -201,7 +201,10 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <body className="dark">
         <Toaster richColors position="top-center" expand={true} />
         <div className="flex flex-col min-h-screen">
-          <header className="py-2 px-4 shadow border-b border-gray-800">
+          {/* Stays on top while scrolling. Solid background, no backdrop
+              blur: a filter would pin the search results (position: fixed
+              on phones) to the header instead of the screen */}
+          <header className="sticky top-0 z-40 bg-background py-2 px-4 shadow border-b border-gray-800">
             <div className="flex flex-row items-center gap-2 md:gap-4">
               <Link to="/" className="w-10 flex-shrink-0">
                 <img
