@@ -684,6 +684,27 @@ A backup should contain everything needed to restore the inventory completely. T
 
 ## Architecture Improvements
 
+### ARCH-003: Extract generic undo handler ✅ COMPLETED 2026-11-05
+**Priority:** High
+
+**Description:**
+Undoing an item change and undoing a location change were two nearly identical functions in `changelogActions.ts`. They should share one handler, so a new kind of entity only describes how it is stored.
+
+**Acceptance Criteria:**
+- [x] One generic undo handler
+- [x] Both items and locations use it
+- [x] Conflict detection logic preserved
+- [x] Existing undo E2E tests pass
+
+**Implementation Notes:**
+- `undoEntityChange` in `src/lib/undoEntityChange.ts` (instead of `changelogUtils.ts`, which holds change detection): undo create → delete, update → write back the changed fields, delete → restore with the old id; each undo is logged as a change of its own
+- Each entity kind is an `UndoStore` in `changelogActions.ts` (`undoStores`): `findById`, `delete`, `update`, `restore`, and optional `prepareRestore` (items drop generated search fields and `updatedAt`, and turn `createdAt` back into a date)
+- No database imports in the handler: unit tests with an in-memory store (6 tests)
+- The conflict check stays in `undoChange` before the handler is called
+- New E2E tests that really undo: an item edit, an item creation and a location deletion (before, the tests only opened and cancelled the dialog)
+
+---
+
 ### ARCH-004: Move server logic from route files to actions ✅ COMPLETED 2026-11-02
 **Priority:** Medium
 

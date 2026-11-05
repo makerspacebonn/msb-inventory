@@ -45,42 +45,6 @@ throw new AppError('VALIDATION_ERROR', 'Invalid item ID', 400, { field: 'itemId'
 
 ---
 
-### ARCH-003: Extract generic undo handler
-**Priority:** High
-**Effort:** 1-2 days
-
-**Description:**
-Consolidate near-identical `undoItemChange` and `undoLocationChange` functions into a generic handler.
-
-**Current Duplication:**
-- `src/actions/changelogActions.ts` lines 107-209: `undoItemChange()` (~100 lines)
-- `src/actions/changelogActions.ts` lines 211-305: `undoLocationChange()` (~100 lines)
-- Functions are 90% identical, differing only in repository and field handling
-
-**Implementation:**
-```typescript
-// src/lib/changelogUtils.ts
-interface EntityRestorer<T> {
-  repository: { restore: (data: T) => Promise<T>; delete: (id: number) => Promise<void> }
-  excludeFields: string[]
-  entityType: 'item' | 'location'
-}
-
-export async function undoEntityChange<T>(
-  changelogEntry: ChangelogEntry,
-  restorer: EntityRestorer<T>,
-  context: AuthContext
-): Promise<UndoResult>
-```
-
-**Acceptance Criteria:**
-- [ ] `src/lib/changelogUtils.ts` created with generic undo handler
-- [ ] Both `undoItemChange` and `undoLocationChange` use shared handler
-- [ ] Conflict detection logic preserved
-- [ ] Existing undo E2E tests pass
-
----
-
 ### ARCH-006: Provider-neutral login naming
 **Priority:** Low
 

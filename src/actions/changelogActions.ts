@@ -2,9 +2,11 @@ import { createServerFn } from "@tanstack/react-start"
 import type {
   ChangelogEntry,
   ChangelogEntryWithUser,
+  EntityType,
   PaginatedResult,
   UndoResult,
 } from "@/src/app/types"
+import { type UndoStore, undoEntityChange } from "@/src/lib/undoEntityChange"
 import {
   adminGuardMiddleware,
   authGuardMiddleware,
@@ -100,210 +102,46 @@ export const undoChange = createServerFn({ method: "POST" })
       }
     }
 
-    // Perform the undo based on entity type
-    if (entry.entityType === "item") {
-      return undoItemChange(entry, context.userId)
-    } else if (entry.entityType === "location") {
-      return undoLocationChange(entry, context.userId)
+    const store = undoStores[entry.entityType]?.()
+    if (!store) {
+      return { success: false, error: "Unbekannter Entity-Typ" }
     }
-
-    return { success: false, error: "Unbekannter Entity-Typ" }
+    return undoEntityChange(entry, store, {
+      userId: context.userId,
+      record: recordChange,
+    })
   })
 
-async function undoItemChange(
-  entry: ChangelogEntry,
-  userId: string | null,
-): Promise<UndoResult> {
-  const itemRepo = new ItemRepository()
-
-  switch (entry.changeType) {
-    case "create": {
-      // Undo create = delete the item
-      const itemToDelete = await itemRepo.findById(entry.entityId)
-      if (!itemToDelete) {
-        return { success: false, error: "Item existiert nicht mehr" }
-      }
-      await itemRepo.delete(entry.entityId)
-      await recordChange({
-        entityType: "item",
-        entityId: entry.entityId,
-        changeType: "delete",
-        userId,
-        before: itemToDelete,
-        after: null,
-        changedFields: Object.keys(itemToDelete),
-      })
-      return { success: true, action: "deleted" }
+const undoStores: Record<EntityType, () => UndoStore<{ id: number }>> = {
+  item: () => {
+    const items = new ItemRepository()
+    return {
+      entityType: "item",
+      label: "Item",
+      findById: (id) => items.findById(id),
+      delete: (id) => items.delete(id),
+      update: async (id, fields) =>
+        (await items.upsert({ ...fields, id }))?.[0],
+      restore: (data) =>
+        items.restore(data as Parameters<typeof items.restore>[0]),
+      // Search fields are generated, updatedAt is set on saving, and the
+      // snapshot holds createdAt as a string
+      prepareRestore: ({ searchVector, searchableText, updatedAt, ...rest }) =>
+        typeof rest.createdAt === "string"
+          ? { ...rest, createdAt: new Date(rest.createdAt) }
+          : rest,
     }
-
-    case "update": {
-      // Undo update = restore beforeValues
-      const currentItem = await itemRepo.findById(entry.entityId)
-      if (!currentItem) {
-        return { success: false, error: "Item existiert nicht mehr" }
-      }
-
-      const restoredData = entry.beforeValues as Record<string, unknown>
-      // Only restore the fields that were changed
-      const updateData: Record<string, unknown> = {}
-      for (const field of entry.changedFields || []) {
-        if (field in restoredData) {
-          updateData[field] = restoredData[field]
-        }
-      }
-      updateData.id = entry.entityId
-
-      const [updatedItem] = (await itemRepo.upsert(updateData)) || []
-
-      await recordChange({
-        entityType: "item",
-        entityId: entry.entityId,
-        changeType: "update",
-        userId,
-        before: currentItem,
-        after: updatedItem,
-        changedFields: entry.changedFields || [],
-      })
-      return { success: true, action: "restored" }
+  },
+  location: () => {
+    const locations = new LocationRepository()
+    return {
+      entityType: "location",
+      label: "Location",
+      findById: (id) => locations.findById(id),
+      delete: (id) => locations.delete(id),
+      update: (id, fields) => locations.update(id, fields),
+      restore: (data) =>
+        locations.restore(data as Parameters<typeof locations.restore>[0]),
     }
-
-    case "delete": {
-      // Undo delete = recreate from beforeValues with original ID
-      const itemData = entry.beforeValues as Record<string, unknown>
-      if (!itemData) {
-        return {
-          success: false,
-          error: "Keine Daten zum Wiederherstellen vorhanden",
-        }
-      }
-
-      // Remove readonly/generated fields that can't be inserted
-      const insertData = { ...itemData }
-      delete insertData.searchVector
-      delete insertData.searchableText
-      delete insertData.updatedAt
-      // Convert date strings back to Date objects
-      if (insertData.createdAt && typeof insertData.createdAt === "string") {
-        insertData.createdAt = new Date(insertData.createdAt)
-      }
-
-      // Use restore method to INSERT with original ID
-      const restoredItem = await itemRepo.restore(
-        insertData as Parameters<typeof itemRepo.restore>[0],
-      )
-
-      if (!restoredItem) {
-        return { success: false, error: "Fehler beim Wiederherstellen" }
-      }
-
-      await recordChange({
-        entityType: "item",
-        entityId: restoredItem.id,
-        changeType: "create",
-        userId,
-        before: null,
-        after: restoredItem,
-        changedFields: Object.keys(insertData),
-      })
-      return { success: true, action: "restored", newId: restoredItem.id }
-    }
-
-    default:
-      return { success: false, error: "Unbekannter Änderungstyp" }
-  }
-}
-
-async function undoLocationChange(
-  entry: ChangelogEntry,
-  userId: string | null,
-): Promise<UndoResult> {
-  const locationRepo = new LocationRepository()
-
-  switch (entry.changeType) {
-    case "create": {
-      // Undo create = delete the location
-      const locationToDelete = await locationRepo.findById(entry.entityId)
-      if (!locationToDelete) {
-        return { success: false, error: "Location existiert nicht mehr" }
-      }
-      await locationRepo.delete(entry.entityId)
-      await recordChange({
-        entityType: "location",
-        entityId: entry.entityId,
-        changeType: "delete",
-        userId,
-        before: locationToDelete,
-        after: null,
-        changedFields: Object.keys(locationToDelete),
-      })
-      return { success: true, action: "deleted" }
-    }
-
-    case "update": {
-      // Undo update = restore beforeValues
-      const currentLocation = await locationRepo.findById(entry.entityId)
-      if (!currentLocation) {
-        return { success: false, error: "Location existiert nicht mehr" }
-      }
-
-      const restoredData = entry.beforeValues as Record<string, unknown>
-      // Only restore the fields that were changed
-      const updateData: Record<string, unknown> = {}
-      for (const field of entry.changedFields || []) {
-        if (field in restoredData) {
-          updateData[field] = restoredData[field]
-        }
-      }
-
-      const updatedLocation = await locationRepo.update(
-        entry.entityId,
-        updateData,
-      )
-
-      await recordChange({
-        entityType: "location",
-        entityId: entry.entityId,
-        changeType: "update",
-        userId,
-        before: currentLocation,
-        after: updatedLocation ?? null,
-        changedFields: entry.changedFields || [],
-      })
-      return { success: true, action: "restored" }
-    }
-
-    case "delete": {
-      // Undo delete = recreate from beforeValues with original ID
-      const locationData = entry.beforeValues as Record<string, unknown>
-      if (!locationData) {
-        return {
-          success: false,
-          error: "Keine Daten zum Wiederherstellen vorhanden",
-        }
-      }
-
-      // Use restore method to INSERT with original ID
-      const restoredLocation = await locationRepo.restore(
-        locationData as Parameters<typeof locationRepo.restore>[0],
-      )
-
-      if (!restoredLocation) {
-        return { success: false, error: "Fehler beim Wiederherstellen" }
-      }
-
-      await recordChange({
-        entityType: "location",
-        entityId: restoredLocation.id,
-        changeType: "create",
-        userId,
-        before: null,
-        after: restoredLocation,
-        changedFields: Object.keys(locationData),
-      })
-      return { success: true, action: "restored", newId: restoredLocation.id }
-    }
-
-    default:
-      return { success: false, error: "Unbekannter Änderungstyp" }
-  }
+  },
 }
