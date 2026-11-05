@@ -23,6 +23,8 @@ import {
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { fetchLabelPrinterStatus } from "@/src/actions/labelPrinterActions"
+import { requireLogin } from "@/src/lib/access"
+import { errorMessage } from "@/src/lib/errors"
 import type {
   LabelPrinterSnapshot,
   LabelPrinterState,
@@ -34,11 +36,7 @@ const REFRESH_MS = 5_000
 
 export const Route = createFileRoute("/printers")({
   component: PrintersPage,
-  beforeLoad: ({ context }) => {
-    if (!context.isLoggedIn) {
-      throw new Error("Unauthorized")
-    }
-  },
+  beforeLoad: ({ context }) => requireLogin(context),
   loader: () => fetchLabelPrinterStatus(),
   head: () => ({
     meta: [{ title: "Labelprinter | MSB Inventar" }],
@@ -227,11 +225,7 @@ function PrintersPage() {
         setSnapshot(await fetchLabelPrinterStatus())
         setFetchError(null)
       } catch (error) {
-        setFetchError(
-          error instanceof Error
-            ? error.message
-            : "Aktualisierung fehlgeschlagen",
-        )
+        setFetchError(errorMessage(error, "Aktualisierung fehlgeschlagen"))
       }
     }, REFRESH_MS)
     return () => clearInterval(interval)

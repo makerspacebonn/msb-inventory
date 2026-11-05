@@ -12,16 +12,14 @@ import {
 } from "lucide-react"
 import { useRef, useState } from "react"
 import { searchByPhotoFn } from "@/src/actions/aiActions"
+import { requireLogin } from "@/src/lib/access"
+import { errorMessage } from "@/src/lib/errors"
 import { categorySearchTerm } from "@/src/lib/searchQuery"
 
 export const Route = createFileRoute("/items/photo")({
   component: PhotoSearchPage,
   // Each search costs an AI call, so it's for logged-in users only
-  beforeLoad: ({ context }) => {
-    if (!context.isLoggedIn) {
-      throw new Error("Unauthorized")
-    }
-  },
+  beforeLoad: ({ context }) => requireLogin(context),
   head: () => ({ meta: [{ title: "Mit Foto suchen | MSB Inventar" }] }),
 })
 
@@ -56,10 +54,7 @@ function PhotoSearchPage() {
         setState({
           status: "error",
           photo,
-          message:
-            error instanceof Error
-              ? error.message
-              : "Die Suche ist fehlgeschlagen.",
+          message: errorMessage(error, "Die Suche ist fehlgeschlagen."),
         })
       }
     } catch {

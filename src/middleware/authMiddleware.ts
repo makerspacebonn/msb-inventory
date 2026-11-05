@@ -1,4 +1,5 @@
 import { createMiddleware } from "@tanstack/react-start"
+import { requireAdmin, requireLogin } from "@/src/lib/access"
 import { isAdmin } from "@/src/lib/roles"
 
 /**
@@ -37,9 +38,7 @@ export const authMiddleware = createMiddleware({ type: "function" }).server(
 export const authGuardMiddleware = createMiddleware({ type: "function" })
   .middleware([authMiddleware])
   .server(async ({ next, context }) => {
-    if (!context.isLoggedIn) {
-      throw new Error("Unauthorized")
-    }
+    requireLogin(context)
     return next()
   })
 
@@ -50,11 +49,6 @@ export const authGuardMiddleware = createMiddleware({ type: "function" })
 export const adminGuardMiddleware = createMiddleware({ type: "function" })
   .middleware([authMiddleware])
   .server(async ({ next, context }) => {
-    if (!context.isLoggedIn) {
-      throw new Error("Unauthorized")
-    }
-    if (!context.isAdmin) {
-      throw new Error("Forbidden")
-    }
+    requireAdmin(context)
     return next()
   })

@@ -1,4 +1,5 @@
 // src/router.tsx
+import { ErrorPage } from "@components/ErrorPage"
 import { createRouter } from "@tanstack/react-router"
 import { routeTree } from "./routeTree.gen"
 
@@ -9,8 +10,6 @@ export function getRouter() {
     context: { isLoggedIn: false, isAdmin: false, userId: null },
     scrollRestoration: true,
     defaultNotFoundComponent: () => <div>Not Found</div>,
-    defaultErrorComponent: ({ error }) => (
-      <div>Error {error instanceof Error ? error.message : String(error)}</div>
-    ),
+    defaultErrorComponent: ({ error }) => <ErrorPage error={error} />,
   })
 }

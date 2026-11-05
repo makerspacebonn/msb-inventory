@@ -28,8 +28,10 @@ import { describeImageFn } from "@/src/actions/aiActions"
 import { fetchCategories } from "@/src/actions/categoryActions"
 import { fetchItem, saveItem } from "@/src/actions/itemActions"
 import type { Item } from "@/src/app/types"
+import { requireLogin } from "@/src/lib/access"
 import type { AiItemDescription } from "@/src/lib/aiItemPrompt"
 import { type ItemFormData, itemSchema } from "@/src/lib/itemSchema"
+import { showError } from "@/src/lib/showError"
 import { addTags, suggestionsFor } from "@/src/lib/tagInput"
 
 type AiData = AiItemDescription
@@ -43,11 +45,7 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/items/add")({
   component: RouteComponent,
   validateSearch: searchSchema,
-  beforeLoad: ({ context }) => {
-    if (!context.isLoggedIn) {
-      throw new Error("Unauthorized")
-    }
-  },
+  beforeLoad: ({ context }) => requireLogin(context),
   loaderDeps: ({ search }) => ({ itemId: search.itemId }),
   loader: async ({ deps }) => {
     if (deps.itemId) {
@@ -143,10 +141,7 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
       }
       toast.success("KI-Analyse abgeschlossen")
     } catch (error) {
-      console.error(error)
-      const message =
-        error instanceof Error ? error.message : "Fehler bei der KI-Analyse"
-      toast.error(message)
+      showError(error, "Fehler bei der KI-Analyse")
     } finally {
       setAiLoading(false)
     }
@@ -179,7 +174,14 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
     onSubmit: async ({ value }) => {
       const parsedInput = itemSchema.parse(value)
 
-      const result = await saveItem({ data: parsedInput })
+      let result: Awaited<ReturnType<typeof saveItem>>
+      try {
+        result = await saveItem({ data: parsedInput })
+      } catch (error) {
+        // E.g. the session ran out while editing; the form keeps its values
+        showError(error, "Das Item konnte nicht gespeichert werden.")
+        return
+      }
       if (result?.success) {
         if (result.item) {
           await navigate({

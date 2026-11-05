@@ -1,5 +1,6 @@
 import crypto from "node:crypto"
 import { auth } from "@/src/lib/auth"
+import { AppError } from "./errors"
 
 /**
  * One-click login for local development, as admin or as normal user.
@@ -23,7 +24,7 @@ export async function signInAsDevUser(
   headers: Headers,
 ): Promise<void> {
   if (!devLoginEnabled) {
-    throw new Error("Dev login is disabled")
+    throw new AppError("FORBIDDEN", "Dev-Login ist deaktiviert")
   }
 
   const account = DEV_ACCOUNTS[role]

@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { printLabelFn } from "@/src/actions/printActions"
 import { useAuth } from "@/src/context/AuthContext"
+import { showError } from "@/src/lib/showError"
 
 type QRCodeLabelProps = {
   /** The link the QR code opens */
@@ -130,10 +131,7 @@ export function QRCodeLabel({
         toast.error(result.error || "Fehler beim Drucken")
       }
     } catch (error) {
-      console.error(error)
-      const message =
-        error instanceof Error ? error.message : "Fehler beim Drucken"
-      toast.error(message)
+      showError(error, "Fehler beim Drucken")
     } finally {
       setIsPrinting(false)
     }

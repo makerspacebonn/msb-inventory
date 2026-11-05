@@ -33,6 +33,7 @@ import type {
   EntityType,
 } from "@/src/app/types"
 import { useAuth } from "@/src/context/AuthContext"
+import { requireLogin } from "@/src/lib/access"
 
 export const Route = createFileRoute("/changelog")({
   component: ChangelogPage,
@@ -43,11 +44,7 @@ export const Route = createFileRoute("/changelog")({
     page: Number(search.page) || 1,
     highlight: search.highlight ? Number(search.highlight) : undefined,
   }),
-  beforeLoad: ({ context }) => {
-    if (!context.isLoggedIn) {
-      throw new Error("Unauthorized")
-    }
-  },
+  beforeLoad: ({ context }) => requireLogin(context),
   loaderDeps: ({ search }) => ({ page: search.page }),
   loader: async ({ deps }) => {
     return fetchChangelogPaginated({ data: { page: deps.page, pageSize: 50 } })

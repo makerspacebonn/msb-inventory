@@ -67,6 +67,7 @@ Requires Docker. Create `.env` from `.env_example` before running.
 **Rules:**
 - use biome to check and autoformat the code
 - E2E tests follow the guidelines in `e2e/README.md` (find elements by role/label, never let checks pass silently)
+- Server functions fail with `AppError` (`src/lib/errors.ts`); the client shows errors with `showError`/`errorMessage`, never a raw `error.message`
 
 **Commands:**
 - ```bun dev``` starts the dev server.

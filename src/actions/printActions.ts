@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start"
 import mqtt from "mqtt"
 import { v4 as uuidv4 } from "uuid"
 import z from "zod/v4"
+import { AppError } from "@/src/lib/errors"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 
 const printLabelSchema = z.object({
@@ -25,7 +26,10 @@ export const printLabelFn = createServerFn({ method: "POST" })
     const password = process.env.MQTT_PASSWORD
 
     if (!brokerUrl) {
-      throw new Error("MQTT nicht konfiguriert")
+      throw new AppError(
+        "NOT_CONFIGURED",
+        "Der Etikettendrucker ist nicht eingerichtet (MQTT).",
+      )
     }
 
     const printId = uuidv4()

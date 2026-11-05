@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { createServerFn } from "@tanstack/react-start"
 import { eq, sql } from "drizzle-orm"
+import { AppError } from "@/src/lib/errors"
 import { adminGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { db } from "../db"
 import {
@@ -125,7 +126,7 @@ export const deleteBackup = createServerFn()
 
     // Security: ensure the file is within the backups directory
     if (!filePath.startsWith(BACKUPS_DIR) || !filename.endsWith(".zip")) {
-      throw new Error("Invalid backup filename")
+      throw new AppError("INVALID_INPUT", "Ungültiger Backup-Dateiname")
     }
 
     if (fs.existsSync(filePath)) {
@@ -165,16 +166,19 @@ export const restoreBackup = createServerFn()
 
     // Security: ensure the file is within the backups directory
     if (!filePath.startsWith(BACKUPS_DIR) || !filename.endsWith(".zip")) {
-      throw new Error("Invalid backup filename")
+      throw new AppError("INVALID_INPUT", "Ungültiger Backup-Dateiname")
     }
 
     if (!fs.existsSync(filePath)) {
-      throw new Error("Backup file not found")
+      throw new AppError("NOT_FOUND", "Backup nicht gefunden")
     }
 
     const databaseJson = await readBackupDatabase(filePath)
     if (databaseJson === null) {
-      throw new Error("Invalid backup: database.json not found")
+      throw new AppError(
+        "INVALID_INPUT",
+        "Ungültiges Backup: database.json fehlt",
+      )
     }
 
     // Parse before touching anything, so a broken backup changes nothing

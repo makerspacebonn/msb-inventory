@@ -22,6 +22,7 @@ import {
 import { searchLocations } from "@/src/actions/locationActions"
 import { type LabelEntry, useLabelSheet } from "@/src/context/LabelSheetContext"
 import { useDebounce } from "@/src/hooks/useDebounce"
+import { requireLogin } from "@/src/lib/access"
 import {
   findTemplate,
   LABEL_TEMPLATES,
@@ -32,11 +33,7 @@ import {
 
 export const Route = createFileRoute("/labels")({
   component: LabelsPage,
-  beforeLoad: ({ context }) => {
-    if (!context.isLoggedIn) {
-      throw new Error("Unauthorized")
-    }
-  },
+  beforeLoad: ({ context }) => requireLogin(context),
   head: () => ({ meta: [{ title: "Etiketten drucken | MSB Inventar" }] }),
 })
 

@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { useState } from "react"
 import { signIn } from "@/src/lib/auth-client"
+import { errorMessage } from "@/src/lib/errors"
 
 const getAuthConfig = createServerFn().handler(async () => {
   // Import dynamically to avoid bundling server code in client
@@ -73,7 +74,7 @@ function LoginPage() {
       window.location.href = "/"
     } catch (err) {
       console.error("Dev login error:", err)
-      setError(err instanceof Error ? err.message : "Dev Login fehlgeschlagen")
+      setError(errorMessage(err, "Dev Login fehlgeschlagen"))
       setLoading(false)
     }
   }

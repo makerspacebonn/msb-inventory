@@ -22,6 +22,7 @@ import {
   fetchLocationView,
   updateLocation,
 } from "@/src/actions/locationActions"
+import { requireLogin } from "@/src/lib/access"
 
 type LocationView = Awaited<ReturnType<typeof fetchLocationView>>
 
@@ -40,11 +41,7 @@ type Step =
 
 export const Route = createFileRoute("/locations_/$locationId/edit")({
   component: RouteComponent,
-  beforeLoad: ({ context }) => {
-    if (!context.isLoggedIn) {
-      throw new Error("Unauthorized")
-    }
-  },
+  beforeLoad: ({ context }) => requireLogin(context),
   loader: async ({ params }) => {
     const view = await fetchLocationView({
       data: parseInt(params.locationId, 10),

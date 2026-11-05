@@ -11,6 +11,7 @@ import {
   type UserInsert,
   UserTable,
 } from "../drizzle/schema"
+import { AppError } from "./errors"
 
 // v1 backups (no formatVersion) only contained items and locations
 export const BACKUP_FORMAT_VERSION = 2
@@ -84,8 +85,9 @@ export function parseBackupData(json: string): BackupData {
   const formatVersion = raw.formatVersion ?? 1
 
   if (formatVersion > BACKUP_FORMAT_VERSION) {
-    throw new Error(
-      `Backup format ${formatVersion} is newer than supported (${BACKUP_FORMAT_VERSION})`,
+    throw new AppError(
+      "INVALID_INPUT",
+      `Das Backup hat Format ${formatVersion}, unterstützt wird bis ${BACKUP_FORMAT_VERSION}. Bitte die App aktualisieren.`,
     )
   }
 

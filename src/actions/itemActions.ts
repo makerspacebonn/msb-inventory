@@ -6,6 +6,7 @@ import type {
 import { createServerFn } from "@tanstack/react-start"
 import z from "zod/v4"
 import { diffFields } from "@/src/lib/changelogUtils"
+import { errorMessage } from "@/src/lib/errors"
 import { storeImage } from "@/src/lib/imageUtils"
 import { itemSchema } from "@/src/lib/itemSchema"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
@@ -61,7 +62,7 @@ export const saveItem = createServerFn({ method: "POST" })
       if (data.id) {
         beforeItem = await itemRepo.findById(data.id)
         if (!beforeItem) {
-          return { success: false, error: "Item not found" }
+          return { success: false, error: "Item nicht gefunden" }
         }
       }
 
@@ -71,10 +72,9 @@ export const saveItem = createServerFn({ method: "POST" })
           data.imagePath = await storeImage(data.image, "items")
         } catch (e) {
           console.error(e)
-          const message = e instanceof Error ? e.message : String(e)
           return {
             success: false,
-            error: `Bild konnte nicht gespeichert werden: ${message}`,
+            error: `Bild konnte nicht gespeichert werden: ${errorMessage(e, "Fehler beim Speichern der Datei")}`,
           }
         }
       }

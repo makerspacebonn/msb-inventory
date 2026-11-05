@@ -23,6 +23,7 @@ import {
 } from "@/src/actions/locationActions"
 import { useCreateLocation } from "@/src/hooks/useCreateLocation"
 import { useRecentLocations } from "@/src/hooks/useRecentLocations"
+import { requireLogin } from "@/src/lib/access"
 
 type LocationPickerSearch = {
   at?: number // location currently shown in the picker
@@ -35,11 +36,7 @@ export const Route = createFileRoute("/items/$itemId/location/add")({
       at: search.at ? Number(search.at) : undefined,
     }
   },
-  beforeLoad: ({ context }) => {
-    if (!context.isLoggedIn) {
-      throw new Error("Unauthorized")
-    }
-  },
+  beforeLoad: ({ context }) => requireLogin(context),
   loaderDeps: ({ search: { at } }) => ({ at }),
   loader: async ({ params, deps: { at } }) => {
     const item = await fetchItem({ data: parseInt(params.itemId, 10) })

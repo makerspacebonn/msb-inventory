@@ -152,6 +152,11 @@ test.describe("Label sheets", () => {
 
   test("isn't available to visitors", async ({ page }) => {
     await page.goto("/labels")
-    await expect(page.getByText("Unauthorized")).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Dafür musst du angemeldet sein." }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole("main").getByRole("link", { name: "Anmelden" }),
+    ).toBeVisible()
   })
 })

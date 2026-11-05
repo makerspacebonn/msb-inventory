@@ -94,6 +94,11 @@ describe("parseBackupData", () => {
           tables: {},
         }),
       ),
-    ).toThrow(/newer than supported/)
+    ).toThrow(
+      expect.objectContaining({
+        code: "INVALID_INPUT",
+        message: expect.stringContaining("Bitte die App aktualisieren"),
+      }),
+    )
   })
 })

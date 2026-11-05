@@ -684,6 +684,29 @@ A backup should contain everything needed to restore the inventory completely. T
 
 ## Architecture Improvements
 
+### ARCH-002: Standardize error handling ✅ COMPLETED 2026-11-05
+**Priority:** Medium
+
+**Description:**
+Server functions failed with plain errors ("Unauthorized"), and the client could only show their text. Failures should have a consistent structure with a code, so the client can react to the kind of failure.
+
+**Acceptance Criteria:**
+- [x] `src/lib/errors.ts` created with `AppError` class
+- [x] `authMiddleware.ts` uses `AppError` instead of plain strings
+- [x] Error responses include consistent `{ code, message, statusCode }` format
+- [x] Client-side error handling updated to use error codes
+
+**Implementation Notes:**
+- `AppError(code, message)` with the codes `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `INVALID_INPUT`, `NOT_CONFIGURED`, `AI_RATE_LIMITED`, `AI_UNAVAILABLE`, `AI_FAILED`; the status follows from the code
+- TanStack Start only keeps an error's message across the server function boundary; a serialization adapter in `src/start.ts` keeps the class and code
+- `requireLogin`/`requireAdmin` in `src/lib/access.ts` are shared by the middleware and the routes' `beforeLoad`
+- Client: `errorMessage(error, fallback)` shows an AppError's message and hides other errors' (possibly technical) text; `showError` adds an "Anmelden" button for `UNAUTHORIZED`; the router's error page (`components/ErrorPage.tsx`) offers the login when that's what's missing
+- Fixed: saving an item after the session ran out failed silently; now a toast asks to log in again and the form keeps its values (E2E in `item-crud.spec.ts`)
+- Expected outcomes stay results (`{ success: false, error }`, e.g. undo blocked by a newer change); AppError is for requests that can't be served
+- The HTTP status of the response isn't set from `statusCode` (server functions still answer 500); nothing relies on it so far
+
+---
+
 ### ARCH-003: Extract generic undo handler ✅ COMPLETED 2026-11-05
 **Priority:** High
 

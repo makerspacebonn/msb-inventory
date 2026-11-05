@@ -9,17 +9,13 @@ import {
   listBackups,
   restoreBackup,
 } from "@/src/actions/backupActions"
+import { requireAdmin } from "@/src/lib/access"
+import { errorMessage } from "@/src/lib/errors"
+import { showError } from "@/src/lib/showError"
 
 export const Route = createFileRoute("/backup")({
   component: BackupPage,
-  beforeLoad: ({ context }) => {
-    if (!context.isLoggedIn) {
-      throw new Error("Unauthorized")
-    }
-    if (!context.isAdmin) {
-      throw new Error("Forbidden")
-    }
-  },
+  beforeLoad: ({ context }) => requireAdmin(context),
   loader: () => listBackups(),
   head: () => ({
     meta: [{ title: "Backup | MSB Inventar" }],
@@ -40,7 +36,7 @@ function BackupPage() {
       const newBackup = await generateBackup()
       setBackups((prev) => [newBackup, ...prev])
     } catch (error) {
-      console.error("Backup generation failed:", error)
+      showError(error, "Das Backup konnte nicht erstellt werden.")
     } finally {
       setIsGenerating(false)
     }
@@ -52,7 +48,7 @@ function BackupPage() {
       await deleteBackup({ data: filename })
       setBackups((prev) => prev.filter((b) => b.filename !== filename))
     } catch (error) {
-      console.error("Backup deletion failed:", error)
+      showError(error, "Das Backup konnte nicht gelöscht werden.")
     } finally {
       setDeletingFile(null)
     }
@@ -75,7 +71,7 @@ function BackupPage() {
       )
     } catch (error) {
       console.error("Restore failed:", error)
-      setRestoreResult("Wiederherstellung fehlgeschlagen")
+      setRestoreResult(errorMessage(error, "Wiederherstellung fehlgeschlagen"))
     } finally {
       setRestoringFile(null)
     }

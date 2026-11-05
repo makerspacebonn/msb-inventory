@@ -7,6 +7,7 @@ import {
   buildItemPrompt,
   buildItemResponseSchema,
 } from "@/src/lib/aiItemPrompt"
+import { AppError } from "@/src/lib/errors"
 import { rankPhotoMatches, toPhotoDescription } from "@/src/lib/photoMatch"
 import { cleanTags } from "@/src/lib/tagRules"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
@@ -58,7 +59,10 @@ export const describeImageFn = createServerFn({ method: "POST" })
         : "image/jpeg"
       base64Image = `data:${mimeType};base64,${fileBuffer.toString("base64")}`
     } else {
-      throw new Error("Either base64Image or imagePath must be provided")
+      throw new AppError(
+        "INVALID_INPUT",
+        "Kein Bild für die KI-Analyse angegeben",
+      )
     }
 
     return describeItemImage(base64Image)
@@ -157,7 +161,8 @@ async function describeItemImage(base64Image: string) {
       if (isDailyQuota) {
         // Midnight PT is 08:00 UTC (PST) or 07:00 UTC (PDT)
         // In German time: ~09:00 CET/CEST (varies slightly during DST transitions)
-        throw new Error(
+        throw new AppError(
+          "AI_RATE_LIMITED",
           "Tägliches API-Limit erreicht. Versuche es ab ca. 09:00 Uhr erneut.",
         )
       }
@@ -168,7 +173,8 @@ async function describeItemImage(base64Image: string) {
       )
       if (retryInfo?.retryDelay) {
         const seconds = Math.ceil(parseFloat(retryInfo.retryDelay))
-        throw new Error(
+        throw new AppError(
+          "AI_RATE_LIMITED",
           `API-Limit erreicht. Versuche es in ${seconds} Sekunden erneut.`,
         )
       }
@@ -177,46 +183,56 @@ async function describeItemImage(base64Image: string) {
       const retryMatch = message.match(/retry in (\d+(?:\.\d+)?)/i)
       if (retryMatch) {
         const seconds = Math.ceil(parseFloat(retryMatch[1]))
-        throw new Error(
+        throw new AppError(
+          "AI_RATE_LIMITED",
           `API-Limit erreicht. Versuche es in ${seconds} Sekunden erneut.`,
         )
       }
 
-      throw new Error(
+      throw new AppError(
+        "AI_RATE_LIMITED",
         "API-Limit erreicht. Bitte warte einen Moment und versuche es erneut.",
       )
     }
 
     if (statusCode === 402 || message.includes("402")) {
-      throw new Error(
+      throw new AppError(
+        "AI_UNAVAILABLE",
         "KI-Guthaben aufgebraucht. Bitte das Gemini-Konto aufladen.",
       )
     }
 
     if (statusCode === 404 || message.includes("404")) {
-      throw new Error(
+      throw new AppError(
+        "NOT_CONFIGURED",
         `KI-Modell "${geminiModel}" ist nicht verfügbar. Bitte GEMINI_MODEL anpassen.`,
       )
     }
 
     if (statusCode === 431 || message.includes("431")) {
-      throw new Error(
+      throw new AppError(
+        "INVALID_INPUT",
         "Das Bild ist zu groß. Bitte verwende ein kleineres Bild.",
       )
     }
 
     if (statusCode === 400 || message.includes("400")) {
-      throw new Error(
+      throw new AppError(
+        "INVALID_INPUT",
         "Ungültige Anfrage. Das Bild konnte nicht verarbeitet werden.",
       )
     }
 
     if (statusCode === 503 || message.includes("503")) {
-      throw new Error(
+      throw new AppError(
+        "AI_UNAVAILABLE",
         "Der KI-Service ist vorübergehend nicht verfügbar. Bitte versuche es später erneut.",
       )
     }
 
-    throw new Error("KI-Analyse fehlgeschlagen. Bitte versuche es erneut.")
+    throw new AppError(
+      "AI_FAILED",
+      "KI-Analyse fehlgeschlagen. Bitte versuche es erneut.",
+    )
   }
 }

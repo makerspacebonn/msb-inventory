@@ -157,4 +157,35 @@ test.describe("Item CRUD Operations", () => {
       ).toBeVisible()
     })
   })
+
+  test.describe("Errors", () => {
+    test("asks to log in again when the session ran out while editing", async ({
+      authenticatedPage: page,
+    }) => {
+      const name = `Session Ended ${Date.now()}`
+      await page.goto("/items/add")
+      await page.getByLabel("Name", { exact: true }).fill(name)
+
+      // The session ends, e.g. it expired or the user logged out elsewhere
+      await page.context().clearCookies()
+      await page.getByRole("button", { name: "Erstellen" }).click()
+
+      // The "Anmelden" button only appears for the code UNAUTHORIZED, so it
+      // also shows that the error's code made it to the browser
+      const toast = page
+        .getByRole("listitem")
+        .filter({ hasText: "Dafür musst du angemeldet sein." })
+      await expect(toast).toBeVisible()
+      await expect(
+        toast.getByRole("button", { name: "Anmelden" }),
+      ).toBeVisible()
+
+      // Nothing is lost: the form stays with what was typed
+      await expect(page).toHaveURL("/items/add")
+      await expect(page.getByLabel("Name", { exact: true })).toHaveValue(name)
+
+      await toast.getByRole("button", { name: "Anmelden" }).click()
+      await expect(page).toHaveURL("/login")
+    })
+  })
 })

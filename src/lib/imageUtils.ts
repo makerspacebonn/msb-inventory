@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { v7 as uuidv7 } from "uuid"
+import { AppError } from "./errors"
 
 /** Subfolders of SAVE_PATH that hold uploaded images */
 export type ImageFolder = "items" | "locations"
@@ -23,12 +24,15 @@ export function parseImageDataUrl(dataUrl: string): {
 } {
   const match = dataUrl.match(/^data:([a-z]+\/[a-z0-9.+-]+);base64,(.+)$/i)
   if (!match) {
-    throw new Error("Ungültiges Bildformat")
+    throw new AppError("INVALID_INPUT", "Ungültiges Bildformat")
   }
 
   const extension = ALLOWED_IMAGE_TYPES[match[1].toLowerCase()]
   if (!extension) {
-    throw new Error(`Bildtyp ${match[1]} wird nicht unterstützt`)
+    throw new AppError(
+      "INVALID_INPUT",
+      `Bildtyp ${match[1]} wird nicht unterstützt`,
+    )
   }
 
   return { extension, buffer: Buffer.from(match[2], "base64") }

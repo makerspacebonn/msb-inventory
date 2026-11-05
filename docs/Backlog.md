@@ -6,45 +6,6 @@ Open items. Completed items are moved to [BacklogArchive.md](./BacklogArchive.md
 
 Code consolidation and structural improvements identified via architectural review (2026-01-19).
 
-### ARCH-002: Standardize error handling
-**Priority:** Medium
-**Effort:** 1 day
-
-**Description:**
-Create consistent error handling with structured `AppError` class.
-
-**Current Issues:**
-- `aiActions.ts` has excellent granular error handling (lines 62-115)
-- `authGuardMiddleware` throws plain strings: `throw new Error("Unauthorized")`
-- No standardized error response format across server functions
-
-**Implementation:**
-```typescript
-// src/lib/errors.ts
-export class AppError extends Error {
-  constructor(
-    public code: string,
-    message: string,
-    public statusCode: number = 400,
-    public details?: Record<string, unknown>
-  ) {
-    super(message)
-  }
-}
-
-// Usage
-throw new AppError('UNAUTHORIZED', 'Authentication required', 401)
-throw new AppError('VALIDATION_ERROR', 'Invalid item ID', 400, { field: 'itemId' })
-```
-
-**Acceptance Criteria:**
-- [ ] `src/lib/errors.ts` created with `AppError` class
-- [ ] `authMiddleware.ts` uses `AppError` instead of plain strings
-- [ ] Error responses include consistent `{ code, message, statusCode }` format
-- [ ] Client-side error handling updated to use error codes
-
----
-
 ### ARCH-006: Provider-neutral login naming
 **Priority:** Low
 
