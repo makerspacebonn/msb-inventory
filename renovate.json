@@ -1,0 +1,57 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests",
+    ":semanticCommits"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "labels": ["security"]
+  },
+  "packageRules": [
+    {
+      "description": "One PR for minor and patch updates of packages",
+      "matchManagers": ["bun"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "packages minor and patch"
+    },
+    {
+      "description": "Bun everywhere at the same version: images, setup-bun and bun-types",
+      "matchPackageNames": [
+        "oven/bun",
+        "oven-sh/bun",
+        "bun",
+        "bun-types",
+        "@types/bun"
+      ],
+      "groupName": "bun"
+    },
+    {
+      "description": "The Playwright image must match @playwright/test, which Renovate groups as \"playwright monorepo\"",
+      "matchPackageNames": ["mcr.microsoft.com/playwright", "@playwright/test"],
+      "groupName": "playwright monorepo"
+    },
+    {
+      "description": "A new Postgres major needs the data migrated: stay on 15 until that's done",
+      "matchPackageNames": ["postgres"],
+      "allowedVersions": "<16"
+    },
+    {
+      "description": "Overrides pin indirect packages for security fixes; a new major could break the packages that use them",
+      "matchDepTypes": ["overrides"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ]
+}
