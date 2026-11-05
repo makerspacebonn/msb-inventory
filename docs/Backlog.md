@@ -254,24 +254,6 @@ Creating and choosing tags is cumbersome on a phone. Adding a tag should open a 
 
 ---
 
-### UX-025: Better use of screen space when choosing a location
-**Priority:** Medium
-
-**Description:**
-On a phone, choosing a location wastes much of the screen: the title, the item, the search, recent locations, the breadcrumb and the current location take up most of the first screen, so the sublocations, which are what people actually pick from, only start at the bottom edge. Choosing a location should need less scrolling.
-
-**Acceptance Criteria:**
-- [ ] On a phone, the sublocations start within the first screen
-- [ ] Sublocations keep their large photos, as they make places easy to recognize
-- [ ] It stays clear which item is being placed and where in the hierarchy the user is
-- [ ] Placing the item at the current location stays reachable without scrolling
-- [ ] Creating a new sublocation is offered next to placing the item here, not as a tile among the sublocations
-- [ ] The locations page offers creating a sublocation in the same place, so both pages behave alike
-- [ ] Search and recent locations remain available
-- [ ] Recent locations can also be removed on touch screens
-
----
-
 ### PRINT-001: Choose the label printer
 **Priority:** Low
 

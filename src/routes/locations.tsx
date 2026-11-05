@@ -6,7 +6,10 @@ import {
 } from "@components/labels/LabelSheetButtons"
 import { CreateLocationForm } from "@components/location/CreateLocationForm"
 import { CurrentLocationCard } from "@components/location/CurrentLocationCard"
-import { LocationBrowser } from "@components/location/LocationBrowser"
+import {
+  LocationBrowser,
+  NewLocationButton,
+} from "@components/location/LocationBrowser"
 import {
   collectMarkers,
   MarkerStep,
@@ -151,8 +154,8 @@ function RouteComponent() {
   }
 
   return (
-    <div className="max-w-128 mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Locations</h1>
+    <div className="max-w-128 mx-auto">
+      <h1 className="text-2xl font-bold mb-3">Locations</h1>
 
       <LocationBrowser
         locations={childLocations}
@@ -160,11 +163,12 @@ function RouteComponent() {
         onLocationClick={(location: Location) => goToLocation(location.id)}
         onBreadcrumbClick={handleBreadcrumbClick}
         onStartCreate={isLoggedIn ? create.start : undefined}
-        renderHeader={() =>
+        renderHeader={(breadcrumb) =>
           currentLocation ? (
             <CurrentLocationCard
               location={currentLocation}
               markers={markers}
+              breadcrumb={breadcrumb}
               actions={
                 isLoggedIn && (
                   <>
@@ -258,6 +262,10 @@ function RouteComponent() {
                 )
               }
             >
+              {/* Same place as in the item's location picker */}
+              {isLoggedIn && (
+                <NewLocationButton onClick={create.start} className="w-full" />
+              )}
               <LocationPathPhotos locationPath={locationPath} />
             </CurrentLocationCard>
           ) : null

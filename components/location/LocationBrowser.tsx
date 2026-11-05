@@ -1,3 +1,4 @@
+import { Button } from "@components/ui/button"
 import { Input } from "@components/ui/input"
 import type { Location } from "@server/app/types"
 import { MapPinIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react"
@@ -14,7 +15,8 @@ type LocationBrowserProps = {
   onLocationClick: (location: Location) => void
   onBreadcrumbClick: (index: number) => void // -1 = root
   onStartCreate?: () => void
-  renderHeader?: () => ReactNode
+  // Receives the breadcrumb (null at the top level) to show inside it
+  renderHeader?: (breadcrumb: ReactNode) => ReactNode
   renderFooter?: () => ReactNode
   // Recent locations props
   recentLocations?: RecentLocation[]
@@ -36,6 +38,7 @@ export function LocationBrowser({
   onRecentLocationRemove,
   showRecentLocations = false,
 }: LocationBrowserProps) {
+  const atRoot = locationPath.length === 0
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<LocationWithPath[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -60,7 +63,7 @@ export function LocationBrowser({
   return (
     <>
       {/* Search input */}
-      <div className="relative mb-4">
+      <div className="relative mb-3">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           value={searchQuery}
@@ -142,92 +145,119 @@ export function LocationBrowser({
       {/* Browse mode - only show when not searching */}
       {!searchQuery && (
         <>
-          {/* Breadcrumb navigation */}
-          <div className="flex items-center gap-1 mb-4 flex-wrap">
-            <button
-              type="button"
-              className="text-muted-foreground hover:text-foreground hover:underline"
-              onClick={() => onBreadcrumbClick(-1)}
-            >
-              Start
-            </button>
-            {locationPath.map((loc, index) => (
-              <span key={loc.id} className="flex items-center gap-1">
-                <span className="text-muted-foreground">&rarr;</span>
+          {renderHeader?.(
+            locationPath.length > 0 ? (
+              <Breadcrumb
+                ancestors={locationPath.slice(0, -1)}
+                onClick={onBreadcrumbClick}
+              />
+            ) : null,
+          )}
+
+          {/* Location grid. Inside a location, creating a sublocation is
+              offered by the page next to its main action; at the top level
+              there's no such place, so it sits next to the heading */}
+          {(locations.length > 0 || (atRoot && onStartCreate)) && (
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h3 className="text-lg font-semibold">
+                {atRoot ? "Alle Locations" : "Unterorte"}
+              </h3>
+              {atRoot && onStartCreate && (
+                <NewLocationButton onClick={onStartCreate} size="sm" />
+              )}
+            </div>
+          )}
+          {locations.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+              {locations.map((location) => (
                 <button
                   type="button"
-                  className="text-muted-foreground hover:text-foreground hover:underline"
-                  onClick={() => onBreadcrumbClick(index)}
+                  key={location.id}
+                  className="border rounded-lg p-2 flex flex-col items-center gap-2 hover:bg-muted transition-colors"
+                  onClick={() => onLocationClick(location)}
                 >
-                  {loc.name}
-                </button>
-              </span>
-            ))}
-          </div>
-
-          {renderHeader?.()}
-
-          {/* Location grid */}
-          {(locations.length > 0 || onStartCreate) && (
-            <>
-              {locations.length > 0 && (
-                <h3 className="text-lg font-semibold mb-3">
-                  {locationPath.length > 0 ? "Unterorte" : "Alle Locations"}
-                </h3>
-              )}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-                {locations.map((location) => (
-                  <button
-                    type="button"
-                    key={location.id}
-                    className="border rounded-lg p-3 flex flex-col items-center gap-2 hover:bg-muted transition-colors"
-                    onClick={() => onLocationClick(location)}
-                  >
-                    {location.imagePath ? (
-                      <img
-                        src={`/img/locations/${location.imagePath}`}
-                        alt=""
-                        className="w-full aspect-square object-cover rounded-lg"
-                      />
-                    ) : (
-                      <div className="w-full aspect-square rounded-2xl bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
-                        <MapPinIcon className="w-12 h-12 text-gray-400" />
-                      </div>
-                    )}
-                    <span className="text-sm font-medium text-center">
-                      {location.name}
-                    </span>
-                  </button>
-                ))}
-                {onStartCreate && (
-                  <button
-                    type="button"
-                    className="border border-dashed rounded-lg p-3 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
-                    onClick={onStartCreate}
-                  >
-                    <div className="w-full aspect-square flex items-center justify-center">
-                      <PlusIcon className="w-12 h-12" />
+                  {location.imagePath ? (
+                    <img
+                      src={`/img/locations/${location.imagePath}`}
+                      alt=""
+                      className="w-full aspect-square object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="w-full aspect-square rounded-2xl bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
+                      <MapPinIcon className="w-12 h-12 text-gray-400" />
                     </div>
-                    <span className="text-sm font-medium">Neue Location</span>
-                  </button>
-                )}
-              </div>
-            </>
+                  )}
+                  <span className="text-sm font-medium text-center">
+                    {location.name}
+                  </span>
+                </button>
+              ))}
+            </div>
           )}
 
           {/* Empty state */}
-          {locations.length === 0 &&
-            !onStartCreate &&
-            locationPath.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <MapPinIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Keine Locations vorhanden</p>
-              </div>
-            )}
+          {locations.length === 0 && !onStartCreate && atRoot && (
+            <div className="text-center py-8 text-muted-foreground">
+              <MapPinIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>Keine Locations vorhanden</p>
+            </div>
+          )}
 
           {renderFooter?.()}
         </>
       )}
     </>
+  )
+}
+
+/** Path to the current location's parent; the current one is the heading */
+function Breadcrumb({
+  ancestors,
+  onClick,
+}: {
+  ancestors: Location[]
+  onClick: (index: number) => void // -1 = root
+}) {
+  const crumbs = [{ id: "start", name: "Start" }, ...ancestors]
+  return (
+    <nav aria-label="Pfad" className="text-sm">
+      <ol className="flex flex-wrap items-center gap-1 text-muted-foreground">
+        {crumbs.map((crumb, i) => (
+          <li key={crumb.id} className="flex items-center gap-1">
+            {i > 0 && <span aria-hidden="true">&rarr;</span>}
+            <button
+              type="button"
+              className="hover:text-foreground hover:underline"
+              onClick={() => onClick(i - 1)}
+            >
+              {crumb.name}
+            </button>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}
+
+/** Starts creating a location below the current one */
+export function NewLocationButton({
+  onClick,
+  size,
+  className,
+}: {
+  onClick: () => void
+  size?: "sm"
+  className?: string
+}) {
+  return (
+    <Button
+      variant="outline"
+      size={size}
+      className={className}
+      onClick={onClick}
+    >
+      <PlusIcon className="w-4 h-4 mr-1" />
+      Neue Location
+    </Button>
   )
 }

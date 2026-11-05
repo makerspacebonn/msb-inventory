@@ -524,6 +524,32 @@ The welcome line below the front page heading adds nothing the heading doesn't a
 
 ---
 
+### UX-025: Better use of screen space when choosing a location ✅ COMPLETED 2026-11-05
+**Priority:** Medium
+
+**Description:**
+On a phone, choosing a location wastes much of the screen: the title, the item, the search, recent locations, the breadcrumb and the current location take up most of the first screen, so the sublocations, which are what people actually pick from, only start at the bottom edge. Choosing a location should need less scrolling.
+
+**Acceptance Criteria:**
+- [x] On a phone, the sublocations start within the first screen
+- [x] Sublocations keep their large photos, as they make places easy to recognize
+- [x] It stays clear which item is being placed and where in the hierarchy the user is
+- [x] Placing the item at the current location stays reachable without scrolling
+- [x] Creating a new sublocation is offered next to placing the item here, not as a tile among the sublocations
+- [x] The locations page offers creating a sublocation in the same place, so both pages behave alike
+- [x] Search and recent locations remain available
+- [x] Recent locations can also be removed on touch screens
+
+**Implementation Notes:**
+- Measured on a 390 × 844 phone with three recent locations: the first sublocation row starts at 480 px instead of about 690 px and is fully visible
+- One compact top row (back, item, heading) on the picker and the move dialog; no doubled side padding
+- Breadcrumb (parents only) inside `CurrentLocationCard`; `LocationBrowser` hands it to `renderHeader`
+- `NewLocationButton` next to "Hier ablegen", below the card on `/locations`, next to the heading at the top level; the "+" tile is gone
+- Recent locations in one sideways scrolling row with an always visible X
+- E2E: `e2e/tests/item-location-picker.spec.ts`
+
+---
+
 ### PRINT-002: Print location labels ✅ COMPLETED 2026-11-04
 **Priority:** Medium
 

@@ -171,21 +171,27 @@ function RouteComponent() {
   if (step.step === "pick") {
     const { view } = step
     return (
-      <div className="max-w-128 mx-auto p-4">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="max-w-128 mx-auto">
+        {/* One row: back, and which location is being moved */}
+        <div className="flex items-center gap-2 mb-3">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => setStep({ step: "form" })}
+            aria-label="Zurück"
+            className="flex-shrink-0"
           >
-            <ChevronLeftIcon className="w-4 h-4 mr-1" />
-            Zurück
+            <ChevronLeftIcon className="w-5 h-5" />
           </Button>
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold leading-tight">
+              Neuen Ort wählen
+            </h1>
+            <p className="text-xs text-muted-foreground truncate">
+              Wohin soll "{location.name}" verschoben werden?
+            </p>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold mb-6">Neuen Ort wählen</h1>
-        <p className="text-muted-foreground mb-4">
-          Wohin soll "{location.name}" verschoben werden?
-        </p>
 
         <LocationBrowser
           // The edited location can't be its own parent
@@ -195,11 +201,12 @@ function RouteComponent() {
           onBreadcrumbClick={(index) =>
             openPicker(index === -1 ? undefined : view.locationPath[index].id)
           }
-          renderHeader={() =>
+          renderHeader={(breadcrumb) =>
             view.currentLocation ? (
               <CurrentLocationCard
                 location={view.currentLocation}
                 markers={collectMarkers(view.childLocations, view.items)}
+                breadcrumb={breadcrumb}
               >
                 <Button
                   className="w-full"
@@ -211,7 +218,7 @@ function RouteComponent() {
               </CurrentLocationCard>
             ) : (
               <Button
-                className="w-full mb-6"
+                className="w-full mb-4"
                 onClick={() => chooseParent(view, step)}
               >
                 <CheckIcon className="w-4 h-4 mr-1" />

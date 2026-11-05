@@ -1,6 +1,9 @@
 import { CreateLocationForm } from "@components/location/CreateLocationForm"
 import { CurrentLocationCard } from "@components/location/CurrentLocationCard"
-import { LocationBrowser } from "@components/location/LocationBrowser"
+import {
+  LocationBrowser,
+  NewLocationButton,
+} from "@components/location/LocationBrowser"
 import {
   collectMarkers,
   type MarkerPosition,
@@ -174,25 +177,31 @@ function RouteComponent() {
   }
 
   return (
-    <div className="max-w-128 mx-auto p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Button variant="ghost" size="sm" onClick={handleCancel}>
-          <ChevronLeftIcon className="w-4 h-4 mr-1" />
-          Abbrechen
+    <div className="max-w-128 mx-auto">
+      {/* One row: back, the item being placed and what to do with it */}
+      <div className="flex items-center gap-2 mb-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleCancel}
+          aria-label="Abbrechen"
+          className="flex-shrink-0"
+        >
+          <ChevronLeftIcon className="w-5 h-5" />
         </Button>
-      </div>
-      <h1 className="text-2xl font-bold mb-6">Ort auswählen</h1>
-
-      {/* Item context bar */}
-      <div className="flex items-center gap-3 mb-6 p-3 bg-muted rounded-lg">
         {item?.imagePath && (
           <img
             src={`/img/items/${item.imagePath}`}
-            alt={item?.name ?? ""}
-            className="w-12 h-12 rounded-lg object-cover"
+            alt=""
+            className="w-9 h-9 rounded-md object-cover flex-shrink-0"
           />
         )}
-        <span className="font-medium">{item?.name}</span>
+        <h1 className="min-w-0 text-lg font-semibold leading-tight">
+          <span className="block text-xs font-normal text-muted-foreground">
+            Ort auswählen für
+          </span>
+          <span className="block truncate">{item?.name}</span>
+        </h1>
       </div>
 
       <LocationBrowser
@@ -205,13 +214,20 @@ function RouteComponent() {
         onRecentLocationSelect={handleRecentLocationSelect}
         onRecentLocationRemove={removeRecentLocation}
         showRecentLocations={true}
-        renderHeader={() =>
+        renderHeader={(breadcrumb) =>
           currentLocation ? (
-            <CurrentLocationCard location={currentLocation} markers={markers}>
-              <Button className="w-full" onClick={handleChooseCurrent}>
-                <CheckIcon className="w-4 h-4 mr-1" />
-                Hier ablegen
-              </Button>
+            <CurrentLocationCard
+              location={currentLocation}
+              markers={markers}
+              breadcrumb={breadcrumb}
+            >
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={handleChooseCurrent}>
+                  <CheckIcon className="w-4 h-4 mr-1" />
+                  Hier ablegen
+                </Button>
+                <NewLocationButton onClick={create.start} />
+              </div>
             </CurrentLocationCard>
           ) : null
         }

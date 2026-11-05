@@ -9,6 +9,7 @@ import {
 type CurrentLocationCardProps = {
   location: Location
   markers: ExistingMarker[]
+  breadcrumb?: ReactNode // path to the parent, shown above the name
   actions?: ReactNode // small buttons next to the name
   children?: ReactNode // main action below, e.g. "Hier ablegen"
 }
@@ -18,14 +19,16 @@ type CurrentLocationCardProps = {
 export function CurrentLocationCard({
   location,
   markers,
+  breadcrumb,
   actions,
   children,
 }: CurrentLocationCardProps) {
   const [enlarged, setEnlarged] = useState(false)
 
   return (
-    <div className="mb-6 p-4 border-2 rounded-lg space-y-4">
-      <div className="flex flex-wrap items-center gap-4">
+    <div className="mb-4 p-3 border-2 rounded-lg space-y-3">
+      {breadcrumb}
+      <div className="flex flex-wrap items-center gap-3">
         {location.imagePath ? (
           <button
             type="button"
@@ -36,18 +39,20 @@ export function CurrentLocationCard({
             <img
               src={`/img/locations/${location.imagePath}`}
               alt={location.name}
-              className="w-24 h-24 rounded-lg object-cover"
+              className="w-16 h-16 rounded-lg object-cover"
             />
           </button>
         ) : (
-          <div className="w-24 h-24 flex-shrink-0 rounded-lg bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
-            <MapPinIcon className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
+            <MapPinIcon className="w-6 h-6 text-gray-400" />
           </div>
         )}
         <div className="flex-1 min-w-0">
           <h2 className="text-xl font-bold">{location.name}</h2>
           {location.description && (
-            <p className="text-muted-foreground">{location.description}</p>
+            <p className="text-sm text-muted-foreground">
+              {location.description}
+            </p>
           )}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
