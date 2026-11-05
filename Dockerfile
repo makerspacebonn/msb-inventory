@@ -1,12 +1,12 @@
 # Stage 1: Dependencies
-FROM oven/bun:1.4.4-alpine AS deps
+FROM oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a AS deps
 WORKDIR /app
 
 COPY package.json bun.lock bunfig.toml ./
 RUN bun install --frozen-lockfile
 
 # Stage 2: Builder
-FROM oven/bun:1.4.4-alpine AS builder
+FROM oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -16,7 +16,7 @@ ENV NODE_ENV=production
 RUN bun run build
 
 # Stage 3: Production
-FROM oven/bun:1.4.4-alpine AS production
+FROM oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a AS production
 WORKDIR /app
 
 ENV NODE_ENV=production
