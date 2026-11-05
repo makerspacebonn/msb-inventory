@@ -95,6 +95,20 @@ Single sign-on is named after Kanidm throughout the app (settings, login route, 
 
 ---
 
+### ARCH-007: Single level of abstraction
+**Priority:** Low
+
+**Description:**
+Some functions and components mix high-level steps with low-level details, for example a route that describes a workflow and also builds queries or formats data. Code where each function works on a single level of abstraction reads like a description of what happens, and the details sit in well-named helpers. The codebase should be reviewed against this principle and the places where it helps most improved.
+
+**Acceptance Criteria:**
+- [ ] The places that mix levels of abstraction the most are identified
+- [ ] These places read as a sequence of named steps, with the details in helpers
+- [ ] The app works as before
+- [ ] The principle is documented in the development rules, so new code follows it
+
+---
+
 ## UX Improvements
 
 User experience enhancements for common workflows.
@@ -248,6 +262,19 @@ The app already shows the status of every label printer, but labels are always s
 - [ ] Printers that are offline can't be chosen, or are clearly marked
 - [ ] With only one printer, printing works without an extra step
 - [ ] The last used printer is preselected
+
+---
+
+### UX-026: Link items and locations in the changelog
+**Priority:** Medium
+
+**Description:**
+The changelog names the items and locations that were changed, but they can't be opened from there. Users who see a change often want to look at the item or location right away, for example to check where something was moved.
+
+**Acceptance Criteria:**
+- [ ] Items and locations in changelog entries link to their page
+- [ ] Entries of deleted items or locations show the name without a broken link
+- [ ] Links work for all kinds of changes (created, edited, moved, deleted)
 
 ---
 
