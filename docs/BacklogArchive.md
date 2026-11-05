@@ -524,6 +524,31 @@ The welcome line below the front page heading adds nothing the heading doesn't a
 
 ---
 
+### UX-024: Add tags with an overlay on phones ✅ COMPLETED 2026-11-05
+**Priority:** Medium
+
+**Description:**
+Creating and choosing tags is cumbersome on a phone. Adding a tag should open a full-screen overlay: the input sits at the top of the screen, matching existing tags are suggested below it, and one tap or Enter adds the tag and closes the overlay.
+
+**Acceptance Criteria:**
+- [x] A "+" button next to the tags opens the overlay
+- [x] The input is at the top of the screen and focused, so the keyboard doesn't cover it
+- [x] While typing, matching existing tags are suggested below the input
+- [x] Tapping a suggestion adds that tag and closes the overlay
+- [x] Pressing Enter adds the typed text as a new tag and closes the overlay
+- [x] The close button (X) closes the overlay without changing the tags
+- [x] Tags that are already on the item aren't suggested again
+
+**Implementation Notes:**
+- `components/form/TagPicker.tsx` replaces the `emblor` tag input (dependency removed) on all screen sizes: full screen on phones, a dialog near the top on larger screens
+- Suggestions from `fetchAutocompleteTags`, most used first; only the latest request's answer is shown
+- Rules in `src/lib/tagInput.ts`: a known tag typed in another case keeps its existing spelling, duplicates are ignored
+- Combobox pattern: arrow keys select a suggestion, Enter accepts it (or the typed text when nothing is selected)
+- Accepting the AI's tags adds them to the entered ones (`addTags`); the AI suggestion only lists tags the item doesn't have yet
+- E2E: `e2e/tests/tag-picker.spec.ts`
+
+---
+
 ### UX-025: Better use of screen space when choosing a location ✅ COMPLETED 2026-11-05
 **Priority:** Medium
 

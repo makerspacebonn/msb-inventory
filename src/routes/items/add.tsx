@@ -1,10 +1,10 @@
 import { CategoryCombobox } from "@components/form/CategoryCombobox"
 import { MyCropper } from "@components/form/MyCropper"
+import { TagPicker } from "@components/form/TagPicker"
 import { Badge } from "@components/ui/badge"
 import { Button } from "@components/ui/button"
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { type Tag, TagInput } from "emblor"
 import {
   CheckIcon,
   Loader2Icon,
@@ -27,10 +27,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { describeImageFn } from "@/src/actions/aiActions"
 import { fetchCategories } from "@/src/actions/categoryActions"
 import { fetchItem, saveItem } from "@/src/actions/itemActions"
-import { fetchAutocompleteTags } from "@/src/actions/tagActions"
 import type { Item } from "@/src/app/types"
 import type { AiItemDescription } from "@/src/lib/aiItemPrompt"
 import { type ItemFormData, itemSchema } from "@/src/lib/itemSchema"
+import { addTags, suggestionsFor } from "@/src/lib/tagInput"
 
 type AiData = AiItemDescription
 
@@ -87,12 +87,6 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
   const navigate = useNavigate()
   const isEditing = !!existingItem
 
-  const [tags, setTags] = useState<Tag[]>(
-    existingItem?.tags?.map((text, index) => ({ id: `tag-${index}`, text })) ??
-      [],
-  )
-  const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null)
-  const [autocompleteTags, setAutocompleteTags] = useState<Tag[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [aiData, setAiData] = useState<AiData | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
@@ -113,14 +107,6 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
   // Fetch autocomplete suggestions on mount
   useEffect(() => {
     fetchCategories().then(setCategories)
-    fetchAutocompleteTags({ data: undefined }).then((existingTags) => {
-      setAutocompleteTags(
-        existingTags.map((text, index) => ({
-          id: `suggestion-${index}`,
-          text,
-        })),
-      )
-    })
   }, [])
 
   // Resize textareas on mount when editing (delay to allow form values to populate)
@@ -342,61 +328,36 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
           {(field) => (
             <FieldContent>
               <FieldLabel htmlFor={field.name}>Tags</FieldLabel>
-              <TagInput
-                placeholder="Tag eingeben..."
-                tags={tags}
-                setTags={(newTags) => {
-                  const resolvedTags =
-                    typeof newTags === "function" ? newTags(tags) : newTags
-                  setTags(resolvedTags)
-                  field.setValue(resolvedTags.map((t: Tag) => t.text))
-                }}
-                activeTagIndex={activeTagIndex}
-                setActiveTagIndex={setActiveTagIndex}
-                enableAutocomplete
-                autocompleteOptions={autocompleteTags}
-                allowDuplicates={false}
-                restrictTagsToAutocompleteOptions={false}
-                styleClasses={{
-                  input: "w-full sm:max-w-[200px]",
-                  inlineTagsContainer:
-                    "rounded-md border border-input bg-background px-3 py-2 flex-wrap gap-1.5",
-                  tag: {
-                    body: "bg-emerald-950 text-emerald-100 hover:bg-emerald-900 rounded-full px-3 py-1 text-sm",
-                    closeButton: "text-emerald-300 hover:text-white ml-1",
-                  },
-                  autoComplete: {
-                    popoverContent:
-                      "bg-card border rounded-md shadow-lg mt-1 p-1 z-50",
-                    commandList: "max-h-48 bg-card",
-                    commandGroup: "p-1 bg-card",
-                    commandItem:
-                      "px-3 py-2 rounded-md cursor-pointer hover:bg-muted text-sm bg-card",
-                  },
-                }}
+              <TagPicker
+                id={field.name}
+                tags={field.state.value ?? []}
+                onChange={(next) => field.handleChange(next)}
               />
               {!field.state.meta.isValid && (
                 <FieldError errors={field.state.meta.errors} />
               )}
-              {aiData?.schlagworte &&
-                aiData.schlagworte.length > 0 &&
-                !dismissedSuggestions.has("tags") && (
-                  <InlineTagsSuggestion
-                    tags={aiData.schlagworte}
-                    onUse={() => {
-                      const tagObjects = aiData.schlagworte.map(
-                        (text, index) => ({
-                          id: `ai-${index}`,
-                          text,
-                        }),
-                      )
-                      setTags(tagObjects)
-                      field.setValue(aiData.schlagworte)
-                      dismissSuggestion("tags")
-                    }}
-                    onDismiss={() => dismissSuggestion("tags")}
-                  />
-                )}
+              {(() => {
+                // Only the AI's tags the item doesn't have yet; accepting
+                // them adds to the tags entered so far instead of replacing
+                const current = field.state.value ?? []
+                const newTags = suggestionsFor(
+                  aiData?.schlagworte ?? [],
+                  current,
+                )
+                return (
+                  newTags.length > 0 &&
+                  !dismissedSuggestions.has("tags") && (
+                    <InlineTagsSuggestion
+                      tags={newTags}
+                      onUse={() => {
+                        field.handleChange(addTags(current, newTags))
+                        dismissSuggestion("tags")
+                      }}
+                      onDismiss={() => dismissSuggestion("tags")}
+                    />
+                  )
+                )
+              })()}
             </FieldContent>
           )}
         </form.Field>
@@ -692,7 +653,10 @@ function InlineTagsSuggestion({
   onDismiss: () => void
 }) {
   return (
-    <div className="mt-1.5 pl-3 border-l-2 border-emerald-500/40">
+    <fieldset
+      aria-label="KI-Vorschlag für Tags"
+      className="mt-1.5 min-w-0 pl-3 border-l-2 border-emerald-500/40"
+    >
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
         <SparklesIcon className="w-3 h-3 text-emerald-500" />
         <span>KI-Vorschlag</span>
@@ -722,6 +686,6 @@ function InlineTagsSuggestion({
           Verwerfen
         </button>
       </div>
-    </div>
+    </fieldset>
   )
 }

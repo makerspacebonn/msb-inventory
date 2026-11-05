@@ -237,23 +237,6 @@ Items are sometimes added twice because nobody knows one already exists. When ad
 
 ---
 
-### UX-024: Add tags with an overlay on phones
-**Priority:** Medium
-
-**Description:**
-Creating and choosing tags is cumbersome on a phone. Adding a tag should open a full-screen overlay: the input sits at the top of the screen, matching existing tags are suggested below it, and one tap or Enter adds the tag and closes the overlay.
-
-**Acceptance Criteria:**
-- [ ] A "+" button next to the tags opens the overlay
-- [ ] The input is at the top of the screen and focused, so the keyboard doesn't cover it
-- [ ] While typing, matching existing tags are suggested below the input
-- [ ] Tapping a suggestion adds that tag and closes the overlay
-- [ ] Pressing Enter adds the typed text as a new tag and closes the overlay
-- [ ] The close button (X) closes the overlay without changing the tags
-- [ ] Tags that are already on the item aren't suggested again
-
----
-
 ### PRINT-001: Choose the label printer
 **Priority:** Low
 

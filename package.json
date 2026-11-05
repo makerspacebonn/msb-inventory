@@ -46,7 +46,6 @@
     "clsx": "^2.1.1",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
-    "emblor": "^1.4.8",
     "eta": "^4.6.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.22.0",
