@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { Clock, Image, MapPin, Package } from "lucide-react"
+import { ItemCard } from "@/components/ItemCard"
 import {
   Card,
   CardContent,
@@ -9,7 +10,9 @@ import {
 } from "@/components/ui/card"
 import {
   fetchInventoryStats,
+  fetchMostViewedItems,
   type InventoryStats,
+  type MostViewedItem,
 } from "@/src/actions/statsActions"
 
 export const Route = createFileRoute("/")({
@@ -17,8 +20,11 @@ export const Route = createFileRoute("/")({
     meta: [{ title: "Startseite | MSB Inventar" }],
   }),
   loader: async () => {
-    const stats = await fetchInventoryStats()
-    return { stats }
+    const [stats, mostViewed] = await Promise.all([
+      fetchInventoryStats(),
+      fetchMostViewedItems(),
+    ])
+    return { stats, mostViewed }
   },
   component: RouteComponent,
 })
@@ -101,7 +107,7 @@ function StatsGrid({ stats }: { stats: InventoryStats }) {
 }
 
 function RouteComponent() {
-  const { stats } = Route.useLoaderData()
+  const { stats, mostViewed } = Route.useLoaderData()
 
   return (
     <div className="text-center content-center py-8">
@@ -110,6 +116,37 @@ function RouteComponent() {
       </h1>
 
       <StatsGrid stats={stats} />
+      <Link
+        to="/stats"
+        search={{ days: 30 }}
+        className="mt-3 inline-block text-sm underline underline-offset-4"
+      >
+        Aktivität über die Zeit
+      </Link>
+      <MostViewed items={mostViewed} />
     </div>
+  )
+}
+
+function MostViewed({ items }: { items: MostViewedItem[] }) {
+  if (items.length === 0) return null
+  return (
+    <section className="mx-auto mt-10 w-full max-w-4xl text-left">
+      <h2 className="mb-3 text-lg font-semibold">Meistgesehen (7 Tage)</h2>
+      <ol
+        aria-label="Meistgesehen (7 Tage)"
+        className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5"
+      >
+        {items.map(({ item, views }) => (
+          <li key={item.id}>
+            <ItemCard item={item} />
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {views.toLocaleString("de-DE")}{" "}
+              {views === 1 ? "Aufruf" : "Aufrufe"}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </section>
   )
 }

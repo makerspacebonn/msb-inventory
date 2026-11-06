@@ -6,15 +6,18 @@ import {
   ChangelogTable,
   type ItemInsert,
   ItemTable,
+  type ItemViewInsert,
   type LocationInsert,
   LocationTable,
+  type SearchCountInsert,
   type UserInsert,
   UserTable,
 } from "../drizzle/schema"
 import { AppError } from "./errors"
 
-// v1 backups (no formatVersion) only contained items and locations
-export const BACKUP_FORMAT_VERSION = 2
+// v1 backups (no formatVersion) only contained items and locations;
+// v2 had no search counts and item views
+export const BACKUP_FORMAT_VERSION = 3
 
 // Every table in the schema must appear in exactly one of these lists,
 // so a new table can't be silently left out of backups.
@@ -24,6 +27,8 @@ export const BACKED_UP_TABLES = [
   "locations",
   "items",
   "changelog",
+  "search_counts",
+  "item_views",
 ] as const
 
 export const EXCLUDED_TABLES = {
@@ -41,6 +46,10 @@ export interface BackupTables {
   locations: (LocationInsert & { id?: number })[]
   items: ItemInsert[]
   changelog: ChangelogInsert[]
+  /** Missing in backups before v3: restoring one keeps the current counts */
+  searchCounts?: SearchCountInsert[]
+  /** Missing in backups before v3 */
+  itemViews?: ItemViewInsert[]
 }
 
 export interface BackupData {
@@ -110,6 +119,8 @@ export function parseBackupData(json: string): BackupData {
         ChangelogTable,
         raw.tables.changelog,
       ),
+      searchCounts: raw.tables.searchCounts as SearchCountInsert[] | undefined,
+      itemViews: raw.tables.itemViews as ItemViewInsert[] | undefined,
     },
   }
 }

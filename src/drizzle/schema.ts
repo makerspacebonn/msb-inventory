@@ -8,10 +8,12 @@ import {
   type AnyPgColumn,
   boolean,
   customType,
+  date,
   index,
   integer,
   json,
   pgTable,
+  primaryKey,
   serial,
   text,
   timestamp,
@@ -214,3 +216,32 @@ export const CategoryTable = pgTable("categories", {
 
 export type CategorySelect = InferSelectModel<typeof CategoryTable>
 export type CategoryInsert = InferInsertModel<typeof CategoryTable>
+
+// Number of searches per calendar day in Bonn (YYYY-MM-DD), for the activity
+// statistics. Counts only: neither the search text nor who searched is kept
+export const SearchCountTable = pgTable("search_counts", {
+  day: date("day", { mode: "string" }).primaryKey(),
+  count: integer("count").notNull().default(0),
+})
+
+export type SearchCountSelect = InferSelectModel<typeof SearchCountTable>
+export type SearchCountInsert = InferInsertModel<typeof SearchCountTable>
+
+// Views of an item's page per calendar day in Bonn, for "most viewed" on
+// the front page. Counts only, not who viewed. Removed with the item
+export const ItemViewTable = pgTable(
+  "item_views",
+  {
+    itemId: integer("item_id")
+      .notNull()
+      .references(() => ItemTable.id, { onDelete: "cascade" }),
+    day: date("day", { mode: "string" }).notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => [
+    primaryKey({ columns: [t.itemId, t.day] }),
+    index("idx_item_views_day").on(t.day),
+  ],
+)
+
+export type ItemViewInsert = InferInsertModel<typeof ItemViewTable>

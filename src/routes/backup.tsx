@@ -7,6 +7,7 @@ import {
   deleteBackup,
   generateBackup,
   listBackups,
+  type RestoreResult,
   restoreBackup,
 } from "@/src/actions/backupActions"
 import { requireAdmin } from "@/src/lib/access"
@@ -66,9 +67,7 @@ function BackupPage() {
     setRestoreResult(null)
     try {
       const result = await restoreBackup({ data: filename })
-      setRestoreResult(
-        `Wiederherstellung erfolgreich: ${result.locationsRestored} Standorte, ${result.itemsRestored} Items, ${result.categoriesRestored} Kategorien, ${result.changelogRestored} Änderungen, ${result.usersAdded} neue Benutzer, ${result.imagesRestored} Bilder`,
-      )
+      setRestoreResult(restoreSummary(result))
     } catch (error) {
       console.error("Restore failed:", error)
       setRestoreResult(errorMessage(error, "Wiederherstellung fehlgeschlagen"))
@@ -167,4 +166,22 @@ function BackupPage() {
       )}
     </>
   )
+}
+
+function restoreSummary(result: RestoreResult): string {
+  const parts = [
+    `${result.locationsRestored} Standorte`,
+    `${result.itemsRestored} Items`,
+    `${result.categoriesRestored} Kategorien`,
+    `${result.changelogRestored} Änderungen`,
+    result.searchDaysRestored === null
+      ? "Suchstatistik unverändert (älteres Backup)"
+      : `Suchstatistik für ${result.searchDaysRestored} Tage`,
+    result.itemViewsRestored === null
+      ? "keine Aufrufe (älteres Backup)"
+      : `${result.itemViewsRestored} Einträge zu Aufrufen`,
+    `${result.usersAdded} neue Benutzer`,
+    `${result.imagesRestored} Bilder`,
+  ]
+  return `Wiederherstellung erfolgreich: ${parts.join(", ")}`
 }

@@ -16,6 +16,7 @@ import { Route as LabelsRouteImport } from './routes/labels'
 import { Route as LocationsRouteImport } from './routes/locations'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrintersRouteImport } from './routes/printers'
+import { Route as StatsRouteImport } from './routes/stats'
 import { Route as ApiItemsRouteImport } from './routes/api/items'
 import { Route as IItemIdRouteImport } from './routes/i.$itemId'
 import { Route as ImgSplatRouteImport } from './routes/img.$'
@@ -63,6 +64,11 @@ const LoginRoute = LoginRouteImport.update({
 const PrintersRoute = PrintersRouteImport.update({
   id: '/printers',
   path: '/printers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiItemsRoute = ApiItemsRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/printers': typeof PrintersRoute
+  '/stats': typeof StatsRoute
   '/api/items': typeof ApiItemsRoute
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/printers': typeof PrintersRoute
+  '/stats': typeof StatsRoute
   '/api/items': typeof ApiItemsRoute
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
   '/printers': typeof PrintersRoute
+  '/stats': typeof StatsRoute
   '/api/items': typeof ApiItemsRoute
   '/i/$itemId': typeof IItemIdRoute
   '/img/$': typeof ImgSplatRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/locations'
     | '/login'
     | '/printers'
+    | '/stats'
     | '/api/items'
     | '/i/$itemId'
     | '/img/$'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/locations'
     | '/login'
     | '/printers'
+    | '/stats'
     | '/api/items'
     | '/i/$itemId'
     | '/img/$'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/locations'
     | '/login'
     | '/printers'
+    | '/stats'
     | '/api/items'
     | '/i/$itemId'
     | '/img/$'
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   LocationsRoute: typeof LocationsRoute
   LoginRoute: typeof LoginRoute
   PrintersRoute: typeof PrintersRoute
+  StatsRoute: typeof StatsRoute
   ApiItemsRoute: typeof ApiItemsRoute
   IItemIdRoute: typeof IItemIdRoute
   ImgSplatRoute: typeof ImgSplatRoute
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/printers'
       fullPath: '/printers'
       preLoaderRoute: typeof PrintersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/items': {
@@ -453,6 +473,7 @@ const rootRouteChildren: RootRouteChildren = {
   LocationsRoute: LocationsRoute,
   LoginRoute: LoginRoute,
   PrintersRoute: PrintersRoute,
+  StatsRoute: StatsRoute,
   ApiItemsRoute: ApiItemsRoute,
   IItemIdRoute: IItemIdRoute,
   ImgSplatRoute: ImgSplatRoute,

@@ -9,15 +9,34 @@ import { diffFields } from "@/src/lib/changelogUtils"
 import { errorMessage } from "@/src/lib/errors"
 import { storeImage } from "@/src/lib/imageUtils"
 import { itemSchema } from "@/src/lib/itemSchema"
-import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
+import {
+  authGuardMiddleware,
+  authMiddleware,
+} from "@/src/middleware/authMiddleware"
 import { CategoryRepository } from "@/src/repositories/CategoryRepository"
 import { recordChange } from "@/src/repositories/ChangelogRepository"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
 import { LocationRepository } from "@/src/repositories/LocationRepository"
+import {
+  recordItemView,
+  recordSearch,
+} from "@/src/repositories/StatsRepository"
 
 export const searchItems = createServerFn()
   .validator((query: string) => query)
   .handler(async ({ data: query }): Promise<Item[]> => {
+    return new ItemRepository().search(query)
+  })
+
+/**
+ * The search on the results page (/items?q=), counted for the activity
+ * statistics. The suggestions while typing in the header use searchItems
+ * and aren't counted, as they run on every pause in typing
+ */
+export const searchInventory = createServerFn()
+  .validator((query: string) => query)
+  .handler(async ({ data: query }): Promise<Item[]> => {
+    await recordSearch()
     return new ItemRepository().search(query)
   })
 
@@ -33,11 +52,26 @@ export const fetchItem = createServerFn()
     return new ItemRepository().findById(itemId)
   })
 
-/** Item with its full location chain, plus the base URL for QR codes */
+/**
+ * Item with its full location chain, plus the base URL for QR codes. Used
+ * by the item page only, so each call counts as a view
+ */
 export const fetchItemWithLocation = createServerFn()
+  .middleware([authMiddleware])
   .validator(z.object({ itemId: z.number() }))
-  .handler(async ({ data: { itemId } }) => {
+  .handler(async ({ data: { itemId }, context }) => {
     const item = await new ItemRepository().findById(itemId)
+    if (item) {
+      const { getRequest, getRequestIP } = await import(
+        "@tanstack/react-start/server"
+      )
+      await recordItemView(item.id, {
+        userId: context.userId,
+        // Behind the reverse proxy, the visitor's address is in X-Forwarded-For
+        ip: getRequestIP({ xForwardedFor: true }),
+        userAgent: getRequest().headers.get("user-agent"),
+      })
+    }
     if (item?.locationId) {
       item.locationChain = await new LocationRepository().findChainForId(
         item.locationId,

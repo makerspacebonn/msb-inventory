@@ -149,6 +149,29 @@ curl http://localhost:3000/api/auth/get-session
 
 User experience enhancements for common workflows.
 
+### UX-029: Activity statistics ✅ COMPLETED 2026-11-06
+**Priority:** Low
+
+**Description:**
+The front page shows totals, but not how the inventory is used over time. Statistics per day for searches, additions, changes and deletions, shown as a graph, would show whether the inventory is kept up to date and how much it's used. A view per user could show who contributes.
+
+**Acceptance Criteria:**
+- [x] Searches, additions, changes and deletions are counted per day
+- [x] A graph shows these numbers over a selectable period
+- [x] Optionally the numbers can be shown per user
+- [x] Searches are counted without storing what was searched for by whom
+
+**Implementation Notes:**
+- `/stats` (linked from the front page): totals, line charts "Suchen pro Tag" and "Änderungen pro Tag" (three lines, one scale), period 7/30/90 days in the URL; open to everyone, "Änderungen pro Person" only for logged-in users (the server leaves it out for visitors)
+- Changes come from the changelog; searches are counted in the new table `search_counts` (one row per day, no text, no person): the results page (`searchInventory`) and photo search count, the header suggestions while typing don't
+- Days are calendar days in Bonn (`src/lib/activityStats.ts`, unit-tested)
+- `components/stats/LineChart.tsx`: plain SVG, no chart library; crosshair tooltip, keyboard as a slider (arrow keys, Home/End) with the day's values as `aria-valuetext`, legend for several lines, table view; line colors are the reference palette's first three dark slots, validated against the app's dark surface
+- Also added: views per item (`item_views`, per item and day, removed with the item). A person's views of an item count once per hour (`src/lib/viewCounting.ts`): logged-in users by user id, visitors by a hash of IP address and browser with a daily changing salt, kept in memory only, so no cookie and no consent is needed; and "Meistgesehen (7 Tage)" with the five most viewed items on the front page
+- Backups (format 3) include `search_counts` and `item_views`; restoring an older backup keeps the current search counts
+- E2E: `e2e/tests/stats.spec.ts`, backup restore checks both new tables
+
+---
+
 ### UX-001: Auto-select newly created location ✅ COMPLETED 2026-02-05
 **Priority:** Medium
 **Effort:** 0.5 day

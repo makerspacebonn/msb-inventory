@@ -9,7 +9,9 @@ import {
   CategoryTable,
   ChangelogTable,
   ItemTable,
+  ItemViewTable,
   LocationTable,
+  SearchCountTable,
   UserTable,
 } from "../drizzle/schema"
 import {
@@ -56,18 +58,36 @@ export const generateBackup = createServerFn()
     const zipPath = path.join(BACKUPS_DIR, `${backupName}.zip`)
 
     // Export database tables
-    const [users, categories, locations, items, changelog] = await Promise.all([
+    const [
+      users,
+      categories,
+      locations,
+      items,
+      changelog,
+      searchCounts,
+      itemViews,
+    ] = await Promise.all([
       db.select().from(UserTable),
       db.select().from(CategoryTable),
       db.select().from(LocationTable),
       db.select().from(ItemTable),
       db.select().from(ChangelogTable),
+      db.select().from(SearchCountTable),
+      db.select().from(ItemViewTable),
     ])
 
     const databaseExport: BackupData = {
       formatVersion: BACKUP_FORMAT_VERSION,
       exportedAt: new Date().toISOString(),
-      tables: { users, categories, locations, items, changelog },
+      tables: {
+        users,
+        categories,
+        locations,
+        items,
+        changelog,
+        searchCounts,
+        itemViews,
+      },
     }
 
     // Streams the images from disk into the zip, so the backup size isn't
@@ -143,6 +163,10 @@ export interface RestoreResult {
   locationsRestored: number
   categoriesRestored: number
   changelogRestored: number
+  /** Days with search counts; null when the backup has none (before v3) */
+  searchDaysRestored: number | null
+  /** Rows of item views; null when the backup has none (before v3) */
+  itemViewsRestored: number | null
   usersAdded: number
   imagesRestored: number
 }
@@ -183,7 +207,15 @@ export const restoreBackup = createServerFn()
 
     // Parse before touching anything, so a broken backup changes nothing
     const backupData = parseBackupData(databaseJson)
-    const { users, categories, locations, items, changelog } = backupData.tables
+    const {
+      users,
+      categories,
+      locations,
+      items,
+      changelog,
+      searchCounts,
+      itemViews,
+    } = backupData.tables
 
     // All-or-nothing: if any insert fails, the current data stays untouched
     const usersAdded = await db.transaction(async (tx) => {
@@ -201,6 +233,8 @@ export const restoreBackup = createServerFn()
 
       // Changelog and categories have no FKs; items reference locations
       await tx.delete(ChangelogTable)
+      // Item views belong to the items being replaced
+      await tx.delete(ItemViewTable)
       await tx.delete(ItemTable)
       await tx.delete(LocationTable)
       await tx.delete(CategoryTable)
@@ -233,6 +267,18 @@ export const restoreBackup = createServerFn()
         await tx.insert(ChangelogTable).overridingSystemValue().values(rows)
       }
 
+      for (const rows of chunk(itemViews ?? [])) {
+        await tx.insert(ItemViewTable).values(rows)
+      }
+
+      // Older backups have no search counts: the current ones stay
+      if (searchCounts) {
+        await tx.delete(SearchCountTable)
+        for (const rows of chunk(searchCounts)) {
+          await tx.insert(SearchCountTable).values(rows)
+        }
+      }
+
       // Continue ids after the highest restored one
       for (const table of ["categories", "locations", "items", "changelog"]) {
         await tx.execute(
@@ -253,6 +299,8 @@ export const restoreBackup = createServerFn()
       locationsRestored: locations.length,
       categoriesRestored: categories.length,
       changelogRestored: changelog.length,
+      searchDaysRestored: searchCounts?.length ?? null,
+      itemViewsRestored: itemViews?.length ?? null,
       usersAdded,
       imagesRestored,
     }

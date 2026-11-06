@@ -46,11 +46,18 @@ describe("parseBackupData", () => {
               changedAt: "2026-02-01T00:00:00.000Z",
             },
           ],
+          searchCounts: [{ day: "2026-02-01", count: 12 }],
+          itemViews: [{ itemId: 7, day: "2026-02-01", count: 3 }],
         },
       }),
     )
 
     expect(data.formatVersion).toBe(BACKUP_FORMAT_VERSION)
+    // Days stay strings: they are calendar days, not moments
+    expect(data.tables.searchCounts).toEqual([{ day: "2026-02-01", count: 12 }])
+    expect(data.tables.itemViews).toEqual([
+      { itemId: 7, day: "2026-02-01", count: 3 },
+    ])
     expect(data.tables.users[0].createdAt).toEqual(
       new Date("2026-01-01T00:00:00.000Z"),
     )
@@ -78,6 +85,8 @@ describe("parseBackupData", () => {
     expect(data.formatVersion).toBe(1)
     expect(data.tables.users).toEqual([])
     expect(data.tables.changelog).toEqual([])
+    // Restoring it leaves the current search counts alone
+    expect(data.tables.searchCounts).toBeUndefined()
     expect(data.tables.locations).toHaveLength(1)
     expect(data.tables.categories).toEqual([
       { name: "Elektronik" },

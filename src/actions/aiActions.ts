@@ -13,6 +13,7 @@ import { cleanTags } from "@/src/lib/tagRules"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { CategoryRepository } from "@/src/repositories/CategoryRepository"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
+import { recordSearch } from "@/src/repositories/StatsRepository"
 import { TagsRepository } from "@/src/repositories/TagsRepository"
 
 // Safety net for what the prompt asks: drop stop tags and tags repeating
@@ -76,6 +77,7 @@ export const searchByPhotoFn = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
   .validator(z.object({ base64Image: z.string().startsWith("data:image/") }))
   .handler(async ({ data }) => {
+    await recordSearch()
     const description = toPhotoDescription(
       await describeItemImage(data.base64Image),
     )

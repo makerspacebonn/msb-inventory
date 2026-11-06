@@ -230,20 +230,6 @@ The backup page is hard to use on a phone: the list of backups and its actions d
 
 ---
 
-### UX-029: Activity statistics
-**Priority:** Low
-
-**Description:**
-The front page shows totals, but not how the inventory is used over time. Statistics per day for searches, additions, changes and deletions, shown as a graph, would show whether the inventory is kept up to date and how much it's used. A view per user could show who contributes.
-
-**Acceptance Criteria:**
-- [ ] Searches, additions, changes and deletions are counted per day
-- [ ] A graph shows these numbers over a selectable period
-- [ ] Optionally the numbers can be shown per user
-- [ ] Searches are counted without storing what was searched for by whom
-
----
-
 ## AI Features
 
 Item recognition and suggestions with generative AI.
