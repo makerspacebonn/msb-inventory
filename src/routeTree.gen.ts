@@ -30,6 +30,7 @@ import { Route as ApiE2eCreateSessionRouteImport } from './routes/api/e2e/create
 import { Route as ApiE2eGroupChangesRouteImport } from './routes/api/e2e/group-changes'
 import { Route as BackupDownloadSplatRouteImport } from './routes/backup.download.$'
 import { Route as LocationsLocationIdEditRouteImport } from './routes/locations_.$locationId.edit'
+import { Route as LocationsLocationIdImageRouteImport } from './routes/locations_.$locationId.image'
 import { Route as ItemsItemIdLocationAddRouteImport } from './routes/items/$itemId/location/add'
 
 const IndexRoute = IndexRouteImport.update({
@@ -137,6 +138,12 @@ const LocationsLocationIdEditRoute = LocationsLocationIdEditRouteImport.update({
   path: '/locations/$locationId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LocationsLocationIdImageRoute =
+  LocationsLocationIdImageRouteImport.update({
+    id: '/locations_/$locationId/image',
+    path: '/locations/$locationId/image',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ItemsItemIdLocationAddRoute = ItemsItemIdLocationAddRouteImport.update({
   id: '/items/$itemId/location/add',
   path: '/items/$itemId/location/add',
@@ -165,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/api/e2e/group-changes': typeof ApiE2eGroupChangesRoute
   '/backup/download/$': typeof BackupDownloadSplatRoute
   '/locations/$locationId/edit': typeof LocationsLocationIdEditRoute
+  '/locations/$locationId/image': typeof LocationsLocationIdImageRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRoutesByTo {
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/api/e2e/group-changes': typeof ApiE2eGroupChangesRoute
   '/backup/download/$': typeof BackupDownloadSplatRoute
   '/locations/$locationId/edit': typeof LocationsLocationIdEditRoute
+  '/locations/$locationId/image': typeof LocationsLocationIdImageRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRoutesById {
@@ -214,6 +223,7 @@ export interface FileRoutesById {
   '/api/e2e/group-changes': typeof ApiE2eGroupChangesRoute
   '/backup/download/$': typeof BackupDownloadSplatRoute
   '/locations_/$locationId/edit': typeof LocationsLocationIdEditRoute
+  '/locations_/$locationId/image': typeof LocationsLocationIdImageRoute
   '/items/$itemId/location/add': typeof ItemsItemIdLocationAddRoute
 }
 export interface FileRouteTypes {
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/api/e2e/group-changes'
     | '/backup/download/$'
     | '/locations/$locationId/edit'
+    | '/locations/$locationId/image'
     | '/items/$itemId/location/add'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/api/e2e/group-changes'
     | '/backup/download/$'
     | '/locations/$locationId/edit'
+    | '/locations/$locationId/image'
     | '/items/$itemId/location/add'
   id:
     | '__root__'
@@ -288,6 +300,7 @@ export interface FileRouteTypes {
     | '/api/e2e/group-changes'
     | '/backup/download/$'
     | '/locations_/$locationId/edit'
+    | '/locations_/$locationId/image'
     | '/items/$itemId/location/add'
   fileRoutesById: FileRoutesById
 }
@@ -312,6 +325,7 @@ export interface RootRouteChildren {
   ApiE2eCreateSessionRoute: typeof ApiE2eCreateSessionRoute
   ApiE2eGroupChangesRoute: typeof ApiE2eGroupChangesRoute
   LocationsLocationIdEditRoute: typeof LocationsLocationIdEditRoute
+  LocationsLocationIdImageRoute: typeof LocationsLocationIdImageRoute
   ItemsItemIdLocationAddRoute: typeof ItemsItemIdLocationAddRoute
 }
 
@@ -464,6 +478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LocationsLocationIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/locations_/$locationId/image': {
+      id: '/locations_/$locationId/image'
+      path: '/locations/$locationId/image'
+      fullPath: '/locations/$locationId/image'
+      preLoaderRoute: typeof LocationsLocationIdImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/items/$itemId/location/add': {
       id: '/items/$itemId/location/add'
       path: '/items/$itemId/location/add'
@@ -506,6 +527,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiE2eCreateSessionRoute: ApiE2eCreateSessionRoute,
   ApiE2eGroupChangesRoute: ApiE2eGroupChangesRoute,
   LocationsLocationIdEditRoute: LocationsLocationIdEditRoute,
+  LocationsLocationIdImageRoute: LocationsLocationIdImageRoute,
   ItemsItemIdLocationAddRoute: ItemsItemIdLocationAddRoute,
 }
 export const routeTree = rootRouteImport

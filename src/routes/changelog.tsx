@@ -34,6 +34,7 @@ import type {
 } from "@/src/app/types"
 import { useAuth } from "@/src/context/AuthContext"
 import { requireLogin } from "@/src/lib/access"
+import { type EntryGroup, groupEntries } from "@/src/lib/changelogGroups"
 
 export const Route = createFileRoute("/changelog")({
   component: ChangelogPage,
@@ -82,11 +83,11 @@ function ChangelogPage() {
       ) : (
         <>
           <div className="border rounded-lg overflow-hidden">
-            {data.items.map((entry) => (
-              <ChangelogEntryCard
-                key={entry.id}
-                entry={entry}
-                isHighlighted={highlight === entry.id}
+            {groupEntries(data.items).map((group) => (
+              <ChangelogGroup
+                key={group.main.id}
+                group={group}
+                highlight={highlight}
               />
             ))}
           </div>
@@ -114,6 +115,54 @@ function ChangelogPage() {
             </Button>
           </div>
         </>
+      )}
+    </div>
+  )
+}
+
+/** An entry, with the others of the same action folded away below it */
+function ChangelogGroup({
+  group,
+  highlight,
+}: {
+  group: EntryGroup<ChangelogEntryWithUser>
+  highlight: number | undefined
+}) {
+  const { main, others } = group
+  const [showOthers, setShowOthers] = useState(
+    others.some((entry) => entry.id === highlight),
+  )
+
+  return (
+    <div data-testid="changelog-group">
+      <ChangelogEntryCard entry={main} isHighlighted={highlight === main.id} />
+      {others.length > 0 && (
+        <div className="border-b">
+          <button
+            type="button"
+            aria-expanded={showOthers}
+            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:bg-muted/50"
+            onClick={() => setShowOthers(!showOthers)}
+          >
+            <ChevronDownIcon
+              className={`h-4 w-4 transition-transform ${showOthers ? "rotate-180" : ""}`}
+            />
+            {others.length === 1
+              ? "1 weitere Änderung dieser Aktion"
+              : `${others.length} weitere Änderungen dieser Aktion`}
+          </button>
+          {showOthers && (
+            <div className="border-t pl-4">
+              {others.map((entry) => (
+                <ChangelogEntryCard
+                  key={entry.id}
+                  entry={entry}
+                  isHighlighted={highlight === entry.id}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )

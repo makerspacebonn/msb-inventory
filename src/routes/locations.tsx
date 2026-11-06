@@ -188,39 +188,57 @@ function RouteComponent() {
                         <PencilIcon className="w-4 h-4" />
                       </Link>
                     </Button>
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          aria-label="Bild hinzufügen"
+                    {/* With markers on the image, they have to move with it */}
+                    {currentLocation.imagePath && markers.length > 0 ? (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link
+                          to="/locations/$locationId/image"
+                          params={{ locationId: currentLocation.id.toString() }}
+                          aria-label="Bild ersetzen"
                         >
                           <ImagePlusIcon className="w-4 h-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Bild hinzufügen</DialogTitle>
-                          <DialogDescription>
-                            Füge ein Bild zu "{currentLocation.name}" hinzu.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4">
-                          <MyCropper onChange={(image) => setNewImage(image)} />
-                        </div>
-                        <DialogFooter>
-                          <DialogClose asChild>
-                            <Button variant="outline">Abbrechen</Button>
-                          </DialogClose>
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Dialog
+                        open={isDialogOpen}
+                        onOpenChange={setIsDialogOpen}
+                      >
+                        <DialogTrigger asChild>
                           <Button
-                            onClick={handleSaveImage}
-                            disabled={!newImage}
+                            variant="outline"
+                            size="sm"
+                            aria-label="Bild hinzufügen"
                           >
-                            Speichern
+                            <ImagePlusIcon className="w-4 h-4" />
                           </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Bild hinzufügen</DialogTitle>
+                            <DialogDescription>
+                              Füge ein Bild zu "{currentLocation.name}" hinzu.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <MyCropper
+                              onChange={(image) => setNewImage(image)}
+                            />
+                          </div>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button variant="outline">Abbrechen</Button>
+                            </DialogClose>
+                            <Button
+                              onClick={handleSaveImage}
+                              disabled={!newImage}
+                            >
+                              Speichern
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                     {canDelete && (
                       <Dialog
                         open={isDeleteDialogOpen}

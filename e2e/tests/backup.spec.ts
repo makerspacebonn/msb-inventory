@@ -1,4 +1,5 @@
 import { expect, test } from "../fixtures/auth.fixture"
+import { gotoSeededEntry } from "../fixtures/changelog"
 
 test.describe("Backup", () => {
   // One after the other: the first test counts the backups on the server
@@ -141,11 +142,8 @@ test.describe("Backup", () => {
     )?.[1]
     expect(Number(viewRows)).toBeGreaterThan(0)
 
-    await page.goto("/changelog")
     await expect(
-      page
-        .getByTestId("changelog-entry")
-        .filter({ hasText: "Bohrmaschine Makita" }),
+      await gotoSeededEntry(page, "Bohrmaschine Makita"),
     ).toBeVisible()
   })
 

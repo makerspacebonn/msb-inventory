@@ -2,10 +2,12 @@ import { Button } from "@components/ui/button"
 import type { Item, Location } from "@server/app/types"
 import { CheckIcon, ChevronLeftIcon, CrosshairIcon } from "lucide-react"
 import { type MouseEvent, useRef, useState } from "react"
+import type { MarkerOwner } from "@/src/lib/markerUpdates"
 
 export type MarkerPosition = { x: number; y: number }
 
-export type ExistingMarker = MarkerPosition & { key: string; label: string }
+export type ExistingMarker = MarkerPosition &
+  MarkerOwner & { key: string; label: string }
 
 // Collects the markers that already sit on a location image:
 // its sublocations and the items stored there
@@ -17,13 +19,27 @@ export function collectMarkers(
   for (const location of childLocations) {
     if (location.parentLocationMarker) {
       const { x, y } = location.parentLocationMarker
-      markers.push({ key: `l${location.id}`, label: location.name, x, y })
+      markers.push({
+        key: `l${location.id}`,
+        kind: "location",
+        id: location.id,
+        label: location.name,
+        x,
+        y,
+      })
     }
   }
   for (const item of items) {
     if (item.parentLocationMarker) {
       const { x, y } = item.parentLocationMarker
-      markers.push({ key: `i${item.id}`, label: item.name, x, y })
+      markers.push({
+        key: `i${item.id}`,
+        kind: "item",
+        id: item.id,
+        label: item.name,
+        x,
+        y,
+      })
     }
   }
   return markers

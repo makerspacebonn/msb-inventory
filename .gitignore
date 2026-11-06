@@ -25,3 +25,6 @@ experiment*
 /playwright-report/
 /test-results/
 /logs/*
+
+# Demo videos, recorded with real inventory photos
+docs/videos/

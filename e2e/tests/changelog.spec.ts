@@ -1,19 +1,12 @@
 import type { Page } from "@playwright/test"
 import { expect, TEST_ADMIN, test } from "../fixtures/auth.fixture"
+import { gotoSeededEntry } from "../fixtures/changelog"
 
 // Seeded changelog entries that no other test changes:
 // - item "Bohrmaschine Makita" created by the admin
 // - location "Werkstatt" created by the admin
-// Other tests add entries in parallel, so tests look entries up by name
-// instead of relying on their position.
-function seededEntry(page: Page, entityName: string) {
-  return page
-    .getByTestId("changelog-entry")
-    .filter({ has: page.getByText(entityName, { exact: true }) })
-}
-
 async function expandEntry(page: Page, entityName: string) {
-  const entry = seededEntry(page, entityName)
+  const entry = await gotoSeededEntry(page, entityName)
   await entry.getByRole("button", { expanded: false }).click()
   await expect(entry.getByRole("button", { expanded: true })).toBeVisible()
   return entry
@@ -32,16 +25,14 @@ test.describe("Changelog / Audit Log", () => {
   test("describes what changed, who changed it and when", async ({
     authenticatedPage: page,
   }) => {
-    await page.goto("/changelog")
-
-    const itemEntry = seededEntry(page, "Bohrmaschine Makita")
+    const itemEntry = await gotoSeededEntry(page, "Bohrmaschine Makita")
     await expect(itemEntry.getByRole("button")).toHaveAccessibleName(
       /Erstellt\s*Item\s*Bohrmaschine Makita/,
     )
     await expect(itemEntry).toContainText(TEST_ADMIN.name)
     await expect(itemEntry).toContainText(/\d{2}\.\d{2}\.\d{4}/)
 
-    const locationEntry = seededEntry(page, "Werkstatt")
+    const locationEntry = await gotoSeededEntry(page, "Werkstatt")
     await expect(locationEntry.getByRole("button")).toHaveAccessibleName(
       /Erstellt\s*Location\s*Werkstatt/,
     )
@@ -50,8 +41,6 @@ test.describe("Changelog / Audit Log", () => {
   test("shows the created values when expanding an entry", async ({
     authenticatedPage: page,
   }) => {
-    await page.goto("/changelog")
-
     const entry = await expandEntry(page, "Bohrmaschine Makita")
 
     const diff = entry.getByTestId("changelog-diff")
@@ -61,8 +50,6 @@ test.describe("Changelog / Audit Log", () => {
   })
 
   test("offers undo to admins", async ({ adminPage: page }) => {
-    await page.goto("/changelog")
-
     const entry = await expandEntry(page, "Bohrmaschine Makita")
 
     await expect(
@@ -71,8 +58,6 @@ test.describe("Changelog / Audit Log", () => {
   })
 
   test("asks for confirmation before undoing", async ({ adminPage: page }) => {
-    await page.goto("/changelog")
-
     const entry = await expandEntry(page, "Bohrmaschine Makita")
     await entry.getByRole("button", { name: "Rückgängig" }).click()
 
@@ -87,8 +72,6 @@ test.describe("Changelog / Audit Log", () => {
   test("does not offer undo to non-admins", async ({
     authenticatedPage: page,
   }) => {
-    await page.goto("/changelog")
-
     const entry = await expandEntry(page, "Bohrmaschine Makita")
 
     await expect(entry.getByTestId("changelog-diff")).toBeVisible()
@@ -232,6 +215,14 @@ test.describe("Changelog: undo", () => {
       await groupChanges(page, ids)
 
       await page.goto("/changelog")
+      // One line for the action; the other entry opens below it
+      const group = page
+        .getByTestId("changelog-group")
+        .filter({ hasText: `${b} neu` })
+      await expect(
+        changeEntry(page, "Geändert", "Item", `${a} neu`),
+      ).toHaveCount(0)
+      await group.getByRole("button", { name: /1 weitere Änderung/ }).click()
       const entry = changeEntry(page, "Geändert", "Item", `${a} neu`)
       await entry.getByRole("button", { expanded: false }).click()
       await entry.getByRole("button", { name: "Rückgängig" }).click()
@@ -290,7 +281,11 @@ test.describe("Changelog: undo", () => {
       await expect(page).toHaveURL(`/i/${ids[1]}`)
 
       await page.goto("/changelog")
-      await undo(page, changeEntry(page, "Geändert", "Item", `${a} neu`))
+      const group = page.getByTestId("changelog-group").filter({
+        has: page.getByRole("button", { name: /1 weitere Änderung/ }),
+        hasText: `${b} später`,
+      })
+      await undo(page, group.getByTestId("changelog-entry"))
       await expect(
         page.getByText(/Eine neuere Änderung existiert/),
       ).toBeVisible()

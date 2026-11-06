@@ -38,35 +38,6 @@ Some functions and components mix high-level steps with low-level details, for e
 
 User experience enhancements for common workflows.
 
-### LOC-001: Replace a location image while keeping markers
-**Priority:** Medium
-
-**Description:**
-When a location's picture is replaced (e.g. after rearranging a shelf), all existing markers of sublocations and items on that image would no longer match. Users should be able to transfer the markers to the new image instead of placing all of them again.
-
-**Desired Behavior:**
-- All existing markers are shown on the old image
-- The user defines a few reference points that correspond between the old and the new image
-- The marker positions on the new image are calculated from these reference points
-- A warning appears if not all markers can be placed on the new image
-- The user can review the result before it's applied
-- While placing or moving a marker on the new image, the old image stays visible with that marker highlighted, as a reference
-- The reference points can be skipped when the location was rebuilt completely: markers then start at their old positions and are placed by hand
-- Any logged-in user can replace an image
-- The change can be undone
-
-**Acceptance Criteria:**
-- [ ] Old markers are visible on the old image during replacement
-- [ ] Reference points can be set on both images
-- [ ] Markers are transferred to the new image automatically
-- [ ] Markers that can't be placed are listed in a warning
-- [ ] The user can check the result before saving
-- [ ] The old position of a marker is visible on the old image while placing it on the new one
-- [ ] Reference points can be skipped to place all markers by hand
-- [ ] The image replacement including marker changes can be undone
-
----
-
 ### UX-006: Choose location directly after adding an item
 **Priority:** Medium
 

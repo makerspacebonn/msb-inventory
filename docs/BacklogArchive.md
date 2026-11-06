@@ -149,6 +149,44 @@ curl http://localhost:3000/api/auth/get-session
 
 User experience enhancements for common workflows.
 
+### LOC-001: Replace a location image while keeping markers ✅ COMPLETED 2026-11-06
+**Priority:** Medium
+
+**Description:**
+When a location's picture is replaced (e.g. after rearranging a shelf), all existing markers of sublocations and items on that image would no longer match. Users should be able to transfer the markers to the new image instead of placing all of them again.
+
+**Desired Behavior:**
+- All existing markers are shown on the old image
+- The user defines a few reference points that correspond between the old and the new image
+- The marker positions on the new image are calculated from these reference points
+- A warning appears if not all markers can be placed on the new image
+- The user can review the result before it's applied
+- While placing or moving a marker on the new image, the old image stays visible with that marker highlighted, as a reference
+- The reference points can be skipped when the location was rebuilt completely: markers then start at their old positions and are placed by hand
+- Any logged-in user can replace an image
+- The change can be undone
+
+**Acceptance Criteria:**
+- [x] Old markers are visible on the old image during replacement
+- [x] Reference points can be set on both images
+- [x] Markers are transferred to the new image automatically
+- [x] Markers that can't be placed are listed in a warning
+- [x] The user can check the result before saving
+- [x] The old position of a marker is visible on the old image while placing it on the new one
+- [x] Reference points can be skipped to place all markers by hand
+- [x] The image replacement including marker changes can be undone
+
+**Implementation Notes:**
+- `/locations/$locationId/image` (`components/location/ReplaceImageSteps.tsx`): new photo, matching points, check. The location page links to it when the image has markers; otherwise the simple dialog stays
+- `src/lib/markerTransform.ts`: an affine fit, or a perspective fit from 4 points when the points clearly need it and a real camera could produce it. Measured with ±1% tapping errors, 4 points near the corners stay within about 3% of the image, also for a photo from another angle; that's why the page asks for those
+- Reference points only correct for the camera, so each marker can be moved afterwards (tap or drag); its old position stays highlighted on the old image, small and pinned on phones
+- `replaceLocationImage` saves in one transaction and refuses when the markers changed in the meantime (`src/lib/markerUpdates.ts`); stored markers carry an extra `id`, so only `x` and `y` are compared
+- Undo: changelog entries of one action share a `group_id`, one entry per record, and are undone together in a transaction (`undoEntries`); a newer change to any of them blocks it. Repositories accept a transaction for this. The changelog folds a group into one line (`src/lib/changelogGroups.ts`)
+- `/api/e2e/group-changes` only works with `E2E_TEST_API=1`, set only in `docker-compose.e2e.yml`; `NODE_ENV` can't guard this, as the build fixes it to "production"
+- E2E: `e2e/tests/location-image.spec.ts`, group undo in `changelog.spec.ts`
+
+---
+
 ### UX-028: Backup page on phones ✅ COMPLETED 2026-11-06
 **Priority:** Low
 
