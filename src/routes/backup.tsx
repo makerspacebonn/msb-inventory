@@ -40,6 +40,9 @@ function BackupPage() {
   const [restoreResult, setRestoreResult] = useState<string | null>(null)
   // The backup waiting for the user to confirm its deletion
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
+  const [confirmingRestore, setConfirmingRestore] = useState<string | null>(
+    null,
+  )
 
   const handleGenerate = async () => {
     setIsGenerating(true)
@@ -66,13 +69,6 @@ function BackupPage() {
   }
 
   const handleRestore = async (filename: string) => {
-    if (
-      !confirm(
-        `Backup "${filename}" wiederherstellen? Alle aktuellen Daten werden überschrieben!`,
-      )
-    ) {
-      return
-    }
     setRestoringFile(filename)
     setRestoreResult(null)
     try {
@@ -160,7 +156,7 @@ function BackupPage() {
                   variant="outline"
                   size="sm"
                   className="h-11 sm:h-8"
-                  onClick={() => handleRestore(backup.filename)}
+                  onClick={() => setConfirmingRestore(backup.filename)}
                   disabled={restoringFile === backup.filename}
                 >
                   {restoringFile === backup.filename ? (
@@ -189,6 +185,40 @@ function BackupPage() {
           ))}
         </div>
       )}
+
+      <Dialog
+        open={confirmingRestore !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmingRestore(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Backup wiederherstellen</DialogTitle>
+            <DialogDescription className="break-all">
+              Möchtest du "{confirmingRestore}" wirklich wiederherstellen? Alle
+              aktuellen Daten werden überschrieben.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmingRestore(null)}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (confirmingRestore) handleRestore(confirmingRestore)
+                setConfirmingRestore(null)
+              }}
+            >
+              Wiederherstellen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={confirmingDelete !== null}

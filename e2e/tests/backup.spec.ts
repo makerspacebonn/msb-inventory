@@ -109,10 +109,22 @@ test.describe("Backup", () => {
     const backupRow = page.getByTestId("backup-row").first()
     await expect(backupRow).toContainText(/backup-.*\.zip/, { timeout: 15000 })
 
-    page.once("dialog", (dialog) => dialog.accept())
-    await backupRow.getByRole("button", { name: "Restore" }).click()
-
+    const restore = backupRow.getByRole("button", { name: "Restore" })
+    const dialog = page.getByRole("dialog", {
+      name: "Backup wiederherstellen",
+    })
     const result = page.getByText(/Wiederherstellung/)
+
+    // Cancelling restores nothing
+    await restore.click()
+    await expect(dialog).toContainText(/backup-.*\.zip/)
+    await expect(dialog).toContainText("überschrieben")
+    await dialog.getByRole("button", { name: "Abbrechen" }).click()
+    await expect(dialog).toBeHidden()
+    await expect(result).toHaveCount(0)
+
+    await restore.click()
+    await dialog.getByRole("button", { name: "Wiederherstellen" }).click()
     await expect(result).toContainText("erfolgreich", { timeout: 30000 })
 
     // The seed data has changelog entries; they must survive the restore
