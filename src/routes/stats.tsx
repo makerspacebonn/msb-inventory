@@ -20,13 +20,14 @@ export const Route = createFileRoute("/stats")({
   component: StatsPage,
 })
 
-// Categorical slots 1–3 of the reference palette, stepped for the dark
-// surface and validated against it (CVD and contrast). Kept in this order:
-// it's what makes the three distinguishable
+// Same meaning as the changelog badges: green added, blue changed, red
+// deleted. These steps are validated against the dark surface, including
+// for red-green color blindness; a lighter green or an orange falls below
+// the checks next to this red
 const CHANGE_LINES: { kind: ChangeKind; label: string; color: string }[] = [
-  { kind: "create", label: "Hinzugefügt", color: "#3987e5" },
-  { kind: "update", label: "Geändert", color: "#d95926" },
-  { kind: "delete", label: "Gelöscht", color: "#199e70" },
+  { kind: "create", label: "Hinzugefügt", color: "#008300" },
+  { kind: "update", label: "Geändert", color: "#3987e5" },
+  { kind: "delete", label: "Gelöscht", color: "#e66767" },
 ]
 const SEARCH_COLOR = "#3987e5"
 

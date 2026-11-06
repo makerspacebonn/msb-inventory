@@ -12,6 +12,7 @@ type LineChartProps = {
   title: string
   /** Calendar days (YYYY-MM-DD), one per value */
   days: string[]
+  /** Legend order; where lines overlap, the first one is in front */
   series: ChartSeries[]
 }
 
@@ -115,6 +116,8 @@ export function LineChart({ title, days, series }: LineChartProps) {
   }
 
   const last = days.length - 1
+  // SVG paints in order, so the first series ends up in front
+  const backToFront = [...series].reverse()
   const shown = active ?? null
   const tooltipLeft =
     shown === null ? 0 : Math.min(Math.max(x(shown) - 80, 0), width - 160)
@@ -221,7 +224,7 @@ export function LineChart({ title, days, series }: LineChartProps) {
                 fillOpacity={0.1}
               />
             )}
-            {series.map((s) => (
+            {backToFront.map((s) => (
               <path
                 key={s.key}
                 d={path(s.values)}
@@ -245,7 +248,7 @@ export function LineChart({ title, days, series }: LineChartProps) {
             )}
             {/* Today's value, or the selected day's, as dots with a ring in
                 the surface color, so they stay apart where lines cross */}
-            {series.map((s) => (
+            {backToFront.map((s) => (
               <circle
                 key={s.key}
                 cx={x(shown ?? last)}
