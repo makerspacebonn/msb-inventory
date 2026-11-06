@@ -192,4 +192,111 @@ test.describe("Changelog: undo", () => {
     await page.goto(locationUrl)
     await expect(page.getByRole("heading", { name, exact: true })).toBeVisible()
   })
+
+  test.describe("of changes made together", () => {
+    /** Creates an item and renames it; returns its id */
+    async function editedItem(page: Page, name: string) {
+      const itemPath = await createItem(page, name)
+      const id = Number(itemPath.split("/").at(-1))
+      await page.goto(`/items/add?itemId=${id}`)
+      await page.getByLabel("Name", { exact: true }).fill(`${name} neu`)
+      await page.getByRole("button", { name: "Speichern" }).click()
+      await expect(page).toHaveURL(itemPath)
+      return id
+    }
+
+    async function groupChanges(
+      page: Page,
+      itemIds: number[],
+      addMissingItem = false,
+    ) {
+      const response = await page.request.post("/api/e2e/group-changes", {
+        data: { itemIds, addMissingItem },
+      })
+      expect(response.status(), await response.text()).toBe(200)
+    }
+
+    async function expectItemName(page: Page, id: number, name: string) {
+      await page.goto(`/i/${id}`)
+      await expect(
+        page.getByRole("heading", { level: 1, name, exact: true }),
+      ).toBeVisible()
+    }
+
+    test("undoes them all, and the undo can be undone as a whole", async ({
+      adminPage: page,
+    }) => {
+      const stamp = Date.now()
+      const [a, b] = [`Gruppe A ${stamp}`, `Gruppe B ${stamp}`]
+      const ids = [await editedItem(page, a), await editedItem(page, b)]
+      await groupChanges(page, ids)
+
+      await page.goto("/changelog")
+      const entry = changeEntry(page, "Geändert", "Item", `${a} neu`)
+      await entry.getByRole("button", { expanded: false }).click()
+      await entry.getByRole("button", { name: "Rückgängig" }).click()
+      const dialog = page.getByRole("dialog", {
+        name: "Änderung rückgängig machen?",
+      })
+      await expect(dialog).toContainText("Alle 2 Einträge")
+      await dialog
+        .getByRole("button", { name: "Ja, rückgängig machen" })
+        .click()
+      await expect(
+        page.getByText("2 Änderungen rückgängig gemacht"),
+      ).toBeVisible()
+
+      await expectItemName(page, ids[0], a)
+      await expectItemName(page, ids[1], b)
+
+      // The undo's own entries are a group again. Entries show the current
+      // name, and the newest "Geändert" entry for A is the undo
+      await page.goto("/changelog")
+      await undo(page, changeEntry(page, "Geändert", "Item", a).first())
+      await expect(
+        page.getByText("2 Änderungen rückgängig gemacht"),
+      ).toBeVisible()
+      await expectItemName(page, ids[0], `${a} neu`)
+      await expectItemName(page, ids[1], `${b} neu`)
+    })
+
+    test("changes nothing when one of them can't be undone", async ({
+      adminPage: page,
+    }) => {
+      const name = `Gruppe Fehler ${Date.now()}`
+      const id = await editedItem(page, name)
+      await groupChanges(page, [id], true)
+
+      await page.goto("/changelog")
+      await undo(page, changeEntry(page, "Geändert", "Item", `${name} neu`))
+      await expect(page.getByText("Item existiert nicht mehr")).toBeVisible()
+
+      // The item was reverted first, and that has been rolled back
+      await expectItemName(page, id, `${name} neu`)
+    })
+
+    test("is blocked by a newer change to any of them", async ({
+      adminPage: page,
+    }) => {
+      const stamp = Date.now()
+      const [a, b] = [`Konflikt A ${stamp}`, `Konflikt B ${stamp}`]
+      const ids = [await editedItem(page, a), await editedItem(page, b)]
+      await groupChanges(page, ids)
+
+      // Another change to B only, on the same field
+      await page.goto(`/items/add?itemId=${ids[1]}`)
+      await page.getByLabel("Name", { exact: true }).fill(`${b} später`)
+      await page.getByRole("button", { name: "Speichern" }).click()
+      await expect(page).toHaveURL(`/i/${ids[1]}`)
+
+      await page.goto("/changelog")
+      await undo(page, changeEntry(page, "Geändert", "Item", `${a} neu`))
+      await expect(
+        page.getByText(/Eine neuere Änderung existiert/),
+      ).toBeVisible()
+
+      await expectItemName(page, ids[0], `${a} neu`)
+      await expectItemName(page, ids[1], `${b} später`)
+    })
+  })
 })

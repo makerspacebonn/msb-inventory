@@ -157,9 +157,11 @@ function ChangelogEntryCard({
 
     if (result.success) {
       toast.success(
-        result.action === "deleted"
-          ? "Eintrag gelöscht"
-          : "Änderung rückgängig gemacht",
+        (result.undoneCount ?? 1) > 1
+          ? `${result.undoneCount} Änderungen rückgängig gemacht`
+          : result.action === "deleted"
+            ? "Eintrag gelöscht"
+            : "Änderung rückgängig gemacht",
       )
       router.invalidate()
     } else {
@@ -185,6 +187,9 @@ function ChangelogEntryCard({
   })
 
   const getUndoDescription = () => {
+    if (entry.groupSize > 1) {
+      return `Diese Änderung gehört zu einer gemeinsamen Aktion: Alle ${entry.groupSize} Einträge werden zusammen rückgängig gemacht.`
+    }
     const entityLabel = entry.entityType === "item" ? "Item" : "Location"
     const entityName = entry.entityName || `#${entry.entityId}`
     switch (entry.changeType) {

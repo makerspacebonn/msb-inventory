@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start"
+import { v7 as uuidv7 } from "uuid"
 import type {
   ChangelogEntry,
   ChangelogEntryWithUser,
@@ -6,7 +7,8 @@ import type {
   PaginatedResult,
   UndoResult,
 } from "@/src/app/types"
-import { type UndoStore, undoEntityChange } from "@/src/lib/undoEntityChange"
+import { type Database, db } from "@/src/db"
+import { type UndoStore, undoEntries } from "@/src/lib/undoEntityChange"
 import {
   adminGuardMiddleware,
   authGuardMiddleware,
@@ -37,6 +39,28 @@ export const fetchChangelogEntry = createServerFn()
     return (await new ChangelogRepository().findById(changelogId)) ?? null
   })
 
+/**
+ * What undoing an entry would touch: the entry and everything undone with
+ * it. A newer change to any of them blocks the whole undo
+ */
+async function loadUndoTarget(changelogId: number) {
+  const changelog = new ChangelogRepository()
+  const entry = await changelog.findById(changelogId)
+  if (!entry) return null
+
+  const entries = await changelog.findWithGroup(entry)
+  for (const member of entries) {
+    const conflict = await changelog.findConflictingChanges(
+      member.id,
+      member.entityType,
+      member.entityId,
+      member.changedFields || [],
+    )
+    if (conflict) return { entries, conflict }
+  }
+  return { entries, conflict: null }
+}
+
 export const checkUndoConflict = createServerFn()
   .middleware([adminGuardMiddleware])
   .validator((changelogId: number) => changelogId)
@@ -49,72 +73,72 @@ export const checkUndoConflict = createServerFn()
       conflictId?: number
       conflictMessage?: string
     }> => {
-      const changelogRepo = new ChangelogRepository()
-      const entry = await changelogRepo.findById(changelogId)
-
-      if (!entry) {
+      const target = await loadUndoTarget(changelogId)
+      if (!target) {
         return { canUndo: false, error: "Changelog-Eintrag nicht gefunden" }
       }
-
-      const conflict = await changelogRepo.findConflictingChanges(
-        changelogId,
-        entry.entityType,
-        entry.entityId,
-        entry.changedFields || [],
-      )
-
-      if (conflict) {
+      if (target.conflict) {
         return {
           canUndo: false,
-          conflictId: conflict.id,
-          conflictMessage: `Eine neuere Änderung existiert (ID: ${conflict.id})`,
+          conflictId: target.conflict.id,
+          conflictMessage: `Eine neuere Änderung existiert (ID: ${target.conflict.id})`,
         }
       }
-
       return { canUndo: true }
     },
   )
+
+/** Leaves the transaction, so everything undone so far is rolled back */
+class UndoFailed extends Error {
+  constructor(readonly result: UndoResult) {
+    super(result.error)
+  }
+}
 
 export const undoChange = createServerFn({ method: "POST" })
   .middleware([adminGuardMiddleware])
   .validator((changelogId: number) => changelogId)
   .handler(async ({ data: changelogId, context }): Promise<UndoResult> => {
-    const changelogRepo = new ChangelogRepository()
-    const entry = await changelogRepo.findById(changelogId)
-
-    if (!entry) {
+    const target = await loadUndoTarget(changelogId)
+    if (!target) {
       return { success: false, error: "Changelog-Eintrag nicht gefunden" }
     }
-
-    // Check for conflicts first
-    const conflict = await changelogRepo.findConflictingChanges(
-      changelogId,
-      entry.entityType,
-      entry.entityId,
-      entry.changedFields || [],
-    )
-
-    if (conflict) {
+    if (target.conflict) {
       return {
         success: false,
         error: "Rückgängig nicht möglich: Es gibt neuere Änderungen",
-        conflictId: conflict.id,
+        conflictId: target.conflict.id,
       }
     }
 
-    const store = undoStores[entry.entityType]?.()
-    if (!store) {
-      return { success: false, error: "Unbekannter Entity-Typ" }
+    // The undo is one action too, so it can be undone as a whole again
+    const groupId = target.entries.length > 1 ? uuidv7() : null
+
+    try {
+      return await db.transaction(async (tx) => {
+        const result = await undoEntries(
+          target.entries,
+          (entityType) => undoStores[entityType]?.(tx),
+          {
+            userId: context.userId,
+            record: (change) => recordChange({ ...change, groupId }, tx),
+          },
+        )
+        if (!result.success) throw new UndoFailed(result)
+        return result
+      })
+    } catch (error) {
+      if (error instanceof UndoFailed) return error.result
+      throw error
     }
-    return undoEntityChange(entry, store, {
-      userId: context.userId,
-      record: recordChange,
-    })
   })
 
-const undoStores: Record<EntityType, () => UndoStore<{ id: number }>> = {
-  item: () => {
-    const items = new ItemRepository()
+const undoStores: Record<
+  EntityType,
+  (database: Database) => UndoStore<{ id: number }>
+> = {
+  item: (database) => {
+    const items = new ItemRepository(database)
     return {
       entityType: "item",
       label: "Item",
@@ -132,8 +156,8 @@ const undoStores: Record<EntityType, () => UndoStore<{ id: number }>> = {
           : rest,
     }
   },
-  location: () => {
-    const locations = new LocationRepository()
+  location: (database) => {
+    const locations = new LocationRepository(database)
     return {
       entityType: "location",
       label: "Location",

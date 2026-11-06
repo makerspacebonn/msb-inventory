@@ -80,11 +80,15 @@ export type ChangelogEntry = {
   beforeValues: JsonObject | null
   afterValues: JsonObject | null
   changedFields: string[] | null
+  /** Entries with the same group are undone together */
+  groupId: string | null
 }
 
 export type ChangelogEntryWithUser = ChangelogEntry & {
   user: { name: string | null } | null
   entityName: string | null
+  /** How many entries are undone together with this one, itself included */
+  groupSize: number
 }
 
 export type UndoResult = {
@@ -93,4 +97,6 @@ export type UndoResult = {
   error?: string
   conflictId?: number
   newId?: number
+  /** How many changelog entries were undone */
+  undoneCount?: number
 }

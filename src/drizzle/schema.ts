@@ -179,9 +179,13 @@ export const ChangelogTable = pgTable(
     beforeValues: json("before_values").$type<JsonObject | null>(),
     afterValues: json("after_values").$type<JsonObject | null>(),
     changedFields: varchar("changed_fields").array(),
+    // Entries with the same group were one action and are undone together,
+    // e.g. a new location image and the markers moved with it
+    groupId: varchar("group_id"),
   },
   (t) => [
     index("idx_changelog_entity").on(t.entityType, t.entityId),
+    index("idx_changelog_group").on(t.groupId),
     index("idx_changelog_changed_at").on(t.changedAt),
   ],
 )

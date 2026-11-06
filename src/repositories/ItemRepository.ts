@@ -10,7 +10,7 @@ import {
   sql,
 } from "drizzle-orm"
 import type { Item, PaginatedResult } from "../app/types"
-import { db } from "../db"
+import { type Database, db as defaultDb } from "../db"
 import { type ItemInsert, ItemTable, LocationTable } from "../drizzle/schema"
 import { type PhotoDescription, photoSearchTerms } from "../lib/photoMatch"
 import { parseSearchQuery, patternToLike } from "../lib/searchQuery"
@@ -22,27 +22,30 @@ const itemWithLocationName = {
 }
 
 export class ItemRepository {
+  /** Pass a transaction to make the calls part of it */
+  constructor(private readonly db: Database = defaultDb) {}
+
   async upsert(item: Partial<Item>): Promise<Item[] | undefined> {
     if (item.id) {
-      return db
+      return this.db
         .update(ItemTable)
         .set({ ...item, updatedAt: new Date() })
         .where(eq(ItemTable.id, item.id))
         .returning()
     }
-    return db
+    return this.db
       .insert(ItemTable)
       .values(item as ItemInsert)
       .returning()
   }
   async findById(id: number): Promise<Item | undefined> {
-    const item: Item | undefined = await db.query.ItemTable.findFirst({
+    const item: Item | undefined = await this.db.query.ItemTable.findFirst({
       where: (items, { eq }) => eq(items.id, id),
     })
     return item
   }
   async findLatest(): Promise<Item[]> {
-    return db.query.ItemTable.findMany({
+    return this.db.query.ItemTable.findMany({
       orderBy: (items, { desc }) => [desc(items.id)],
     })
   }
@@ -51,14 +54,14 @@ export class ItemRepository {
     const offset = (page - 1) * pageSize
 
     const [items, totalResult] = await Promise.all([
-      db
+      this.db
         .select(itemWithLocationName)
         .from(ItemTable)
         .leftJoin(LocationTable, eq(ItemTable.locationId, LocationTable.id))
         .orderBy(desc(ItemTable.createdAt))
         .limit(pageSize)
         .offset(offset),
-      db.select({ count: count() }).from(ItemTable),
+      this.db.select({ count: count() }).from(ItemTable),
     ])
 
     const total = totalResult[0]?.count ?? 0
@@ -76,20 +79,20 @@ export class ItemRepository {
     const oneMonthAgo = new Date()
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
 
-    return db.query.ItemTable.findMany({
+    return this.db.query.ItemTable.findMany({
       where: (items, { gte }) => gte(items.createdAt, oneMonthAgo),
       orderBy: (items, { desc }) => [desc(items.createdAt)],
       limit,
     })
   }
   async findByLocationId(locationId: number): Promise<Item[]> {
-    return db.query.ItemTable.findMany({
+    return this.db.query.ItemTable.findMany({
       where: (items, { eq }) => eq(items.locationId, locationId),
     })
   }
 
   async delete(id: number): Promise<boolean> {
-    const result = await db
+    const result = await this.db
       .delete(ItemTable)
       .where(eq(ItemTable.id, id))
       .returning()
@@ -101,7 +104,7 @@ export class ItemRepository {
    * Uses raw SQL INSERT to bypass the auto-increment behavior.
    */
   async restore(item: Partial<Item> & { id: number }): Promise<Item | null> {
-    const result = await db
+    const result = await this.db
       .insert(ItemTable)
       .values({
         ...item,
@@ -142,7 +145,7 @@ export class ItemRepository {
     )
     const filters = and(categoryFilter, ...tagFilters)
 
-    const results = db
+    const results = this.db
       .select(itemWithLocationName)
       .from(ItemTable)
       .leftJoin(LocationTable, eq(ItemTable.locationId, LocationTable.id))
@@ -197,7 +200,7 @@ export class ItemRepository {
       )`)
     }
 
-    return db
+    return this.db
       .select({
         ...itemWithLocationName,
         // Normalized to 0..1 (rank / (rank + 1))

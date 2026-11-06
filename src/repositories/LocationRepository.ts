@@ -1,5 +1,5 @@
 import { eq, ilike, sql } from "drizzle-orm"
-import { db } from "@/src/db"
+import { type Database, db as defaultDb } from "@/src/db"
 import type { Location } from "../app/types"
 import { type LocationInsert, LocationTable } from "../drizzle/schema"
 
@@ -22,8 +22,14 @@ const locationTree = sql`
   )`
 
 export class LocationRepository {
+  /** Pass a transaction to make the calls part of it */
+  constructor(private readonly db: Database = defaultDb) {}
+
   async create(location: LocationInsert): Promise<Location> {
-    const result = await db.insert(LocationTable).values(location).returning()
+    const result = await this.db
+      .insert(LocationTable)
+      .values(location)
+      .returning()
     return result[0]
   }
 
@@ -31,7 +37,7 @@ export class LocationRepository {
     id: number,
     data: Partial<LocationInsert>,
   ): Promise<Location | undefined> {
-    const result = await db
+    const result = await this.db
       .update(LocationTable)
       .set(data)
       .where(eq(LocationTable.id, id))
@@ -47,24 +53,24 @@ export class LocationRepository {
     parentId: number | undefined | null,
   ): Promise<Location[]> {
     if (parentId == null) {
-      return db.query.LocationTable.findMany({
+      return this.db.query.LocationTable.findMany({
         where: (locations, { isNull }) => isNull(locations.parentId),
       })
     }
-    return db.query.LocationTable.findMany({
+    return this.db.query.LocationTable.findMany({
       where: (locations, { eq }) => eq(locations.parentId, parentId),
     })
   }
 
   async findById(id: number): Promise<Location | undefined> {
-    return db.query.LocationTable.findFirst({
+    return this.db.query.LocationTable.findFirst({
       where: (locations, { eq }) => eq(locations.id, id),
     })
   }
 
   async findChainForId(locationId: number) {
     const locations: Location[] = []
-    const locationsResult = await db.query.LocationTable.findMany({
+    const locationsResult = await this.db.query.LocationTable.findMany({
       where: (locations, { eq }) => eq(locations.id, locationId),
     })
     if (locationsResult.length > 0) {
@@ -79,7 +85,7 @@ export class LocationRepository {
   }
 
   async delete(id: number): Promise<boolean> {
-    const result = await db
+    const result = await this.db
       .delete(LocationTable)
       .where(eq(LocationTable.id, id))
       .returning()
@@ -93,7 +99,7 @@ export class LocationRepository {
   async restore(
     location: Partial<Location> & { id: number },
   ): Promise<Location | null> {
-    const result = await db.execute(sql`
+    const result = await this.db.execute(sql`
       INSERT INTO locations (id, name, description, parent_id, "parentLocationMarker", image_path, "additionalInfo")
       OVERRIDING SYSTEM VALUE
       VALUES (
@@ -111,7 +117,7 @@ export class LocationRepository {
   }
 
   async search(query: string, limit = 20): Promise<Location[]> {
-    return db.query.LocationTable.findMany({
+    return this.db.query.LocationTable.findMany({
       where: (locations) => ilike(locations.name, `%${query}%`),
       limit,
     })
@@ -123,7 +129,7 @@ export class LocationRepository {
    */
   async findLabelInfo(ids: number[]): Promise<LocationLabelInfo[]> {
     if (ids.length === 0) return []
-    const result = await db.execute(sql`
+    const result = await this.db.execute(sql`
       ${locationTree}
       SELECT id, name, ancestors AS path FROM tree
       WHERE id IN (${sql.join(
@@ -135,7 +141,7 @@ export class LocationRepository {
 
   /** A location and all its sublocations, in tree order */
   async findSubtree(id: number): Promise<LocationLabelInfo[]> {
-    const result = await db.execute(sql`
+    const result = await this.db.execute(sql`
       ${locationTree}
       SELECT id, name, ancestors AS path FROM tree
       WHERE ${id} = ANY(ids)
@@ -150,7 +156,7 @@ export class LocationRepository {
   async findItemsInSubtree(
     id: number,
   ): Promise<{ id: number; name: string }[]> {
-    const result = await db.execute(sql`
+    const result = await this.db.execute(sql`
       ${locationTree}
       SELECT items.id, items.name FROM items
       JOIN tree ON items.location_id = tree.id

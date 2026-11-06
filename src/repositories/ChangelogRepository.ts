@@ -7,7 +7,7 @@ import type {
   JsonObject,
   PaginatedResult,
 } from "../app/types"
-import { db } from "../db"
+import { type Database, db as defaultDb } from "../db"
 import {
   ChangelogTable,
   ItemTable,
@@ -23,11 +23,15 @@ type ChangelogCreateInput = {
   beforeValues: JsonObject | null
   afterValues: JsonObject | null
   changedFields: string[]
+  groupId?: string | null
 }
 
 export class ChangelogRepository {
+  /** Pass a transaction to make the calls part of it */
+  constructor(private readonly db: Database = defaultDb) {}
+
   async create(entry: ChangelogCreateInput): Promise<ChangelogEntry> {
-    const [result] = await db
+    const [result] = await this.db
       .insert(ChangelogTable)
       .values({
         entityType: entry.entityType,
@@ -37,16 +41,28 @@ export class ChangelogRepository {
         beforeValues: entry.beforeValues,
         afterValues: entry.afterValues,
         changedFields: entry.changedFields,
+        groupId: entry.groupId ?? null,
       })
       .returning()
     return result as ChangelogEntry
   }
 
   async findById(id: number): Promise<ChangelogEntry | undefined> {
-    const result = await db.query.ChangelogTable.findFirst({
+    const result = await this.db.query.ChangelogTable.findFirst({
       where: eq(ChangelogTable.id, id),
     })
     return result as ChangelogEntry | undefined
+  }
+
+  /** The entry and all entries undone with it, last change first */
+  async findWithGroup(entry: ChangelogEntry): Promise<ChangelogEntry[]> {
+    if (!entry.groupId) return [entry]
+    const entries = await this.db
+      .select()
+      .from(ChangelogTable)
+      .where(eq(ChangelogTable.groupId, entry.groupId))
+      .orderBy(desc(ChangelogTable.changedAt), desc(ChangelogTable.id))
+    return entries as ChangelogEntry[]
   }
 
   async findPaginated(
@@ -56,7 +72,7 @@ export class ChangelogRepository {
     const offset = (page - 1) * pageSize
 
     const [entries, totalResult] = await Promise.all([
-      db
+      this.db
         .select({
           id: ChangelogTable.id,
           entityType: ChangelogTable.entityType,
@@ -67,6 +83,7 @@ export class ChangelogRepository {
           beforeValues: ChangelogTable.beforeValues,
           afterValues: ChangelogTable.afterValues,
           changedFields: ChangelogTable.changedFields,
+          groupId: ChangelogTable.groupId,
           userName: UserTable.name,
         })
         .from(ChangelogTable)
@@ -74,7 +91,7 @@ export class ChangelogRepository {
         .orderBy(desc(ChangelogTable.changedAt))
         .limit(pageSize)
         .offset(offset),
-      db.select({ count: count() }).from(ChangelogTable),
+      this.db.select({ count: count() }).from(ChangelogTable),
     ])
 
     const entriesWithNames = await this.resolveEntityNames(entries)
@@ -99,7 +116,7 @@ export class ChangelogRepository {
     if (!entry) return null
 
     // Find any newer change on the same entity (excluding the current entry)
-    const newerChanges = await db
+    const newerChanges = await this.db
       .select()
       .from(ChangelogTable)
       .where(
@@ -137,7 +154,7 @@ export class ChangelogRepository {
     entityType: EntityType,
     entityId: number,
   ): Promise<ChangelogEntry[]> {
-    const results = await db
+    const results = await this.db
       .select()
       .from(ChangelogTable)
       .where(
@@ -162,6 +179,7 @@ export class ChangelogRepository {
       beforeValues: JsonObject | null
       afterValues: JsonObject | null
       changedFields: string[] | null
+      groupId: string | null
       userName: string | null
     }>,
   ): Promise<ChangelogEntryWithUser[]> {
@@ -182,13 +200,13 @@ export class ChangelogRepository {
     // Batch fetch entity names
     const [items, locations] = await Promise.all([
       itemIds.length > 0
-        ? db
+        ? this.db
             .select({ id: ItemTable.id, name: ItemTable.name })
             .from(ItemTable)
             .where(inArray(ItemTable.id, itemIds))
         : [],
       locationIds.length > 0
-        ? db
+        ? this.db
             .select({ id: LocationTable.id, name: LocationTable.name })
             .from(LocationTable)
             .where(inArray(LocationTable.id, locationIds))
@@ -197,6 +215,19 @@ export class ChangelogRepository {
 
     const itemMap = new Map(items.map((i) => [i.id, i.name]))
     const locationMap = new Map(locations.map((l) => [l.id, l.name]))
+
+    const groupIds = [
+      ...new Set(entries.flatMap((e) => (e.groupId ? [e.groupId] : []))),
+    ]
+    const groupRows =
+      groupIds.length > 0
+        ? await this.db
+            .select({ groupId: ChangelogTable.groupId, size: count() })
+            .from(ChangelogTable)
+            .where(inArray(ChangelogTable.groupId, groupIds))
+            .groupBy(ChangelogTable.groupId)
+        : []
+    const groupSizes = new Map(groupRows.map((r) => [r.groupId, r.size]))
 
     return entries.map((e) => {
       // Try to get name from current entity, fall back to stored values
@@ -217,6 +248,8 @@ export class ChangelogRepository {
         beforeValues: e.beforeValues,
         afterValues: e.afterValues,
         changedFields: e.changedFields,
+        groupId: e.groupId,
+        groupSize: e.groupId ? (groupSizes.get(e.groupId) ?? 1) : 1,
         user: e.userName ? { name: e.userName } : null,
         entityName,
       }
@@ -228,16 +261,20 @@ export class ChangelogRepository {
  * Records a change to an item or location. `before`/`after` are the full
  * entity snapshots (null for the side that doesn't exist on create/delete).
  */
-export function recordChange(change: {
-  entityType: EntityType
-  entityId: number
-  changeType: ChangeType
-  userId: string | null
-  before: object | null
-  after: object | null
-  changedFields: string[]
-}): Promise<ChangelogEntry> {
-  return new ChangelogRepository().create({
+export function recordChange(
+  change: {
+    entityType: EntityType
+    entityId: number
+    changeType: ChangeType
+    userId: string | null
+    before: object | null
+    after: object | null
+    changedFields: string[]
+    groupId?: string | null
+  },
+  database?: Database,
+): Promise<ChangelogEntry> {
+  return new ChangelogRepository(database).create({
     entityType: change.entityType,
     entityId: change.entityId,
     changeType: change.changeType,
@@ -245,5 +282,6 @@ export function recordChange(change: {
     beforeValues: change.before as JsonObject | null,
     afterValues: change.after as JsonObject | null,
     changedFields: change.changedFields,
+    groupId: change.groupId,
   })
 }

@@ -127,3 +127,28 @@ function pick(saved: Fields, fields: string[]): Fields {
     fields.filter((field) => field in saved).map((f) => [f, saved[f]]),
   )
 }
+
+/**
+ * Reverts changelog entries that belong together, last change first. Stops
+ * at the first one that fails and returns that failure: the caller runs this
+ * in a transaction and has to roll it back then
+ */
+export async function undoEntries(
+  entries: ChangelogEntry[],
+  storeFor: (entityType: EntityType) => UndoStore<{ id: number }> | undefined,
+  context: UndoContext,
+): Promise<UndoResult> {
+  let last: UndoResult = {
+    success: false,
+    error: "Nichts rückgängig zu machen",
+  }
+  for (const entry of entries) {
+    const store = storeFor(entry.entityType)
+    if (!store) return { success: false, error: "Unbekannter Entity-Typ" }
+    last = await undoEntityChange(entry, store, context)
+    if (!last.success) return last
+  }
+  return entries.length === 1
+    ? { ...last, undoneCount: 1 }
+    : { success: true, action: "restored", undoneCount: entries.length }
+}

@@ -4,6 +4,7 @@ import {
   type RecordedChange,
   type UndoStore,
   undoEntityChange,
+  undoEntries,
 } from "./undoEntityChange"
 
 type Thing = { id: number; name: string; note: string | null }
@@ -60,6 +61,7 @@ function entry(change: Partial<ChangelogEntry>): ChangelogEntry {
     beforeValues: null,
     afterValues: null,
     changedFields: [],
+    groupId: null,
     ...change,
   }
 }
@@ -187,5 +189,86 @@ describe("undoEntityChange", () => {
       success: false,
       error: "Keine Daten zum Wiederherstellen vorhanden",
     })
+  })
+})
+
+describe("undoEntries", () => {
+  const update = (id: number, entityId: number, oldName: string) =>
+    entry({
+      id,
+      entityId,
+      changeType: "update",
+      beforeValues: { name: oldName },
+      changedFields: ["name"],
+    })
+
+  it("reverts all entries in the given order and counts them", async () => {
+    const { store, rows } = fakeStore([
+      { id: 7, name: "neu A", note: null },
+      { id: 8, name: "neu B", note: null },
+    ])
+    const { recorded, record } = recorder()
+
+    const result = await undoEntries(
+      [update(2, 8, "alt B"), update(1, 7, "alt A")],
+      () => store,
+      { userId: "admin", record },
+    )
+
+    expect(result).toEqual({
+      success: true,
+      action: "restored",
+      undoneCount: 2,
+    })
+    expect(rows.get(7)?.name).toBe("alt A")
+    expect(rows.get(8)?.name).toBe("alt B")
+    expect(recorded.map((change) => change.entityId)).toEqual([8, 7])
+  })
+
+  it("keeps the details of a single entry", async () => {
+    const { store } = fakeStore([])
+    const { record } = recorder()
+
+    const result = await undoEntries(
+      [entry({ changeType: "delete", beforeValues: drill })],
+      () => store,
+      { userId: "admin", record },
+    )
+
+    expect(result).toEqual({
+      success: true,
+      action: "restored",
+      newId: 7,
+      undoneCount: 1,
+    })
+  })
+
+  it("stops at the first failure, for the caller to roll back", async () => {
+    const { store, rows } = fakeStore([{ id: 8, name: "neu B", note: null }])
+    const { recorded, record } = recorder()
+
+    const result = await undoEntries(
+      [update(3, 99, "weg"), update(2, 8, "alt B")],
+      () => store,
+      { userId: "admin", record },
+    )
+
+    expect(result).toEqual({
+      success: false,
+      error: "Item existiert nicht mehr",
+    })
+    expect(rows.get(8)?.name).toBe("neu B")
+    expect(recorded).toEqual([])
+  })
+
+  it("fails for a kind of entity it doesn't know", async () => {
+    const { record } = recorder()
+
+    expect(
+      await undoEntries([update(1, 7, "x")], () => undefined, {
+        userId: "admin",
+        record,
+      }),
+    ).toEqual({ success: false, error: "Unbekannter Entity-Typ" })
   })
 })
