@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MSB Inventory is a full-stack TypeScript inventory management system for Makerspace Bonn. It tracks items, locations (hierarchical), and projects with features like image upload, AI-powered item description (via Google Gemini), and Discord OAuth.
+MSB Inventory is a full-stack TypeScript inventory management system for Makerspace Bonn. It tracks items, and locations (hierarchical) with features like image upload, AI-powered item description (via Google Gemini), and Discord OAuth.
 
 ## Development Commands
 **Always use bun, not npm.**
@@ -59,7 +59,6 @@ Requires Docker. Create `.env` from `.env_example` before running.
 - `SessionTable` - better-auth session management
 - `AccountTable` - OAuth providers and credentials
 - `VerificationTable` - Email verification and password reset tokens
-- `ProjectsTable` - Project management
 
 **Image Handling:** Client-side compression (`browser-image-compression`) + cropping (`react-easy-crop`) before upload as base64.
 

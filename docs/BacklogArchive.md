@@ -709,6 +709,23 @@ Several E2E tests pass even when the feature they check is broken: they swallow 
 
 ## Operations
 
+### OPS-003: Remove projects ✅ COMPLETED 2026-11-06
+**Priority:** Low
+
+**Description:**
+The inventory is meant to manage items only. Leftovers of a former projects feature were still in the codebase, although nothing in the app used them. They should be removed so the codebase only contains what the tool is for.
+
+**Acceptance Criteria:**
+- [x] No project-related code, routes or data structures remain
+- [x] The projects table is removed from the database
+- [x] The app works as before
+
+**Implementation Notes:**
+- Only the table, its types, the backup exclusion and doc mentions were left; the routes were already gone. Old migration files stay as history
+- The table is dropped by `db:push --force` in `run.sh` on the next deployment; it isn't in backups, so check production first: `SELECT count(*) FROM projects;`
+
+---
+
 ### OPS-005: Backups created several times ✅ COMPLETED 2026-11-06
 **Priority:** High
 

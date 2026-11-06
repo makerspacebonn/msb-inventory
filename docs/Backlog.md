@@ -331,19 +331,6 @@ Every deployment should get its own version number, shown in the app, so it's cl
 
 ---
 
-### OPS-003: Remove projects
-**Priority:** Low
-
-**Description:**
-The inventory is meant to manage items only. Leftovers of a former projects feature (database table, server routes) are still in the codebase, although nothing in the app uses them. They should be removed so the codebase only contains what the tool is for.
-
-**Acceptance Criteria:**
-- [ ] No project-related code, routes or data structures remain
-- [ ] The projects table is removed from the database
-- [ ] The app works as before
-
----
-
 ### OPS-004: Clean up unused images
 **Priority:** Low
 

@@ -280,7 +280,7 @@ async function seed() {
     // 1. Truncate all tables (respecting FK order - sessions/accounts have FK to users)
     console.log("Truncating tables...")
     await db.execute(
-      sql`TRUNCATE TABLE changelog, items, locations, sessions, accounts, verifications, users, projects RESTART IDENTITY CASCADE`,
+      sql`TRUNCATE TABLE changelog, items, locations, sessions, accounts, verifications, users RESTART IDENTITY CASCADE`,
     )
 
     // 2. Insert users (better-auth schema)
