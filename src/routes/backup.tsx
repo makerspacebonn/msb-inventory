@@ -1,4 +1,12 @@
 import { Button } from "@components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@components/ui/dialog"
 import { createFileRoute } from "@tanstack/react-router"
 import { Download, Loader2, RotateCcw, Trash2 } from "lucide-react"
 import { useState } from "react"
@@ -30,6 +38,8 @@ function BackupPage() {
   const [deletingFile, setDeletingFile] = useState<string | null>(null)
   const [restoringFile, setRestoringFile] = useState<string | null>(null)
   const [restoreResult, setRestoreResult] = useState<string | null>(null)
+  // The backup waiting for the user to confirm its deletion
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
 
   const handleGenerate = async () => {
     setIsGenerating(true)
@@ -88,9 +98,13 @@ function BackupPage() {
 
   return (
     <>
-      <h1>Backup</h1>
+      <h1 className="mb-4 text-2xl font-bold">Backup</h1>
       <div className="mb-6">
-        <Button onClick={handleGenerate} disabled={isGenerating}>
+        <Button
+          onClick={handleGenerate}
+          disabled={isGenerating}
+          className="h-11 w-full sm:h-9 sm:w-auto"
+        >
           {isGenerating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -118,16 +132,25 @@ function BackupPage() {
             <div
               key={backup.filename}
               data-testid="backup-row"
-              className="flex items-center justify-between p-4 border rounded-lg"
+              className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div>
-                <p className="font-medium">{backup.filename}</p>
+              <div className="min-w-0">
+                {/* A long name without spaces: wraps anywhere, instead of
+                    pushing the page wider than a phone */}
+                <p className="break-all font-medium">{backup.filename}</p>
                 <p className="text-sm text-muted-foreground">
                   {formatDate(backup.createdAt)} &middot; {backup.sizeFormatted}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" asChild>
+              {/* On phones a row of large buttons, with the delete button
+                  apart at the end */}
+              <div className="grid shrink-0 grid-cols-[1fr_1fr_auto] gap-2 sm:flex">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-11 sm:h-8"
+                  asChild
+                >
                   <a href={`/backup/download/${backup.filename}`} download>
                     <Download className="mr-2 h-4 w-4" />
                     Download
@@ -136,6 +159,7 @@ function BackupPage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="h-11 sm:h-8"
                   onClick={() => handleRestore(backup.filename)}
                   disabled={restoringFile === backup.filename}
                 >
@@ -149,7 +173,8 @@ function BackupPage() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => handleDelete(backup.filename)}
+                  className="h-11 w-11 sm:h-8 sm:w-auto"
+                  onClick={() => setConfirmingDelete(backup.filename)}
                   disabled={deletingFile === backup.filename}
                   aria-label="Backup löschen"
                 >
@@ -164,6 +189,37 @@ function BackupPage() {
           ))}
         </div>
       )}
+
+      <Dialog
+        open={confirmingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmingDelete(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Backup löschen</DialogTitle>
+            <DialogDescription className="break-all">
+              Möchtest du "{confirmingDelete}" wirklich löschen? Das kann nicht
+              rückgängig gemacht werden.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmingDelete(null)}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (confirmingDelete) handleDelete(confirmingDelete)
+                setConfirmingDelete(null)
+              }}
+            >
+              Löschen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

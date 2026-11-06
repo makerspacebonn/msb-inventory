@@ -217,19 +217,6 @@ An item has only one picture, but many items need more than one view to be recog
 
 ---
 
-### UX-028: Backup page on phones
-**Priority:** Low
-
-**Description:**
-The backup page is hard to use on a phone: the list of backups and its actions don't fit the narrow screen. Admins should be able to create, download, restore and delete backups on a phone as easily as on a desktop.
-
-**Acceptance Criteria:**
-- [ ] The backup list fits a phone screen without horizontal scrolling
-- [ ] All actions are easy to reach and tap on a phone
-- [ ] Name, date and size of each backup stay readable
-
----
-
 ## AI Features
 
 Item recognition and suggestions with generative AI.

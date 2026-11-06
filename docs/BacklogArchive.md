@@ -149,6 +149,26 @@ curl http://localhost:3000/api/auth/get-session
 
 User experience enhancements for common workflows.
 
+### UX-028: Backup page on phones ✅ COMPLETED 2026-11-06
+**Priority:** Low
+
+**Description:**
+The backup page is hard to use on a phone: the list of backups and its actions don't fit the narrow screen. Admins should be able to create, download, restore and delete backups on a phone as easily as on a desktop.
+
+**Acceptance Criteria:**
+- [x] The backup list fits a phone screen without horizontal scrolling
+- [x] All actions are easy to reach and tap on a phone
+- [x] Name, date and size of each backup stay readable
+
+**Implementation Notes:**
+- Each backup stacks on phones: name and details on top, a row of 44 px buttons below; unchanged from `sm` up
+- The long file name wraps anywhere (`break-all`, `min-w-0`) instead of widening the page
+- The create button is full width on phones; the page's heading got the usual heading style
+- Deleting a backup now asks for confirmation, as a mistaken tap can't be undone
+- E2E: checks at 360 px that the page doesn't scroll sideways and all actions are at least 44 px
+
+---
+
 ### UX-029: Activity statistics ✅ COMPLETED 2026-11-06
 **Priority:** Low
 
