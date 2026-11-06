@@ -1,7 +1,12 @@
 import type { Item, Location, ParentLocationMarker } from "@server/app/types"
 import { createServerFn } from "@tanstack/react-start"
+import { v7 as uuidv7 } from "uuid"
+import { z } from "zod"
+import { db } from "@/src/db"
 import { isSameValue } from "@/src/lib/changelogUtils"
+import { AppError } from "@/src/lib/errors"
 import { storeImage } from "@/src/lib/imageUtils"
+import { type CurrentMarker, planMarkerUpdates } from "@/src/lib/markerUpdates"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
 import { recordChange } from "@/src/repositories/ChangelogRepository"
 import { ItemRepository } from "@/src/repositories/ItemRepository"
@@ -236,6 +241,113 @@ export const updateLocation = createServerFn({ method: "POST" })
     })
 
     return { success: true, location: updatedLocation }
+  })
+
+const markerPosition = z.object({
+  x: z.number().min(0).max(100),
+  y: z.number().min(0).max(100),
+})
+
+/**
+ * Replaces a location's image and moves the markers on it, as one action:
+ * either everything is saved or nothing, and undoing any of the changelog
+ * entries undoes them all. The old image file is kept for that
+ */
+export const replaceLocationImage = createServerFn({ method: "POST" })
+  .middleware([authGuardMiddleware])
+  .validator(
+    z.object({
+      locationId: z.number(),
+      image: z.string().startsWith("data:image/"),
+      markers: z.array(
+        z.object({
+          kind: z.enum(["item", "location"]),
+          id: z.number(),
+          marker: markerPosition.nullable(),
+        }),
+      ),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const groupId = uuidv7()
+
+    return db.transaction(async (tx) => {
+      const locations = new LocationRepository(tx)
+      const items = new ItemRepository(tx)
+      const record = (change: Parameters<typeof recordChange>[0]) =>
+        recordChange({ ...change, groupId }, tx)
+
+      const location = await locations.findById(data.locationId)
+      if (!location) {
+        throw new AppError("NOT_FOUND", "Location nicht gefunden")
+      }
+
+      // One after the other: a transaction has a single connection
+      const children = await locations.findByParentId(data.locationId)
+      const itemsHere = await items.findByLocationId(data.locationId)
+      const currentChildren = new Map(children.map((c) => [c.id, c]))
+      const currentItems = new Map(itemsHere.map((i) => [i.id, i]))
+      const current: CurrentMarker[] = [
+        ...children.flatMap((child): CurrentMarker[] =>
+          child.parentLocationMarker
+            ? [
+                {
+                  kind: "location",
+                  id: child.id,
+                  marker: child.parentLocationMarker,
+                },
+              ]
+            : [],
+        ),
+        ...itemsHere.flatMap((item): CurrentMarker[] =>
+          item.parentLocationMarker
+            ? [{ kind: "item", id: item.id, marker: item.parentLocationMarker }]
+            : [],
+        ),
+      ]
+
+      const plan = planMarkerUpdates(current, data.markers)
+      if (!plan.ok) {
+        throw new AppError(
+          "INVALID_INPUT",
+          "Die Marker wurden inzwischen geändert. Bitte lade die Seite neu.",
+        )
+      }
+
+      // Only after the checks, so a rejected request leaves no file behind
+      const imagePath = await storeImage(data.image, "locations")
+      const updated = await locations.update(data.locationId, { imagePath })
+      await record({
+        entityType: "location",
+        entityId: data.locationId,
+        changeType: "update",
+        userId: context.userId,
+        before: location,
+        after: updated ?? null,
+        changedFields: ["imagePath"],
+      })
+
+      for (const { kind, id, marker } of plan.changes) {
+        const parentLocationMarker = marker as ParentLocationMarker | null
+        const before =
+          kind === "item" ? currentItems.get(id) : currentChildren.get(id)
+        const after =
+          kind === "item"
+            ? (await items.upsert({ id, parentLocationMarker }))?.[0]
+            : await locations.update(id, { parentLocationMarker })
+        await record({
+          entityType: kind,
+          entityId: id,
+          changeType: "update",
+          userId: context.userId,
+          before: before ?? null,
+          after: after ?? null,
+          changedFields: ["parentLocationMarker"],
+        })
+      }
+
+      return { success: true, location: updated }
+    })
   })
 
 export const deleteLocation = createServerFn({ method: "POST" })
