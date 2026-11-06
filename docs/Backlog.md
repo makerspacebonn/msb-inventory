@@ -203,6 +203,47 @@ The changelog names the items and locations that were changed, but they can't be
 
 ---
 
+### UX-027: Several pictures per item
+**Priority:** Medium
+
+**Description:**
+An item has only one picture, but many items need more than one view to be recognized or described well, e.g. the front and the type plate. Users should be able to add several pictures, and the AI analysis should use all of them, so it can read details that a single picture doesn't show.
+
+**Acceptance Criteria:**
+- [ ] An item can have several pictures, and one of them is the main picture shown in lists
+- [ ] Pictures can be added, removed and reordered when adding or editing an item
+- [ ] The AI analysis uses all pictures of the item
+- [ ] Existing items keep their picture as the main picture
+
+---
+
+### UX-028: Backup page on phones
+**Priority:** Low
+
+**Description:**
+The backup page is hard to use on a phone: the list of backups and its actions don't fit the narrow screen. Admins should be able to create, download, restore and delete backups on a phone as easily as on a desktop.
+
+**Acceptance Criteria:**
+- [ ] The backup list fits a phone screen without horizontal scrolling
+- [ ] All actions are easy to reach and tap on a phone
+- [ ] Name, date and size of each backup stay readable
+
+---
+
+### UX-029: Activity statistics
+**Priority:** Low
+
+**Description:**
+The front page shows totals, but not how the inventory is used over time. Statistics per day for searches, additions, changes and deletions, shown as a graph, would show whether the inventory is kept up to date and how much it's used. A view per user could show who contributes.
+
+**Acceptance Criteria:**
+- [ ] Searches, additions, changes and deletions are counted per day
+- [ ] A graph shows these numbers over a selectable period
+- [ ] Optionally the numbers can be shown per user
+- [ ] Searches are counted without storing what was searched for by whom
+
+---
+
 ## AI Features
 
 Item recognition and suggestions with generative AI.
@@ -341,3 +382,16 @@ Images of deleted items and locations, and images that were replaced, stay on th
 - [ ] Images that are shown or can be restored via undo are never removed
 - [ ] The admin sees how many images and how much space would be freed before confirming
 - [ ] Backups and restores keep working as before
+
+---
+
+### OPS-005: Backups created several times
+**Priority:** High
+
+**Description:**
+Creating a backup on a phone produced several backups within seconds instead of one. Duplicate backups take up space and make it unclear which one to restore. One request to create a backup should always result in exactly one backup.
+
+**Acceptance Criteria:**
+- [ ] Creating a backup on a phone results in exactly one backup
+- [ ] Tapping the button again while a backup is being created doesn't start another one
+- [ ] The cause is understood, and other actions with the same problem are fixed too
