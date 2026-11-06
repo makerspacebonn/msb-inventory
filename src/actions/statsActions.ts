@@ -76,16 +76,6 @@ export const fetchInventoryStats = createServerFn().handler(
   },
 )
 
-// Optional: Force refresh the cache (useful for admin operations)
-export const refreshInventoryStats = createServerFn().handler(
-  async (): Promise<InventoryStats> => {
-    const stats = await fetchStatsFromDb()
-    cachedStats = stats
-    cacheTimestamp = Date.now()
-    return stats
-  },
-)
-
 /**
  * Searches and changes per day over the last 7, 30 or 90 days, for
  * everyone. Who changed what is only for logged-in users, like the

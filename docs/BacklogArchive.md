@@ -689,6 +689,25 @@ Several E2E tests pass even when the feature they check is broken: they swallow 
 
 ## Operations
 
+### OPS-005: Backups created several times ✅ COMPLETED 2026-11-06
+**Priority:** High
+
+**Description:**
+Creating a backup on a phone produced several backups within seconds instead of one. Duplicate backups take up space and make it unclear which one to restore. One request to create a backup should always result in exactly one backup.
+
+**Acceptance Criteria:**
+- [x] Creating a backup on a phone results in exactly one backup
+- [x] Tapping the button again while a backup is being created doesn't start another one
+- [x] The cause is understood, and other actions with the same problem are fixed too
+
+**Implementation Notes:**
+- Likely cause (found in the code, not reproduced on a phone): `generateBackup` used the server function default GET, which browsers and proxies may repeat on their own, e.g. when a connection drops during a long request
+- `generateBackup`, `deleteBackup`, `restoreBackup` and `setItemLocation` now use POST; the unused `refreshInventoryStats` was removed
+- `shareWhileRunning`: a second request while a backup is being created gets the same backup
+- `src/actions/serverFnMethods.test.ts` fails when a server function that doesn't plainly read uses GET
+
+---
+
 Backups, releases and running the app.
 
 ### OPS-001: Complete backups ✅ COMPLETED 2026-11-02

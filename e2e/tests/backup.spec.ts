@@ -1,6 +1,29 @@
 import { expect, test } from "../fixtures/auth.fixture"
 
 test.describe("Backup", () => {
+  // One after the other: the first test counts the backups on the server
+  test.describe.configure({ mode: "default" })
+
+  test("creates exactly one backup, even when the button is tapped twice", async ({
+    adminPage: page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto("/backup")
+    const rows = page.getByTestId("backup-row")
+    const before = await rows.count()
+    const create = page.getByRole("button", { name: "Neues Backup erstellen" })
+
+    // A GET could be repeated by the browser on a bad connection
+    const request = page.waitForRequest((r) => r.url().includes("/_serverFn/"))
+    await create.dblclick()
+    expect((await request).method()).toBe("POST")
+    await expect(create).toBeEnabled({ timeout: 15000 })
+
+    // Reloaded, so this is what's really on the server
+    await page.reload()
+    await expect(rows).toHaveCount(before + 1)
+  })
+
   test("restores a fresh backup including categories, changelog and statistics", async ({
     adminPage: page,
   }) => {

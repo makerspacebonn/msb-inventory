@@ -177,10 +177,15 @@ test.describe("Header: sticky", () => {
       page.getByRole("searchbox", { name: "Items suchen" }),
     ).toBeVisible()
 
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-    // The page must really have scrolled, or the check below proves nothing
+    // The page must really have scrolled, or the check below proves nothing.
+    // Repeated, as the router may reset the scroll position while loading
     await expect
-      .poll(() => page.evaluate(() => window.scrollY))
+      .poll(() =>
+        page.evaluate(() => {
+          window.scrollTo(0, document.body.scrollHeight)
+          return window.scrollY
+        }),
+      )
       .toBeGreaterThan(300)
 
     await expect(page.getByRole("banner")).toBeInViewport()

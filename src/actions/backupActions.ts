@@ -24,6 +24,7 @@ import {
   type BackupData,
   parseBackupData,
 } from "../lib/backupFormat"
+import { shareWhileRunning } from "../lib/shareWhileRunning"
 
 const SAVE_PATH = process.env.SAVE_PATH || ""
 const BACKUPS_DIR = path.join(SAVE_PATH, "backups")
@@ -45,20 +46,39 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export const generateBackup = createServerFn()
-  .middleware([adminGuardMiddleware])
-  .handler(async (): Promise<BackupInfo> => {
-    // Ensure backups directory exists
-    if (!fs.existsSync(BACKUPS_DIR)) {
-      fs.mkdirSync(BACKUPS_DIR, { recursive: true })
-    }
+async function createBackup(): Promise<BackupInfo> {
+  // Ensure backups directory exists
+  if (!fs.existsSync(BACKUPS_DIR)) {
+    fs.mkdirSync(BACKUPS_DIR, { recursive: true })
+  }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
-    const backupName = `backup-${timestamp}`
-    const zipPath = path.join(BACKUPS_DIR, `${backupName}.zip`)
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+  const backupName = `backup-${timestamp}`
+  const zipPath = path.join(BACKUPS_DIR, `${backupName}.zip`)
 
-    // Export database tables
-    const [
+  // Export database tables
+  const [
+    users,
+    categories,
+    locations,
+    items,
+    changelog,
+    searchCounts,
+    itemViews,
+  ] = await Promise.all([
+    db.select().from(UserTable),
+    db.select().from(CategoryTable),
+    db.select().from(LocationTable),
+    db.select().from(ItemTable),
+    db.select().from(ChangelogTable),
+    db.select().from(SearchCountTable),
+    db.select().from(ItemViewTable),
+  ])
+
+  const databaseExport: BackupData = {
+    formatVersion: BACKUP_FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    tables: {
       users,
       categories,
       locations,
@@ -66,48 +86,35 @@ export const generateBackup = createServerFn()
       changelog,
       searchCounts,
       itemViews,
-    ] = await Promise.all([
-      db.select().from(UserTable),
-      db.select().from(CategoryTable),
-      db.select().from(LocationTable),
-      db.select().from(ItemTable),
-      db.select().from(ChangelogTable),
-      db.select().from(SearchCountTable),
-      db.select().from(ItemViewTable),
-    ])
+    },
+  }
 
-    const databaseExport: BackupData = {
-      formatVersion: BACKUP_FORMAT_VERSION,
-      exportedAt: new Date().toISOString(),
-      tables: {
-        users,
-        categories,
-        locations,
-        items,
-        changelog,
-        searchCounts,
-        itemViews,
-      },
-    }
+  // Streams the images from disk into the zip, so the backup size isn't
+  // limited by the server's memory
+  await writeBackupArchive(
+    zipPath,
+    JSON.stringify(databaseExport, null, 2),
+    IMAGE_FOLDERS,
+  )
 
-    // Streams the images from disk into the zip, so the backup size isn't
-    // limited by the server's memory
-    await writeBackupArchive(
-      zipPath,
-      JSON.stringify(databaseExport, null, 2),
-      IMAGE_FOLDERS,
-    )
+  // Get file size
+  const stats = fs.statSync(zipPath)
 
-    // Get file size
-    const stats = fs.statSync(zipPath)
+  return {
+    filename: `${backupName}.zip`,
+    size: stats.size,
+    sizeFormatted: formatBytes(stats.size),
+    createdAt: stats.birthtime,
+  }
+}
 
-    return {
-      filename: `${backupName}.zip`,
-      size: stats.size,
-      sizeFormatted: formatBytes(stats.size),
-      createdAt: stats.birthtime,
-    }
-  })
+// A backup can take a while: a second request during that time gets the
+// same backup instead of starting another one
+const createBackupOnce = shareWhileRunning(createBackup)
+
+export const generateBackup = createServerFn({ method: "POST" })
+  .middleware([adminGuardMiddleware])
+  .handler((): Promise<BackupInfo> => createBackupOnce())
 
 export const listBackups = createServerFn()
   .middleware([adminGuardMiddleware])
@@ -138,7 +145,7 @@ export const listBackups = createServerFn()
     return backups
   })
 
-export const deleteBackup = createServerFn()
+export const deleteBackup = createServerFn({ method: "POST" })
   .middleware([adminGuardMiddleware])
   .validator((filename: string) => filename)
   .handler(async ({ data: filename }): Promise<{ success: boolean }> => {
@@ -182,7 +189,7 @@ function chunk<T>(rows: T[]): T[][] {
   return chunks
 }
 
-export const restoreBackup = createServerFn()
+export const restoreBackup = createServerFn({ method: "POST" })
   .middleware([adminGuardMiddleware])
   .validator((filename: string) => filename)
   .handler(async ({ data: filename }): Promise<RestoreResult> => {

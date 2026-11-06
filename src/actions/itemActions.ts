@@ -198,7 +198,7 @@ async function updateItemLocation(
   return { success: true }
 }
 
-export const setItemLocation = createServerFn()
+export const setItemLocation = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
   .validator(
     (data: {
