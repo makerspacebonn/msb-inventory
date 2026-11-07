@@ -1,5 +1,5 @@
 import { CategoryCombobox } from "@components/form/CategoryCombobox"
-import { MyCropper } from "@components/form/MyCropper"
+import { ItemPicturesField } from "@components/form/ItemPicturesField"
 import { TagPicker } from "@components/form/TagPicker"
 import { Badge } from "@components/ui/badge"
 import { Button } from "@components/ui/button"
@@ -30,6 +30,7 @@ import { fetchItem, saveItem } from "@/src/actions/itemActions"
 import type { Item } from "@/src/app/types"
 import { requireLogin } from "@/src/lib/access"
 import type { AiItemDescription } from "@/src/lib/aiItemPrompt"
+import { picturePaths } from "@/src/lib/itemPictures"
 import { type ItemFormData, itemSchema } from "@/src/lib/itemSchema"
 import { showError } from "@/src/lib/showError"
 import { addTags, suggestionsFor } from "@/src/lib/tagInput"
@@ -88,7 +89,6 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
   const [categories, setCategories] = useState<string[]>([])
   const [aiData, setAiData] = useState<AiData | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
-  const [currentImage, setCurrentImage] = useState<string>("")
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(
     new Set(),
   )
@@ -122,18 +122,13 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
     setAiLoading(true)
     setDismissedSuggestions(new Set())
     try {
-      const input = currentImage
-        ? { base64Image: currentImage }
-        : existingItem?.imagePath
-          ? { imagePath: existingItem.imagePath }
-          : null
-
-      if (!input) {
+      const pictures = form.getFieldValue("pictures") ?? []
+      if (pictures.length === 0) {
         toast.error("Kein Bild vorhanden")
         return
       }
 
-      const result = await describeImageFn({ data: input })
+      const result = await describeImageFn({ data: { pictures } })
       if (Array.isArray(result)) {
         setAiData(result[0])
       } else {
@@ -159,8 +154,9 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
       id: existingItem?.id,
       name: existingItem?.name ?? "",
       description: existingItem?.description ?? undefined,
-      image: "",
-      imagePath: existingItem?.imagePath ?? undefined,
+      pictures: existingItem
+        ? picturePaths(existingItem).map((path) => ({ path }))
+        : [],
       tags: existingItem?.tags ?? [],
       manufacturer: existingItem?.manufacturer ?? undefined,
       model: existingItem?.model ?? undefined,
@@ -211,51 +207,44 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
       }}
     >
       <FieldGroup>
-        <form.Field name="image">
+        <form.Field name="pictures">
           {(field) => (
             <>
-              <Input
-                name={field.name}
-                type="hidden"
-                value={field.state.value}
-              />
-              <MyCropper
-                existingImagePath={existingItem?.imagePath ?? undefined}
-                onChange={(image) => {
-                  field.setValue(image)
-                  setCurrentImage(image)
+              <ItemPicturesField
+                value={field.state.value ?? []}
+                onChange={(pictures) => {
+                  field.handleChange(pictures)
                   setAiData(null)
                 }}
               />
               {!field.state.meta.isValid && (
                 <FieldError errors={field.state.meta.errors} />
               )}
+              {(field.state.value ?? []).length > 0 && (
+                <div className="flex justify-center">
+                  <Button
+                    type="button"
+                    onClick={handleAiAnalysis}
+                    disabled={aiLoading}
+                    className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/25"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
+                        Analysiere...
+                      </>
+                    ) : (
+                      <>
+                        <SparklesIcon className="w-4 h-4 mr-2" />
+                        KI-Analyse starten
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </form.Field>
-
-        {(currentImage || existingItem?.imagePath) && (
-          <div className="flex justify-center">
-            <Button
-              type="button"
-              onClick={handleAiAnalysis}
-              disabled={aiLoading}
-              className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/25"
-            >
-              {aiLoading ? (
-                <>
-                  <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
-                  Analysiere...
-                </>
-              ) : (
-                <>
-                  <SparklesIcon className="w-4 h-4 mr-2" />
-                  KI-Analyse starten
-                </>
-              )}
-            </Button>
-          </div>
-        )}
 
         <form.Field name="name">
           {(field) => (

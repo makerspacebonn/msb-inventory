@@ -6,8 +6,9 @@ import type {
 import { createServerFn } from "@tanstack/react-start"
 import z from "zod/v4"
 import { diffFields } from "@/src/lib/changelogUtils"
-import { errorMessage } from "@/src/lib/errors"
+import { AppError, errorMessage } from "@/src/lib/errors"
 import { storeImage } from "@/src/lib/imageUtils"
+import { picturePaths, resolvePictures } from "@/src/lib/itemPictures"
 import { itemSchema } from "@/src/lib/itemSchema"
 import {
   authGuardMiddleware,
@@ -100,11 +101,22 @@ export const saveItem = createServerFn({ method: "POST" })
         }
       }
 
+      const { pictures, ...fields } = data
+      const item: Partial<Item> = fields
+
       // A failed image upload must not silently save the item without it
-      if (data.image) {
+      if (pictures) {
         try {
-          data.imagePath = await storeImage(data.image, "items")
+          Object.assign(
+            item,
+            await resolvePictures(
+              pictures,
+              beforeItem ? picturePaths(beforeItem) : [],
+              (dataUrl) => storeImage(dataUrl, "items"),
+            ),
+          )
         } catch (e) {
+          if (e instanceof AppError) throw e
           console.error(e)
           return {
             success: false,
@@ -115,17 +127,17 @@ export const saveItem = createServerFn({ method: "POST" })
 
       // Categories come from the curated list; a new one typed by an editor
       // is added to it (and an existing one reused, ignoring case)
-      if (data.category?.trim()) {
-        data.category = await new CategoryRepository().ensure(data.category)
+      if (item.category?.trim()) {
+        item.category = await new CategoryRepository().ensure(item.category)
       }
 
-      const [savedItem] = (await itemRepo.upsert(data)) || []
+      const [savedItem] = (await itemRepo.upsert(item)) || []
       if (!savedItem) {
         return { success: true }
       }
 
-      // The base64 image string is not item state, so it is never tracked
-      const submittedFields = Object.keys(data).filter((k) => k !== "image")
+      // The pictures are tracked as the columns they were saved to
+      const submittedFields = Object.keys(item)
 
       if (beforeItem) {
         const changedFields = diffFields(beforeItem, savedItem, submittedFields)

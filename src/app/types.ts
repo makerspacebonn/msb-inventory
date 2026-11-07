@@ -6,7 +6,10 @@ export type Item = {
   locationId: number | null
   parentLocationMarker?: ParentLocationMarker | null
   additionalInfo: (ParentLocationMarker | ItemLink)[] | null
+  /** The main picture, shown in lists */
   imagePath: string | null
+  /** Further pictures after the main one, in their order */
+  extraImagePaths: string[]
   // Name of the item's direct location; only filled in item lists
   locationName?: string | null
   tags: string[] | null

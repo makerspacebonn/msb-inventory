@@ -6,8 +6,14 @@ import {
   type AiItemDescription,
   buildItemPrompt,
   buildItemResponseSchema,
+  imageParts,
 } from "@/src/lib/aiItemPrompt"
 import { AppError } from "@/src/lib/errors"
+import {
+  imageMimeType,
+  isImageFileName,
+  MAX_ITEM_PICTURES,
+} from "@/src/lib/itemPictures"
 import { rankPhotoMatches, toPhotoDescription } from "@/src/lib/photoMatch"
 import { cleanTags } from "@/src/lib/tagRules"
 import { authGuardMiddleware } from "@/src/middleware/authMiddleware"
@@ -40,33 +46,32 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "")
 const geminiModel = process.env.GEMINI_MODEL || "gemini-3.8-flash"
 
 const imageInputSchema = z.object({
-  base64Image: z.string().optional(),
-  imagePath: z.string().optional(),
+  pictures: z
+    .array(
+      z.union([
+        z.object({ path: z.string().refine(isImageFileName) }),
+        z.object({ upload: z.string() }),
+      ]),
+    )
+    .min(1, "Kein Bild für die KI-Analyse angegeben")
+    .max(MAX_ITEM_PICTURES),
 })
 
 export const describeImageFn = createServerFn({ method: "POST" })
   .middleware([authGuardMiddleware])
   .validator(imageInputSchema)
   .handler(async ({ data }) => {
-    let base64Image: string
-
-    if (data.base64Image) {
-      base64Image = data.base64Image
-    } else if (data.imagePath) {
-      const fullPath = `${process.env.SAVE_PATH}items/${data.imagePath}`
-      const fileBuffer = fs.readFileSync(fullPath)
-      const mimeType = data.imagePath.endsWith(".png")
-        ? "image/png"
-        : "image/jpeg"
-      base64Image = `data:${mimeType};base64,${fileBuffer.toString("base64")}`
-    } else {
-      throw new AppError(
-        "INVALID_INPUT",
-        "Kein Bild für die KI-Analyse angegeben",
-      )
-    }
-
-    return describeItemImage(base64Image)
+    // Pictures the item already has are read from disk
+    const images = await Promise.all(
+      data.pictures.map(async (picture) => {
+        if ("upload" in picture) return picture.upload
+        const file = await fs.promises.readFile(
+          `${process.env.SAVE_PATH}items/${picture.path}`,
+        )
+        return `data:${imageMimeType(picture.path)};base64,${file.toString("base64")}`
+      }),
+    )
+    return describeItemImages(images)
   })
 
 /**
@@ -79,7 +84,7 @@ export const searchByPhotoFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await recordSearch()
     const description = toPhotoDescription(
-      await describeItemImage(data.base64Image),
+      await describeItemImages([data.base64Image]),
     )
     const candidates = await new ItemRepository().findPhotoCandidates(
       description,
@@ -90,7 +95,9 @@ export const searchByPhotoFn = createServerFn({ method: "POST" })
     return { description, results }
   })
 
-export type ItemImageDescription = Awaited<ReturnType<typeof describeItemImage>>
+export type ItemImageDescription = Awaited<
+  ReturnType<typeof describeItemImages>
+>
 
 /**
  * Describes the item on a photo (name, category, tags, ...), using the
@@ -99,7 +106,7 @@ export type ItemImageDescription = Awaited<ReturnType<typeof describeItemImage>>
  * For E2E tests, GEMINI_STUB_RESPONSE (set only in docker-compose.e2e.yml)
  * replaces the Gemini call with a fixed JSON answer.
  */
-async function describeItemImage(base64Image: string) {
+async function describeItemImages(images: string[]) {
   const [categories, topTags] = await Promise.all([
     new CategoryRepository().findAllNames(),
     new TagsRepository().findTopTags(100),
@@ -121,14 +128,11 @@ async function describeItemImage(base64Image: string) {
   const prompt = buildItemPrompt({
     categories,
     topTags,
+    pictureCount: images.length,
   })
 
-  const [header, imageData] = base64Image.split(",")
-  const mimeType = header.match(/^data:([^;]+)/)?.[1] ?? "image/jpeg"
-  const imageParts = [{ inlineData: { data: imageData, mimeType } }]
-
   try {
-    const result = await model.generateContent([prompt, ...imageParts])
+    const result = await model.generateContent([prompt, ...imageParts(images)])
     console.log(result.response.text())
     return postProcess(JSON.parse(result.response.text()), categories)
   } catch (error: unknown) {

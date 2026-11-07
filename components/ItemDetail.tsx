@@ -1,3 +1,4 @@
+import { ItemPictures } from "@components/ItemPictures"
 import { AdditionalInfo } from "@components/item/AdditionalInfo"
 import { ItemLocationDeleteButton } from "@components/item/ItemLocationDeleteButton"
 import { Tags } from "@components/item/Tags"
@@ -21,21 +22,12 @@ export const ItemDetail = ({
   /** Shows the buttons to change the item's location (logged-in users) */
   canEdit: boolean
 }) => {
-  const imagePath = `/img/items/${item.imagePath}`
   let marker = item.parentLocationMarker
 
   return (
     <div className="items-center max-w-128 center mx-auto">
       <h1 className="text-3xl font-bold text-center mb-4">{item.name} </h1>
-      <div>
-        {item.imagePath && (
-          <img
-            className="rounded-2xl w-128 aspect-square mb-4"
-            src={imagePath}
-            alt={item.name}
-          />
-        )}
-      </div>
+      <ItemPictures item={item} />
       <div className="mb-4">{item.description}</div>
       <AdditionalInfo item={item} />
       <Tags tags={item.tags} />

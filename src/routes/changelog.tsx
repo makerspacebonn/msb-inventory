@@ -469,6 +469,7 @@ function formatFieldName(field: string): string {
     locationId: "Location",
     parentLocationMarker: "Position",
     imagePath: "Bild",
+    extraImagePaths: "Weitere Bilder",
     tags: "Tags",
     manufacturer: "Hersteller",
     model: "Modell",

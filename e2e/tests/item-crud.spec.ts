@@ -68,7 +68,7 @@ test.describe("Item CRUD Operations", () => {
       await use.click()
       await expect(cropper).toBeHidden()
       await expect(
-        page.getByRole("img", { name: "Gewähltes Bild" }),
+        page.getByRole("img", { name: "Bild 1 von 1" }),
       ).toBeVisible()
 
       await page.getByRole("button", { name: "Erstellen" }).click()

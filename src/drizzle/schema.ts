@@ -124,6 +124,11 @@ export const ItemTable = pgTable(
     ),
     parentLocationMarker: json().$type<ParentLocationMarker | null>(),
     imagePath: varchar("image_path"),
+    // Further pictures after the main one (imagePath), in their order
+    extraImagePaths: varchar("extra_image_paths")
+      .array()
+      .notNull()
+      .default(sql`'{}'::varchar[]`),
     additionalInfo: json().$type<(ParentLocationMarker | ItemLink)[] | null>(),
     tags: varchar("tags").array(),
     manufacturer: varchar("manufacturer"),

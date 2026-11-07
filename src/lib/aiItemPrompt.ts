@@ -8,9 +8,12 @@ import { type ObjectSchema, SchemaType } from "@google/generative-ai"
 export function buildItemPrompt({
   categories,
   topTags,
+  pictureCount = 1,
 }: {
   categories: string[]
   topTags: string[]
+  /** Several pictures show the same item from different sides */
+  pictureCount?: number
 }): string {
   const categoryRule =
     categories.length > 0
@@ -23,7 +26,13 @@ Nur wenn wirklich keine passt, wähle "Sonstiges" und schlage in "kategorie_neu"
       ? `\nBereits verwendete Schlagworte (bevorzuge diese Schreibweisen, wenn sie passen):\n${topTags.join(", ")}\n`
       : ""
 
-  return `Analysiere dieses Bild eines Gegenstands für das Inventar eines Makerspace.
+  const subject =
+    pictureCount > 1
+      ? `Analysiere diese ${pictureCount} Bilder eines Gegenstands für das Inventar eines Makerspace.
+Alle Bilder zeigen denselben Gegenstand, z.B. von verschiedenen Seiten oder mit Typenschild. Nutze die Details aller Bilder.`
+      : "Analysiere dieses Bild eines Gegenstands für das Inventar eines Makerspace."
+
+  return `${subject}
 Gib nur Informationen an, die helfen, den Gegenstand zu identifizieren und wiederzufinden.
 
 ${categoryRule}
@@ -106,4 +115,13 @@ export function buildItemResponseSchema(categories: string[]): ObjectSchema {
       "bedienungsanleitungen",
     ],
   }
+}
+
+/** The images as parts of a Gemini request, from their data URLs */
+export function imageParts(dataUrls: string[]) {
+  return dataUrls.map((dataUrl) => {
+    const [header, data] = dataUrl.split(",")
+    const mimeType = header.match(/^data:([^;]+)/)?.[1] ?? "image/jpeg"
+    return { inlineData: { data, mimeType } }
+  })
 }

@@ -153,17 +153,18 @@ The app already shows the status of every label printer, but labels are always s
 
 ---
 
-### UX-027: Several pictures per item
+### LOC-002: Precise marker placement
 **Priority:** Medium
 
 **Description:**
-An item has only one picture, but many items need more than one view to be recognized or described well, e.g. the front and the type plate. Users should be able to add several pictures, and the AI analysis should use all of them, so it can read details that a single picture doesn't show.
+Markers are hard to place exactly, especially on a phone, where the finger covers the spot it is placing. This matters most when replacing a location image, where the reference points decide where all markers end up, but it affects every marker placement. An enlarged view of the area under the finger while holding and moving it would make placing precise. The details need to be discussed.
 
 **Acceptance Criteria:**
-- [ ] An item can have several pictures, and one of them is the main picture shown in lists
-- [ ] Pictures can be added, removed and reordered when adding or editing an item
-- [ ] The AI analysis uses all pictures of the item
-- [ ] Existing items keep their picture as the main picture
+- [ ] While placing a marker, the spot under the finger can be seen enlarged
+- [ ] The marker can be moved around before it is set
+- [ ] Works for all marker placements, including the reference points when replacing an image
+- [ ] Works on a phone and with a mouse
+- [ ] Open details are agreed on before implementation
 
 ---
 
@@ -182,6 +183,19 @@ Item descriptions and photo search only work with Google Gemini. Being able to u
 - [ ] Item descriptions and photo search work with every supported provider
 - [ ] Without a configured provider, the AI features are hidden and the rest of the app works
 - [ ] Setup documentation describes how to configure each provider
+
+---
+
+### AI-005: Check suggested links
+**Priority:** Medium
+
+**Description:**
+The AI suggests links for an item, such as the manufacturer page or a manual, but it sometimes suggests addresses that don't exist. Users only notice when they open a link later. Suggested links should be checked before they are offered, so only working links end up on an item.
+
+**Acceptance Criteria:**
+- [ ] Links suggested by the AI are checked to see whether they exist
+- [ ] Links that don't exist are not offered, or are clearly marked
+- [ ] A slow or failing check doesn't block the rest of the AI analysis
 
 ---
 

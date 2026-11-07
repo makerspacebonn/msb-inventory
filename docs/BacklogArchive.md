@@ -774,6 +774,27 @@ Items can only be put into the curated categories. When the AI recognizes an ite
 
 ---
 
+### UX-027: Several pictures per item ✅ COMPLETED 2026-11-07
+**Priority:** Medium
+
+**Description:**
+An item has only one picture, but many items need more than one view to be recognized or described well, e.g. the front and the type plate. Users should be able to add several pictures, and the AI analysis should use all of them, so it can read details that a single picture doesn't show.
+
+**Acceptance Criteria:**
+- [x] An item can have several pictures, and one of them is the main picture shown in lists
+- [x] Pictures can be added, removed and reordered when adding or editing an item
+- [x] The AI analysis uses all pictures of the item
+- [x] Existing items keep their picture as the main picture
+
+**Implementation Notes:**
+- `imagePath` stays the main picture, so lists, search and labels are unchanged; further pictures are in the new column `extraImagePaths` (default empty, so existing items and older backups need nothing)
+- At most 6 pictures, each cropped square with the same dialog (`components/form/CropDialog.tsx`, also used by `MyCropper`)
+- The form sends all pictures in order (`{ path }` kept, `{ upload }` new); `resolvePictures` (`src/lib/itemPictures.ts`) stores the new ones and refuses files that aren't the item's own
+- The item page shows the main picture with thumbnails below to switch; the AI analysis gets all pictures in one request, with the prompt saying they show the same item
+- Removed pictures' files stay on disk, so an undo can bring them back (see OPS-004)
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.
