@@ -79,7 +79,8 @@
     "defu": "^6.1.5",
     "ip-address": "^10.7.4",
     "proxy-addr": "^2.0.8",
-    "seroval": "^1.6.3"
+    "seroval": "^1.6.3",
+    "esbuild": "^0.28.2"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.5",
