@@ -104,6 +104,13 @@ export const saveItem = createServerFn({ method: "POST" })
       const { pictures, ...fields } = data
       const item: Partial<Item> = fields
 
+      if (
+        item.locationId &&
+        !(await new LocationRepository().findById(item.locationId))
+      ) {
+        throw new AppError("NOT_FOUND", "Location nicht gefunden")
+      }
+
       // A failed image upload must not silently save the item without it
       if (pictures) {
         try {

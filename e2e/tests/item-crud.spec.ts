@@ -12,7 +12,7 @@ const photo = path.join(
 async function createItem(page: Page, name: string) {
   await page.goto("/items/add")
   await page.getByLabel("Name", { exact: true }).fill(name)
-  await page.getByRole("button", { name: "Erstellen" }).click()
+  await page.getByRole("button", { name: "Ohne Ort erstellen" }).click()
 
   await expect(page).toHaveURL(/\/i\/\d+$/)
   await expect(
@@ -40,7 +40,7 @@ test.describe("Item CRUD Operations", () => {
     test("requires an item name", async ({ authenticatedPage: page }) => {
       await page.goto("/items/add")
 
-      await page.getByRole("button", { name: "Erstellen" }).click()
+      await page.getByRole("button", { name: "Ohne Ort erstellen" }).click()
 
       await expect(
         page.getByText("Muss mindestens einen Buchstaben haben!"),
@@ -71,7 +71,7 @@ test.describe("Item CRUD Operations", () => {
         page.getByRole("img", { name: "Bild 1 von 1" }),
       ).toBeVisible()
 
-      await page.getByRole("button", { name: "Erstellen" }).click()
+      await page.getByRole("button", { name: "Ohne Ort erstellen" }).click()
 
       await expect(page).toHaveURL(/\/i\/\d+$/)
       const image = page.getByRole("img", { name, exact: true })
@@ -168,7 +168,7 @@ test.describe("Item CRUD Operations", () => {
 
       // The session ends, e.g. it expired or the user logged out elsewhere
       await page.context().clearCookies()
-      await page.getByRole("button", { name: "Erstellen" }).click()
+      await page.getByRole("button", { name: "Ohne Ort erstellen" }).click()
 
       // The "Anmelden" button only appears for the code UNAUTHORIZED, so it
       // also shows that the error's code made it to the browser

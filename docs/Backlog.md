@@ -38,19 +38,6 @@ Some functions and components mix high-level steps with low-level details, for e
 
 User experience enhancements for common workflows.
 
-### UX-006: Choose location directly after adding an item
-**Priority:** Medium
-
-**Description:**
-After adding a new item, the user lands on the item detail page and has to start the location selection separately. Choosing a location should follow directly as part of adding an item, so new items don't end up without a location.
-
-**Acceptance Criteria:**
-- [ ] After saving a new item, the location selection starts directly
-- [ ] The user can skip choosing a location
-- [ ] Editing an existing item does not force a location selection
-
----
-
 ### UX-007: Filter items without a location
 **Priority:** Medium
 

@@ -88,7 +88,7 @@ test.describe("Tag picker on a phone", () => {
       "Löten",
     ])
 
-    await page.getByRole("button", { name: "Erstellen" }).click()
+    await page.getByRole("button", { name: "Ohne Ort erstellen" }).click()
     await expect(page).toHaveURL(/\/i\/\d+$/)
     for (const tag of [newTag, "Löten"]) {
       await expect(

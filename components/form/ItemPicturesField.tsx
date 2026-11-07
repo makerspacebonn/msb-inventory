@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils"
 import { type ItemPicture, MAX_ITEM_PICTURES } from "@/src/lib/itemPictures"
 import { CropDialog, readImageFile } from "./CropDialog"
 
-const pictureSrc = (picture: ItemPicture) =>
+/** Where a picture of the form can be shown from */
+export const pictureSrc = (picture: ItemPicture) =>
   "path" in picture ? `/img/items/${picture.path}` : picture.upload
 
 /** Moves the picture at `from` to `to`, keeping the others in order */

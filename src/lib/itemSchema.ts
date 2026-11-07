@@ -23,6 +23,16 @@ export const itemSchema = z.object({
     )
     .max(MAX_ITEM_PICTURES, `Höchstens ${MAX_ITEM_PICTURES} Bilder`)
     .optional(),
+  // Where a new item goes, saved with it, so it's one change in the changelog
+  locationId: z.number().int().positive().optional(),
+  parentLocationMarker: z
+    .object({
+      id: z.number(),
+      x: z.number().min(0).max(100),
+      y: z.number().min(0).max(100),
+    })
+    .nullable()
+    .optional(),
   tags: z.array(z.string()).optional(),
   manufacturer: z.string().optional(),
   model: z.string().optional(),

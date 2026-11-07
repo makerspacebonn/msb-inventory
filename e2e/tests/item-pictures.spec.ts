@@ -34,7 +34,9 @@ async function startItem(page: Page, name: string) {
 }
 
 async function save(page: Page) {
-  await page.getByRole("button", { name: /^(Erstellen|Speichern)$/ }).click()
+  await page
+    .getByRole("button", { name: /^(Ohne Ort erstellen|Speichern)$/ })
+    .click()
   await expect(page).toHaveURL(/\/i\/\d+$/)
   return new URL(page.url()).pathname
 }

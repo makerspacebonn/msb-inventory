@@ -38,7 +38,7 @@ test.describe("Activity statistics", () => {
 
     await page.goto("/items/add")
     await page.getByLabel("Name", { exact: true }).fill(`Stats ${Date.now()}`)
-    await page.getByRole("button", { name: "Erstellen" }).click()
+    await page.getByRole("button", { name: "Ohne Ort erstellen" }).click()
     await expect(page).toHaveURL(/\/i\/\d+$/)
 
     await page.goto("/stats?days=7")
@@ -126,7 +126,7 @@ test.describe("Activity statistics", () => {
     const name = `Viewed ${Date.now()}`
     await page.goto("/items/add")
     await page.getByLabel("Name", { exact: true }).fill(name)
-    await page.getByRole("button", { name: "Erstellen" }).click()
+    await page.getByRole("button", { name: "Ohne Ort erstellen" }).click()
     await expect(page).toHaveURL(/\/i\/\d+$/)
     const itemUrl = page.url()
 

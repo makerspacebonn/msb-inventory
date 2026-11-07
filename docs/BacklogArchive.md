@@ -817,6 +817,25 @@ Markers are hard to place exactly, especially on a phone, where the finger cover
 
 ---
 
+### UX-006: Choose location directly after adding an item ✅ COMPLETED 2026-11-07
+**Priority:** Medium
+
+**Description:**
+After adding a new item, the user lands on the item detail page and has to start the location selection separately. Choosing a location should follow directly as part of adding an item, so new items don't end up without a location.
+
+**Acceptance Criteria:**
+- [x] After filling in a new item, the location selection starts directly (before saving, see notes)
+- [x] The user can skip choosing a location
+- [x] Editing an existing item does not force a location selection
+
+**Implementation Notes:**
+- Changed on purpose: the location is chosen before the item is saved, so a new item is one "Erstellt" entry in the changelog with its location and marker, not a creation followed by a change
+- A new item's form has "Weiter zum Ort" (also on Enter) and "Ohne Ort erstellen"; the picker offers "Ohne Ort speichern" and goes back to the form with everything kept
+- The picker is now `components/location/ItemLocationPicker.tsx`, used by the form (browsing kept in state) and by `/items/$itemId/location/add` (browsing kept in the URL)
+- `saveItem` takes `locationId` and `parentLocationMarker` and refuses a location that doesn't exist
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.

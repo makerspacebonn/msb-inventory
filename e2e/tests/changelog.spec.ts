@@ -27,7 +27,7 @@ function changeEntry(page: Page, change: string, kind: string, name: string) {
 async function createItem(page: Page, name: string) {
   await page.goto("/items/add")
   await page.getByLabel("Name", { exact: true }).fill(name)
-  await page.getByRole("button", { name: "Erstellen" }).click()
+  await page.getByRole("button", { name: "Ohne Ort erstellen" }).click()
   await expect(page).toHaveURL(/\/i\/\d+$/)
   return new URL(page.url()).pathname
 }

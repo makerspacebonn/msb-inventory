@@ -1,6 +1,13 @@
 import { CategoryCombobox } from "@components/form/CategoryCombobox"
-import { ItemPicturesField } from "@components/form/ItemPicturesField"
+import {
+  ItemPicturesField,
+  pictureSrc,
+} from "@components/form/ItemPicturesField"
 import { TagPicker } from "@components/form/TagPicker"
+import {
+  ItemLocationPicker,
+  type LocationView,
+} from "@components/location/ItemLocationPicker"
 import { Badge } from "@components/ui/badge"
 import { Button } from "@components/ui/button"
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
@@ -27,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { describeImageFn } from "@/src/actions/aiActions"
 import { fetchCategories } from "@/src/actions/categoryActions"
 import { fetchItem, saveItem } from "@/src/actions/itemActions"
+import { fetchLocationView } from "@/src/actions/locationActions"
 import type { Item } from "@/src/app/types"
 import { requireLogin } from "@/src/lib/access"
 import type { AiItemDescription } from "@/src/lib/aiItemPrompt"
@@ -36,6 +44,13 @@ import { showError } from "@/src/lib/showError"
 import { addTags, suggestionsFor } from "@/src/lib/tagInput"
 
 type AiData = AiItemDescription
+
+type SubmitMeta = {
+  /** Create a new item without choosing a location */
+  skipLocation?: boolean
+  /** The chosen location of a new item */
+  location?: Pick<ItemFormData, "locationId" | "parentLocationMarker">
+}
 
 const { fieldContext, formContext } = createFormHookContexts()
 
@@ -92,6 +107,28 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(
     new Set(),
   )
+
+  const [step, setStep] = useState<"form" | "location">("form")
+  const [pickerAt, setPickerAt] = useState<number | undefined>(undefined)
+  const [locationView, setLocationView] = useState<LocationView | null>(null)
+
+  // Each step starts at the top; the form's buttons are at its bottom
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs on each change of step
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [step])
+
+  // The picker's locations, loaded for the location it shows
+  useEffect(() => {
+    if (step !== "location") return
+    let current = true
+    fetchLocationView({ data: pickerAt })
+      .then((view) => current && setLocationView(view))
+      .catch((error) => showError(error, "Orte konnten nicht geladen werden"))
+    return () => {
+      current = false
+    }
+  }, [step, pickerAt])
 
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
   const morestuffRef = useRef<HTMLTextAreaElement>(null)
@@ -167,8 +204,15 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
     validators: {
       onSubmit: itemSchema,
     },
-    onSubmit: async ({ value }) => {
-      const parsedInput = itemSchema.parse(value)
+    // A new item goes on to choosing its location first, unless skipped;
+    // the location is then saved together with the item
+    onSubmitMeta: {} as SubmitMeta,
+    onSubmit: async ({ value, meta }) => {
+      if (!isEditing && !meta.skipLocation && !meta.location) {
+        setStep("location")
+        return
+      }
+      const parsedInput = itemSchema.parse({ ...value, ...meta.location })
 
       let result: Awaited<ReturnType<typeof saveItem>>
       try {
@@ -199,92 +243,418 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
     },
   })
 
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        form.handleSubmit()
-      }}
-    >
-      <FieldGroup>
-        <form.Field name="pictures">
-          {(field) => (
-            <>
-              <ItemPicturesField
-                value={field.state.value ?? []}
-                onChange={(pictures) => {
-                  field.handleChange(pictures)
-                  setAiData(null)
-                }}
-              />
-              {!field.state.meta.isValid && (
-                <FieldError errors={field.state.meta.errors} />
-              )}
-              {(field.state.value ?? []).length > 0 && (
-                <div className="flex justify-center">
-                  <Button
-                    type="button"
-                    onClick={handleAiAnalysis}
-                    disabled={aiLoading}
-                    className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/25"
-                  >
-                    {aiLoading ? (
-                      <>
-                        <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
-                        Analysiere...
-                      </>
-                    ) : (
-                      <>
-                        <SparklesIcon className="w-4 h-4 mr-2" />
-                        KI-Analyse starten
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </form.Field>
+  const firstPicture = (form.getFieldValue("pictures") ?? [])[0]
+  const picker = step === "location" && (
+    <div className="mb-6">
+      {locationView ? (
+        <ItemLocationPicker
+          view={locationView}
+          item={{
+            name: form.getFieldValue("name"),
+            imageSrc: firstPicture && pictureSrc(firstPicture),
+          }}
+          onNavigate={setPickerAt}
+          onChoose={(location, marker) =>
+            form.handleSubmit({
+              location: {
+                locationId: location.id,
+                parentLocationMarker: marker
+                  ? { id: 1, x: marker.x, y: marker.y }
+                  : null,
+              },
+            })
+          }
+          onCancel={() => setStep("form")}
+          footer={
+            <Button
+              variant="outline"
+              className="mt-4 w-full"
+              onClick={() => form.handleSubmit({ skipLocation: true })}
+            >
+              Ohne Ort speichern
+            </Button>
+          }
+        />
+      ) : (
+        <Loader2Icon
+          className="mx-auto w-6 h-6 animate-spin"
+          aria-label="Orte werden geladen"
+        />
+      )}
+    </div>
+  )
 
-        <form.Field name="name">
-          {(field) => (
-            <>
-              <FieldContent>
-                <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
+  return (
+    <>
+      {picker}
+      <form
+        className={step === "location" ? "hidden" : undefined}
+        onSubmit={(e) => {
+          e.preventDefault()
+          form.handleSubmit()
+        }}
+      >
+        <FieldGroup>
+          <form.Field name="pictures">
+            {(field) => (
+              <>
+                <ItemPicturesField
+                  value={field.state.value ?? []}
+                  onChange={(pictures) => {
+                    field.handleChange(pictures)
+                    setAiData(null)
+                  }}
                 />
                 {!field.state.meta.isValid && (
                   <FieldError errors={field.state.meta.errors} />
                 )}
-                {aiData?.bezeichnung && !dismissedSuggestions.has("name") && (
-                  <InlineSuggestion
-                    value={aiData.bezeichnung}
-                    onUse={() => {
-                      field.handleChange(aiData.bezeichnung)
-                      dismissSuggestion("name")
+                {(field.state.value ?? []).length > 0 && (
+                  <div className="flex justify-center">
+                    <Button
+                      type="button"
+                      onClick={handleAiAnalysis}
+                      disabled={aiLoading}
+                      className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/25"
+                    >
+                      {aiLoading ? (
+                        <>
+                          <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
+                          Analysiere...
+                        </>
+                      ) : (
+                        <>
+                          <SparklesIcon className="w-4 h-4 mr-2" />
+                          KI-Analyse starten
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </form.Field>
+
+          <form.Field name="name">
+            {(field) => (
+              <>
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                  {!field.state.meta.isValid && (
+                    <FieldError errors={field.state.meta.errors} />
+                  )}
+                  {aiData?.bezeichnung && !dismissedSuggestions.has("name") && (
+                    <InlineSuggestion
+                      value={aiData.bezeichnung}
+                      onUse={() => {
+                        field.handleChange(aiData.bezeichnung)
+                        dismissSuggestion("name")
+                      }}
+                      onDismiss={() => dismissSuggestion("name")}
+                    />
+                  )}
+                </FieldContent>
+              </>
+            )}
+          </form.Field>
+          <form.Field name="description">
+            {(field) => (
+              <>
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Beschreibung</FieldLabel>
+                  <Textarea
+                    ref={descriptionRef}
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => {
+                      field.handleChange(e.target.value)
+                      resizeTextarea(e.target)
                     }}
-                    onDismiss={() => dismissSuggestion("name")}
+                    className="resize-none overflow-hidden"
+                  />
+                  {!field.state.meta.isValid && (
+                    <FieldError errors={field.state.meta.errors} />
+                  )}
+                  {aiData?.beschreibung_kurz &&
+                    !dismissedSuggestions.has("description") && (
+                      <InlineSuggestion
+                        value={aiData.beschreibung_kurz}
+                        onUse={() => {
+                          field.handleChange(aiData.beschreibung_kurz)
+                          dismissSuggestion("description")
+                          setTimeout(
+                            () => resizeTextarea(descriptionRef.current),
+                            0,
+                          )
+                        }}
+                        onDismiss={() => dismissSuggestion("description")}
+                      />
+                    )}
+                </FieldContent>
+              </>
+            )}
+          </form.Field>
+
+          <form.Field name="tags">
+            {(field) => (
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>Tags</FieldLabel>
+                <TagPicker
+                  id={field.name}
+                  tags={field.state.value ?? []}
+                  onChange={(next) => field.handleChange(next)}
+                />
+                {!field.state.meta.isValid && (
+                  <FieldError errors={field.state.meta.errors} />
+                )}
+                {(() => {
+                  // Only the AI's tags the item doesn't have yet; accepting
+                  // them adds to the tags entered so far instead of replacing
+                  const current = field.state.value ?? []
+                  const newTags = suggestionsFor(
+                    aiData?.schlagworte ?? [],
+                    current,
+                  )
+                  return (
+                    newTags.length > 0 &&
+                    !dismissedSuggestions.has("tags") && (
+                      <InlineTagsSuggestion
+                        tags={newTags}
+                        onUse={() => {
+                          field.handleChange(addTags(current, newTags))
+                          dismissSuggestion("tags")
+                        }}
+                        onDismiss={() => dismissSuggestion("tags")}
+                      />
+                    )
+                  )
+                })()}
+              </FieldContent>
+            )}
+          </form.Field>
+
+          <form.Field name="manufacturer">
+            {(field) => (
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>Hersteller</FieldLabel>
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value ?? ""}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+                {aiData?.hersteller &&
+                  !dismissedSuggestions.has("manufacturer") && (
+                    <InlineSuggestion
+                      value={aiData.hersteller}
+                      onUse={() => {
+                        field.handleChange(aiData.hersteller ?? "")
+                        dismissSuggestion("manufacturer")
+                      }}
+                      onDismiss={() => dismissSuggestion("manufacturer")}
+                    />
+                  )}
+              </FieldContent>
+            )}
+          </form.Field>
+
+          <form.Field name="model">
+            {(field) => (
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>Modell</FieldLabel>
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value ?? ""}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+                {aiData?.modell && !dismissedSuggestions.has("model") && (
+                  <InlineSuggestion
+                    value={aiData.modell}
+                    onUse={() => {
+                      field.handleChange(aiData.modell ?? "")
+                      dismissSuggestion("model")
+                    }}
+                    onDismiss={() => dismissSuggestion("model")}
                   />
                 )}
               </FieldContent>
-            </>
-          )}
-        </form.Field>
-        <form.Field name="description">
-          {(field) => (
-            <>
+            )}
+          </form.Field>
+
+          <form.Field name="category">
+            {(field) => (
               <FieldContent>
-                <FieldLabel htmlFor={field.name}>Beschreibung</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Kategorie</FieldLabel>
+                <CategoryCombobox
+                  id={field.name}
+                  value={field.state.value ?? ""}
+                  categories={categories}
+                  onBlur={field.handleBlur}
+                  onChange={field.handleChange}
+                />
+                {aiCategory && !dismissedSuggestions.has("category") && (
+                  <InlineSuggestion
+                    value={
+                      aiData?.kategorie_neu
+                        ? `Neue Kategorie: ${aiCategory}`
+                        : aiCategory
+                    }
+                    onUse={() => {
+                      field.handleChange(aiCategory)
+                      dismissSuggestion("category")
+                    }}
+                    onDismiss={() => dismissSuggestion("category")}
+                  />
+                )}
+              </FieldContent>
+            )}
+          </form.Field>
+
+          <form.Field name="links">
+            {(field) => (
+              <FieldContent>
+                <FieldLabel>Links</FieldLabel>
+                <div className="space-y-2">
+                  {(field.state.value ?? []).map((link, index) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: links have no stable id; keying by content would remount inputs on every keystroke
+                    <div key={index} className="flex gap-2 items-start">
+                      <div className="flex-1 grid grid-cols-3 gap-2">
+                        <Input
+                          placeholder="Name"
+                          value={link.name}
+                          onChange={(e) => {
+                            const newLinks = [...(field.state.value ?? [])]
+                            newLinks[index] = { ...link, name: e.target.value }
+                            field.handleChange(newLinks)
+                          }}
+                        />
+                        <Input
+                          placeholder="URL"
+                          value={link.url}
+                          onChange={(e) => {
+                            const newLinks = [...(field.state.value ?? [])]
+                            newLinks[index] = { ...link, url: e.target.value }
+                            field.handleChange(newLinks)
+                          }}
+                        />
+                        <Input
+                          placeholder="Typ"
+                          value={link.type}
+                          onChange={(e) => {
+                            const newLinks = [...(field.state.value ?? [])]
+                            newLinks[index] = { ...link, type: e.target.value }
+                            field.handleChange(newLinks)
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const newLinks = (field.state.value ?? []).filter(
+                            (_, i) => i !== index,
+                          )
+                          field.handleChange(newLinks)
+                        }}
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      field.handleChange([
+                        ...(field.state.value ?? []),
+                        { name: "", url: "", type: "" },
+                      ])
+                    }}
+                  >
+                    <PlusIcon className="w-4 h-4 mr-1" />
+                    Link hinzufügen
+                  </Button>
+                </div>
+                {aiData?.bedienungsanleitungen &&
+                  aiData.bedienungsanleitungen.length > 0 &&
+                  !dismissedSuggestions.has("links") && (
+                    <div className="mt-1.5 pl-3 border-l-2 border-emerald-500/40">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <SparklesIcon className="w-3 h-3 text-emerald-500" />
+                        <span>KI-Vorschlag</span>
+                      </div>
+                      <div className="space-y-1 mb-2">
+                        {aiData.bedienungsanleitungen.map((url) => (
+                          <a
+                            key={url}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-brand-text hover:underline block"
+                          >
+                            {url}
+                          </a>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="text-xs text-emerald-600 hover:text-emerald-500 font-medium flex items-center gap-1"
+                          onClick={() => {
+                            const newLinks = aiData.bedienungsanleitungen.map(
+                              (url) => ({
+                                name: "Bedienungsanleitung",
+                                url,
+                                type: "manual",
+                              }),
+                            )
+                            field.handleChange([
+                              ...(field.state.value ?? []),
+                              ...newLinks,
+                            ])
+                            dismissSuggestion("links")
+                          }}
+                        >
+                          <CheckIcon className="w-3 h-3" />
+                          Übernehmen
+                        </button>
+                        <button
+                          type="button"
+                          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                          onClick={() => dismissSuggestion("links")}
+                        >
+                          <XIcon className="w-3 h-3" />
+                          Verwerfen
+                        </button>
+                      </div>
+                    </div>
+                  )}
+              </FieldContent>
+            )}
+          </form.Field>
+
+          <form.Field name="morestuff">
+            {(field) => (
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>Weitere Infos</FieldLabel>
                 <Textarea
-                  ref={descriptionRef}
+                  ref={morestuffRef}
                   id={field.name}
                   name={field.name}
-                  value={field.state.value}
+                  value={field.state.value ?? ""}
                   onBlur={field.handleBlur}
                   onChange={(e) => {
                     field.handleChange(e.target.value)
@@ -292,307 +662,42 @@ function ItemForm({ existingItem }: { existingItem: Item | null }) {
                   }}
                   className="resize-none overflow-hidden"
                 />
-                {!field.state.meta.isValid && (
-                  <FieldError errors={field.state.meta.errors} />
-                )}
-                {aiData?.beschreibung_kurz &&
-                  !dismissedSuggestions.has("description") && (
+                {aiData?.zusatzinfos &&
+                  !dismissedSuggestions.has("morestuff") && (
                     <InlineSuggestion
-                      value={aiData.beschreibung_kurz}
+                      value={aiData.zusatzinfos}
                       onUse={() => {
-                        field.handleChange(aiData.beschreibung_kurz)
-                        dismissSuggestion("description")
+                        field.handleChange(aiData.zusatzinfos ?? "")
+                        dismissSuggestion("morestuff")
                         setTimeout(
-                          () => resizeTextarea(descriptionRef.current),
+                          () => resizeTextarea(morestuffRef.current),
                           0,
                         )
                       }}
-                      onDismiss={() => dismissSuggestion("description")}
+                      onDismiss={() => dismissSuggestion("morestuff")}
                     />
                   )}
               </FieldContent>
-            </>
-          )}
-        </form.Field>
+            )}
+          </form.Field>
 
-        <form.Field name="tags">
-          {(field) => (
-            <FieldContent>
-              <FieldLabel htmlFor={field.name}>Tags</FieldLabel>
-              <TagPicker
-                id={field.name}
-                tags={field.state.value ?? []}
-                onChange={(next) => field.handleChange(next)}
-              />
-              {!field.state.meta.isValid && (
-                <FieldError errors={field.state.meta.errors} />
-              )}
-              {(() => {
-                // Only the AI's tags the item doesn't have yet; accepting
-                // them adds to the tags entered so far instead of replacing
-                const current = field.state.value ?? []
-                const newTags = suggestionsFor(
-                  aiData?.schlagworte ?? [],
-                  current,
-                )
-                return (
-                  newTags.length > 0 &&
-                  !dismissedSuggestions.has("tags") && (
-                    <InlineTagsSuggestion
-                      tags={newTags}
-                      onUse={() => {
-                        field.handleChange(addTags(current, newTags))
-                        dismissSuggestion("tags")
-                      }}
-                      onDismiss={() => dismissSuggestion("tags")}
-                    />
-                  )
-                )
-              })()}
-            </FieldContent>
+          {isEditing ? (
+            <Button>Speichern</Button>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Button>Weiter zum Ort</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => form.handleSubmit({ skipLocation: true })}
+              >
+                Ohne Ort erstellen
+              </Button>
+            </div>
           )}
-        </form.Field>
-
-        <form.Field name="manufacturer">
-          {(field) => (
-            <FieldContent>
-              <FieldLabel htmlFor={field.name}>Hersteller</FieldLabel>
-              <Input
-                id={field.name}
-                name={field.name}
-                value={field.state.value ?? ""}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-              {aiData?.hersteller &&
-                !dismissedSuggestions.has("manufacturer") && (
-                  <InlineSuggestion
-                    value={aiData.hersteller}
-                    onUse={() => {
-                      field.handleChange(aiData.hersteller ?? "")
-                      dismissSuggestion("manufacturer")
-                    }}
-                    onDismiss={() => dismissSuggestion("manufacturer")}
-                  />
-                )}
-            </FieldContent>
-          )}
-        </form.Field>
-
-        <form.Field name="model">
-          {(field) => (
-            <FieldContent>
-              <FieldLabel htmlFor={field.name}>Modell</FieldLabel>
-              <Input
-                id={field.name}
-                name={field.name}
-                value={field.state.value ?? ""}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-              {aiData?.modell && !dismissedSuggestions.has("model") && (
-                <InlineSuggestion
-                  value={aiData.modell}
-                  onUse={() => {
-                    field.handleChange(aiData.modell ?? "")
-                    dismissSuggestion("model")
-                  }}
-                  onDismiss={() => dismissSuggestion("model")}
-                />
-              )}
-            </FieldContent>
-          )}
-        </form.Field>
-
-        <form.Field name="category">
-          {(field) => (
-            <FieldContent>
-              <FieldLabel htmlFor={field.name}>Kategorie</FieldLabel>
-              <CategoryCombobox
-                id={field.name}
-                value={field.state.value ?? ""}
-                categories={categories}
-                onBlur={field.handleBlur}
-                onChange={field.handleChange}
-              />
-              {aiCategory && !dismissedSuggestions.has("category") && (
-                <InlineSuggestion
-                  value={
-                    aiData?.kategorie_neu
-                      ? `Neue Kategorie: ${aiCategory}`
-                      : aiCategory
-                  }
-                  onUse={() => {
-                    field.handleChange(aiCategory)
-                    dismissSuggestion("category")
-                  }}
-                  onDismiss={() => dismissSuggestion("category")}
-                />
-              )}
-            </FieldContent>
-          )}
-        </form.Field>
-
-        <form.Field name="links">
-          {(field) => (
-            <FieldContent>
-              <FieldLabel>Links</FieldLabel>
-              <div className="space-y-2">
-                {(field.state.value ?? []).map((link, index) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: links have no stable id; keying by content would remount inputs on every keystroke
-                  <div key={index} className="flex gap-2 items-start">
-                    <div className="flex-1 grid grid-cols-3 gap-2">
-                      <Input
-                        placeholder="Name"
-                        value={link.name}
-                        onChange={(e) => {
-                          const newLinks = [...(field.state.value ?? [])]
-                          newLinks[index] = { ...link, name: e.target.value }
-                          field.handleChange(newLinks)
-                        }}
-                      />
-                      <Input
-                        placeholder="URL"
-                        value={link.url}
-                        onChange={(e) => {
-                          const newLinks = [...(field.state.value ?? [])]
-                          newLinks[index] = { ...link, url: e.target.value }
-                          field.handleChange(newLinks)
-                        }}
-                      />
-                      <Input
-                        placeholder="Typ"
-                        value={link.type}
-                        onChange={(e) => {
-                          const newLinks = [...(field.state.value ?? [])]
-                          newLinks[index] = { ...link, type: e.target.value }
-                          field.handleChange(newLinks)
-                        }}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const newLinks = (field.state.value ?? []).filter(
-                          (_, i) => i !== index,
-                        )
-                        field.handleChange(newLinks)
-                      }}
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    field.handleChange([
-                      ...(field.state.value ?? []),
-                      { name: "", url: "", type: "" },
-                    ])
-                  }}
-                >
-                  <PlusIcon className="w-4 h-4 mr-1" />
-                  Link hinzufügen
-                </Button>
-              </div>
-              {aiData?.bedienungsanleitungen &&
-                aiData.bedienungsanleitungen.length > 0 &&
-                !dismissedSuggestions.has("links") && (
-                  <div className="mt-1.5 pl-3 border-l-2 border-emerald-500/40">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                      <SparklesIcon className="w-3 h-3 text-emerald-500" />
-                      <span>KI-Vorschlag</span>
-                    </div>
-                    <div className="space-y-1 mb-2">
-                      {aiData.bedienungsanleitungen.map((url) => (
-                        <a
-                          key={url}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-brand-text hover:underline block"
-                        >
-                          {url}
-                        </a>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="text-xs text-emerald-600 hover:text-emerald-500 font-medium flex items-center gap-1"
-                        onClick={() => {
-                          const newLinks = aiData.bedienungsanleitungen.map(
-                            (url) => ({
-                              name: "Bedienungsanleitung",
-                              url,
-                              type: "manual",
-                            }),
-                          )
-                          field.handleChange([
-                            ...(field.state.value ?? []),
-                            ...newLinks,
-                          ])
-                          dismissSuggestion("links")
-                        }}
-                      >
-                        <CheckIcon className="w-3 h-3" />
-                        Übernehmen
-                      </button>
-                      <button
-                        type="button"
-                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-                        onClick={() => dismissSuggestion("links")}
-                      >
-                        <XIcon className="w-3 h-3" />
-                        Verwerfen
-                      </button>
-                    </div>
-                  </div>
-                )}
-            </FieldContent>
-          )}
-        </form.Field>
-
-        <form.Field name="morestuff">
-          {(field) => (
-            <FieldContent>
-              <FieldLabel htmlFor={field.name}>Weitere Infos</FieldLabel>
-              <Textarea
-                ref={morestuffRef}
-                id={field.name}
-                name={field.name}
-                value={field.state.value ?? ""}
-                onBlur={field.handleBlur}
-                onChange={(e) => {
-                  field.handleChange(e.target.value)
-                  resizeTextarea(e.target)
-                }}
-                className="resize-none overflow-hidden"
-              />
-              {aiData?.zusatzinfos &&
-                !dismissedSuggestions.has("morestuff") && (
-                  <InlineSuggestion
-                    value={aiData.zusatzinfos}
-                    onUse={() => {
-                      field.handleChange(aiData.zusatzinfos ?? "")
-                      dismissSuggestion("morestuff")
-                      setTimeout(() => resizeTextarea(morestuffRef.current), 0)
-                    }}
-                    onDismiss={() => dismissSuggestion("morestuff")}
-                  />
-                )}
-            </FieldContent>
-          )}
-        </form.Field>
-
-        <Button>{isEditing ? "Speichern" : "Erstellen"}</Button>
-      </FieldGroup>
-    </form>
+        </FieldGroup>
+      </form>
+    </>
   )
 }
 
