@@ -180,6 +180,19 @@ An item has only one picture, but many items need more than one view to be recog
 
 ---
 
+### UX-030: Most viewed items page
+**Priority:** Low
+
+**Description:**
+The home page shows only a few of the most viewed items from the last 7 days. A longer list and other periods would show which items members are interested in over time, for example to decide what deserves a better place or a second copy.
+
+**Acceptance Criteria:**
+- [ ] The home page shows the 10 most viewed items
+- [ ] A dedicated page lists the most viewed items, reachable from the home page
+- [ ] The page can switch between the last 7 days, the last 30 days and all time
+
+---
+
 ## AI Features
 
 Item recognition and suggestions with generative AI.
@@ -254,6 +267,25 @@ Some machines and tools may only be used after a safety briefing ("Einweisung").
 - [ ] It can be recorded which members received a briefing for an item, and when
 - [ ] Members can see for which items they have received a briefing
 - [ ] Only authorized people can record a briefing
+
+---
+
+## Inventory Check
+
+Checking that the inventory matches what is really there.
+
+### INV-001: Inventory check
+**Priority:** Medium
+
+**Description:**
+Over time the inventory drifts away from reality: items get lost, moved or used up without anyone recording it. An inventory check lets members confirm what is really there, either for a whole area at once or bit by bit over time. Details still need to be discussed.
+
+**Acceptance Criteria:**
+- [ ] Members can check a location completely in one go
+- [ ] Items can also be checked occasionally over time, without a full check
+- [ ] It is visible when an item or location was last checked
+- [ ] Items that were not found during a check are flagged
+- [ ] Open details are agreed on before implementation
 
 ---
 
