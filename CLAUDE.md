@@ -67,6 +67,7 @@ Requires Docker. Create `.env` from `.env_example` before running.
 - use biome to check and autoformat the code
 - E2E tests follow the guidelines in `e2e/README.md` (find elements by role/label, never let checks pass silently)
 - Server functions that change data use `{ method: "POST" }`: the default is GET, which browsers and proxies may repeat on their own
+- After changing `docs/Backlog.md`, run `bun run backlog:summary` to update `docs/BacklogSummary.md`; for a short backlog list, show that file
 - Server functions fail with `AppError` (`src/lib/errors.ts`); the client shows errors with `showError`/`errorMessage`, never a raw `error.message`
 
 **Commands:**
