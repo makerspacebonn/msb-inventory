@@ -235,7 +235,15 @@ export function createMarkerTransform(pairs: PointPair[]): TransformResult {
 }
 
 /**
- * Calculates the new positions as whole percentages, like the marker picker
+ * Marker positions are kept to 0.1%: fine enough for a loupe, short in the
+ * stored JSON. Adding 0 turns a rounded -0 into 0
+ */
+export function roundPercent(value: number): number {
+  return Math.round(value * 10) / 10 + 0
+}
+
+/**
+ * Calculates the new positions to 0.1%, like the marker picker
  * sets them. Markers that don't land on the new image stay in `outside` with
  * their old position, for the user to place by hand or remove
  */
@@ -247,9 +255,8 @@ export function transferMarkers<T extends Point>(
   const outside: T[] = []
   for (const marker of markers) {
     const moved = transform(marker)
-    // Adding 0 turns a rounded -0 into 0
-    const x = Math.round(moved.x) + 0
-    const y = Math.round(moved.y) + 0
+    const x = roundPercent(moved.x)
+    const y = roundPercent(moved.y)
     if (x >= 0 && x <= 100 && y >= 0 && y <= 100) {
       placed.push({ ...marker, x, y })
     } else {

@@ -212,10 +212,10 @@ describe("createMarkerTransform rejects points it can't use", () => {
 describe("transferMarkers", () => {
   const shift: Transform = ({ x, y }) => ({ x: x + 20, y })
 
-  it("moves markers and rounds to whole percentages, like the marker picker", () => {
-    const halfShift: Transform = ({ x, y }) => ({ x: x + 0.4, y: y + 0.6 })
-    expect(transferMarkers([{ key: "a", x: 10, y: 10 }], halfShift)).toEqual({
-      placed: [{ key: "a", x: 10, y: 11 }],
+  it("moves markers and rounds to 0.1%, like the marker picker", () => {
+    const smallShift: Transform = ({ x, y }) => ({ x: x + 0.44, y: y + 0.06 })
+    expect(transferMarkers([{ key: "a", x: 10, y: 10 }], smallShift)).toEqual({
+      placed: [{ key: "a", x: 10.4, y: 10.1 }],
       outside: [],
     })
   })
@@ -242,7 +242,7 @@ describe("transferMarkers", () => {
   })
 
   it("never returns a negative zero", () => {
-    const tiny: Transform = () => ({ x: -0.2, y: -0.1 })
+    const tiny: Transform = () => ({ x: -0.02, y: -0.04 })
     const [marker] = transferMarkers([{ key: "a", x: 1, y: 1 }], tiny).placed
     expect(Object.is(marker.x, 0)).toBe(true)
     expect(Object.is(marker.y, 0)).toBe(true)

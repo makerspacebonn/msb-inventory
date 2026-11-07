@@ -1,6 +1,6 @@
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import type { Locator, Page } from "@playwright/test"
+import type { BrowserContext, Locator, Page } from "@playwright/test"
 import { expect, test } from "../fixtures/auth.fixture"
 
 const photo = path.join(
@@ -267,7 +267,10 @@ test.describe("Replacing a location image", () => {
       image.y + image.height * 0.6,
       { steps: 5 },
     )
+    // The loupe shows the spot while dragging
+    await expect(page.getByTestId("loupe")).toBeVisible()
     await page.mouse.up()
+    await expect(page.getByTestId("loupe")).toHaveCount(0)
     await expectMarkerAt(page, label, 70, 60)
 
     await page.getByRole("button", { name: "Speichern" }).click()
@@ -417,5 +420,132 @@ test.describe("Replacing a location image by touch", () => {
     // Choosing the marker didn't move the image under the finger
     expect((await image.boundingBox())?.y).toBe(before.y)
     await expectMarkerAt(page, short, 60, 60)
+  })
+})
+
+/** Opens the marker step for a new sublocation of a location with an image */
+async function startMarking(page: Page, parent: string, label: string) {
+  const url = await locationWithMarkers(page, parent, {})
+  await addLocation(page, label)
+  await page.getByRole("button", { name: "Weiter zur Markierung" }).click()
+  await expect(
+    page.getByRole("heading", { name: "Position markieren" }),
+  ).toBeVisible()
+  const image = page.getByRole("button", { name: parent })
+  await image.evaluate((e) => e.scrollIntoView({ block: "center" }))
+  const box = await image.boundingBox()
+  if (!box) throw new Error("The image isn't visible")
+  /** A point on the image, in percent, as screen coordinates */
+  const at = (x: number, y: number) => ({
+    x: box.x + (box.width * x) / 100,
+    y: box.y + (box.height * y) / 100,
+  })
+  return { at, url }
+}
+
+/** Saves the marker and returns its position on the parent's image */
+async function saveMarker(page: Page, label: string, parentUrl: string) {
+  await page.getByRole("button", { name: "Speichern", exact: true }).click()
+  await expect(page.getByRole("heading", { name: label })).toBeVisible()
+  await page.goto(parentUrl)
+  return savedMarker(page, label)
+}
+
+test.describe("Placing a marker with the loupe", () => {
+  test("shows the spot enlarged while the mouse is pressed and places it on release", async ({
+    authenticatedPage: page,
+  }) => {
+    const stamp = Date.now()
+    const parent = `Lupe ${stamp}`
+    const label = `Fach ${stamp}`
+    const { at, url } = await startMarking(page, parent, label)
+    const loupe = page.getByTestId("loupe")
+
+    const press = at(20, 60)
+    await page.mouse.move(press.x, press.y)
+    await page.mouse.down()
+    await expect(loupe).toBeVisible()
+    // Above the spot, so the hand doesn't cover it
+    const box = await loupe.boundingBox()
+    expect((box?.y ?? Infinity) + (box?.height ?? 0)).toBeLessThan(press.y)
+
+    const release = at(60, 70)
+    await page.mouse.move(release.x, release.y, { steps: 5 })
+    await page.mouse.up()
+    await expect(loupe).toHaveCount(0)
+
+    const saved = await saveMarker(page, label, url)
+    expect(saved.x).toBeCloseTo(60, -0.5)
+    expect(saved.y).toBeCloseTo(70, -0.5)
+  })
+})
+
+test.describe("Placing a marker with the loupe by touch", () => {
+  test.use({ hasTouch: true })
+
+  async function touch(page: Page, context: BrowserContext) {
+    const session = await context.newCDPSession(page)
+    const send = (
+      type: "touchStart" | "touchMove" | "touchEnd",
+      points: { x: number; y: number }[],
+    ) => session.send("Input.dispatchTouchEvent", { type, touchPoints: points })
+    return {
+      start: (point: { x: number; y: number }) => send("touchStart", [point]),
+      move: async (
+        from: { x: number; y: number },
+        to: { x: number; y: number },
+      ) => {
+        for (let step = 1; step <= 10; step++) {
+          await send("touchMove", [
+            {
+              x: from.x + ((to.x - from.x) * step) / 10,
+              y: from.y + ((to.y - from.y) * step) / 10,
+            },
+          ])
+        }
+      },
+      end: () => send("touchEnd", []),
+    }
+  }
+
+  test("holding shows the loupe, moving refines the spot", async ({
+    authenticatedPage: page,
+    context,
+  }) => {
+    const stamp = Date.now()
+    const label = `Fach ${stamp}`
+    await page.setViewportSize({ width: 390, height: 844 })
+    const { at, url } = await startMarking(page, `Finger Lupe ${stamp}`, label)
+    const finger = await touch(page, context)
+    const loupe = page.getByTestId("loupe")
+
+    await finger.start(at(30, 50))
+    await expect(loupe).toBeVisible()
+    await finger.move(at(30, 50), at(70, 40))
+    await finger.end()
+    await expect(loupe).toHaveCount(0)
+
+    const saved = await saveMarker(page, label, url)
+    expect(saved.x).toBeCloseTo(70, -0.5)
+    expect(saved.y).toBeCloseTo(40, -0.5)
+  })
+
+  test("a quick swipe scrolls instead of placing", async ({
+    authenticatedPage: page,
+    context,
+  }) => {
+    const stamp = Date.now()
+    await page.setViewportSize({ width: 390, height: 844 })
+    const { at } = await startMarking(page, `Wisch ${stamp}`, `Fach ${stamp}`)
+    const finger = await touch(page, context)
+
+    await finger.start(at(50, 80))
+    await finger.move(at(50, 80), at(50, 20))
+    await finger.end()
+
+    await expect(page.getByTestId("loupe")).toHaveCount(0)
+    await expect(
+      page.getByRole("button", { name: "Speichern", exact: true }),
+    ).toBeDisabled()
   })
 })

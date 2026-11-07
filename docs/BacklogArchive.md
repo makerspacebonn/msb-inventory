@@ -795,6 +795,28 @@ An item has only one picture, but many items need more than one view to be recog
 
 ---
 
+### LOC-002: Precise marker placement ✅ COMPLETED 2026-11-07
+**Priority:** Medium
+
+**Description:**
+Markers are hard to place exactly, especially on a phone, where the finger covers the spot it is placing. This matters most when replacing a location image, where the reference points decide where all markers end up, but it affects every marker placement. An enlarged view of the area under the finger while holding and moving it would make placing precise. The details need to be discussed.
+
+**Acceptance Criteria:**
+- [x] While placing a marker, the spot under the finger can be seen enlarged
+- [x] The marker can be moved around before it is set
+- [x] Works for all marker placements, including the reference points when replacing an image
+- [x] Works on a phone and with a mouse
+- [x] Open details are agreed on before implementation
+
+**Implementation Notes:**
+- Agreed: a loupe on press for touch and mouse, above the finger and beside it near the top of the screen (never below); a fixed corner may be tried later, only `loupePlacement` in `src/lib/loupe.ts` would change
+- `PlacementSurface` handles the press: the mouse starts the loupe at once; a finger after holding still for 150 ms, so a quick swipe still scrolls; a quick tap or click places directly
+- While the loupe shows, a non-passive `touchmove` listener stops the page from scrolling
+- The loupe shows the image at 3× with a fine, translucent cross; dragging markers when replacing an image shows it too
+- Positions are kept to 0.1% (`roundPercent`), for new placements and carried-over markers; existing whole-number markers stay as they are
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.

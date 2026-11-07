@@ -153,21 +153,6 @@ The app already shows the status of every label printer, but labels are always s
 
 ---
 
-### LOC-002: Precise marker placement
-**Priority:** Medium
-
-**Description:**
-Markers are hard to place exactly, especially on a phone, where the finger covers the spot it is placing. This matters most when replacing a location image, where the reference points decide where all markers end up, but it affects every marker placement. An enlarged view of the area under the finger while holding and moving it would make placing precise. The details need to be discussed.
-
-**Acceptance Criteria:**
-- [ ] While placing a marker, the spot under the finger can be seen enlarged
-- [ ] The marker can be moved around before it is set
-- [ ] Works for all marker placements, including the reference points when replacing an image
-- [ ] Works on a phone and with a mouse
-- [ ] Open details are agreed on before implementation
-
----
-
 ## AI Features
 
 Item recognition and suggestions with generative AI.

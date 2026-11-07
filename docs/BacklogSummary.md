@@ -2,16 +2,15 @@
 
 Generated from [Backlog.md](./Backlog.md) with `bun run backlog:summary`; don't edit by hand.
 
-**19 open items**
+**18 open items**
 
-## Medium (11)
+## Medium (10)
 
 - UX-006: Choose location directly after adding an item
 - UX-007: Filter items without a location
 - UX-016: Report an item as missing
 - UX-017: Report an item as used up
 - UX-020: Suggest possible duplicates when adding an item
-- LOC-002: Precise marker placement
 - AI-005: Check suggested links
 - BRIEF-001: Items that require a briefing
 - INV-001: Inventory check

@@ -4,6 +4,7 @@ import type { Location } from "@server/app/types"
 import { ChevronLeftIcon, Undo2Icon, XIcon } from "lucide-react"
 import { type ReactNode, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
+import { percentPosition } from "@/src/lib/loupe"
 import {
   buildReview,
   firstOpen,
@@ -20,6 +21,8 @@ import {
   type TransformProblem,
 } from "@/src/lib/markerTransform"
 import type { MarkerUpdate } from "@/src/lib/markerUpdates"
+import { Loupe } from "./Loupe"
+import { PlacementSurface } from "./PlacementSurface"
 
 // Four points near the corners are what the calculation works best with
 const POINT_HINTS = ["oben links", "oben rechts", "unten rechts", "unten links"]
@@ -34,17 +37,15 @@ const PROBLEMS: Record<Exclude<TransformProblem, "too-few">, string> = {
 
 const percent = (value: number) => `${value}%`
 
-/** A tap's position on the image, as whole percentages like all markers */
+/** A press on the image in percent, to 0.1% like all markers */
 function positionOn(
   element: HTMLElement,
   event: { clientX: number; clientY: number },
 ) {
-  const rect = element.getBoundingClientRect()
-  const clamp = (value: number) => Math.min(100, Math.max(0, Math.round(value)))
-  return {
-    x: clamp(((event.clientX - rect.left) / rect.width) * 100),
-    y: clamp(((event.clientY - rect.top) / rect.height) * 100),
-  }
+  return percentPosition(element.getBoundingClientRect(), {
+    x: event.clientX,
+    y: event.clientY,
+  })
 }
 
 function Overlay({
@@ -84,20 +85,16 @@ function ImagePane({
   onTap?: (position: Point) => void
   children?: ReactNode
 }) {
+  if (onTap) {
+    return (
+      <PlacementSurface src={src} label={label} onPlace={onTap}>
+        {children}
+      </PlacementSurface>
+    )
+  }
   return (
     <div className="relative w-full">
-      {onTap ? (
-        <button
-          type="button"
-          aria-label={label}
-          className="block w-full cursor-crosshair"
-          onClick={(e) => onTap(positionOn(e.currentTarget, e))}
-        >
-          <img src={src} alt="" className="block w-full rounded-lg" />
-        </button>
-      ) : (
-        <img src={src} alt={label} className="block w-full rounded-lg" />
-      )}
+      <img src={src} alt={label} className="block w-full rounded-lg" />
       {children}
     </div>
   )
@@ -280,6 +277,8 @@ function CheckStep({
   )
   const surface = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
+  // Where the finger is while dragging a marker, for the loupe
+  const [dragFinger, setDragFinger] = useState<Point | null>(null)
 
   const selected = markers.find((marker) => marker.key === selectedKey)
   const open = markers.filter((marker) => !marker.position && !marker.removed)
@@ -358,9 +357,11 @@ function CheckStep({
                       e.currentTarget.setPointerCapture(e.pointerId)
                       dragging.current = true
                       setSelectedKey(marker.key)
+                      setDragFinger({ x: e.clientX, y: e.clientY })
                     }}
                     onPointerMove={(e) => {
                       if (dragging.current && surface.current) {
+                        setDragFinger({ x: e.clientX, y: e.clientY })
                         setMarkers((current) =>
                           placeMarker(
                             current,
@@ -372,6 +373,11 @@ function CheckStep({
                     }}
                     onPointerUp={() => {
                       dragging.current = false
+                      setDragFinger(null)
+                    }}
+                    onPointerCancel={() => {
+                      dragging.current = false
+                      setDragFinger(null)
                     }}
                   >
                     <span
@@ -384,6 +390,14 @@ function CheckStep({
                     />
                   </button>
                 ),
+            )}
+            {dragFinger && selected?.position && surface.current && (
+              <Loupe
+                src={newImage}
+                image={surface.current.getBoundingClientRect()}
+                at={selected.position}
+                finger={dragFinger}
+              />
             )}
           </div>
         </div>

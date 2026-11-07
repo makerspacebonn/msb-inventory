@@ -1,8 +1,9 @@
 import { Button } from "@components/ui/button"
 import type { Item, Location } from "@server/app/types"
 import { CheckIcon, ChevronLeftIcon, CrosshairIcon } from "lucide-react"
-import { type MouseEvent, useRef, useState } from "react"
+import { useState } from "react"
 import type { MarkerOwner } from "@/src/lib/markerUpdates"
+import { PlacementSurface } from "./PlacementSurface"
 
 export type MarkerPosition = { x: number; y: number }
 
@@ -91,28 +92,12 @@ function LocationMarkerPicker({
   markerPosition: MarkerPosition | null
   onChange: (position: MarkerPosition) => void
 }) {
-  const imageRef = useRef<HTMLImageElement>(null)
-
-  const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
-    if (!imageRef.current) return
-    const rect = imageRef.current.getBoundingClientRect()
-    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100)
-    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100)
-    onChange({ x, y })
-  }
-
   return (
-    <button
-      type="button"
-      className="relative inline-block w-full"
-      onClick={handleClick}
+    <PlacementSurface
+      src={`/img/locations/${location.imagePath}`}
+      label={location.name}
+      onPlace={onChange}
     >
-      <img
-        ref={imageRef}
-        src={`/img/locations/${location.imagePath}`}
-        alt={location.name}
-        className="w-full rounded-lg cursor-crosshair"
-      />
       <MarkerDots markers={markers} />
       {markerPosition && (
         <div
@@ -126,7 +111,7 @@ function LocationMarkerPicker({
           <CrosshairIcon className="w-8 h-8 text-red-500 drop-shadow-lg" />
         </div>
       )}
-    </button>
+    </PlacementSurface>
   )
 }
 
