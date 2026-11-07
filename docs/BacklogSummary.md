@@ -2,19 +2,21 @@
 
 Generated from [Backlog.md](./Backlog.md) with `bun run backlog:summary`; don't edit by hand.
 
-**17 open items**
+**19 open items**
 
-## Medium (9)
+## Medium (11)
 
 - UX-007: Filter items without a location
 - UX-016: Report an item as missing
 - UX-017: Report an item as used up
 - UX-020: Suggest possible duplicates when adding an item
+- UX-031: Crop the photo for the photo search
 - AI-005: Check suggested links
 - BRIEF-001: Items that require a briefing
 - INV-001: Inventory check
 - STOCK-001: Track stock of consumables
 - OPS-002: New version with every deployment
+- OPS-006: Small image updates
 
 ## Low (8)
 

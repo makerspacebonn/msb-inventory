@@ -140,6 +140,19 @@ The app already shows the status of every label printer, but labels are always s
 
 ---
 
+### UX-031: Crop the photo for the photo search
+**Priority:** Medium
+
+**Description:**
+A photo taken for the search often shows more than the item that's being looked for: the table, other things, the hand holding it. Everything on the photo influences the search. Being able to crop the photo to the item, like when adding an item, should make the search find the right item more often.
+
+**Acceptance Criteria:**
+- [ ] The photo for the search can be cropped before searching
+- [ ] Cropping works the same way as for item pictures
+- [ ] Searching with the whole photo stays possible without an extra step
+
+---
+
 ## AI Features
 
 Item recognition and suggestions with generative AI.
@@ -282,3 +295,18 @@ Images of deleted items and locations, and images that were replaced, stay on th
 - [ ] Images that are shown or can be restored via undo are never removed
 - [ ] The admin sees how many images and how much space would be freed before confirming
 - [ ] Backups and restores keep working as before
+
+---
+
+### OPS-006: Small image updates
+**Priority:** Medium
+
+**Description:**
+Every new version of the Docker image has to be downloaded by the server. When only a little code changed, the update should be small too, so deployments are fast and don't download the same unchanged parts again and again.
+
+**Acceptance Criteria:**
+- [ ] A change to the app's code only changes a small part of the image
+- [ ] Parts that rarely change, like the base image and dependencies, are reused between versions
+- [ ] The size of a typical update is known before and after the change
+
+---
