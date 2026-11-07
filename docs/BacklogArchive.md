@@ -719,6 +719,25 @@ The changelog names the items and locations that were changed, but they can't be
 ---
 
 
+### UX-030: Most viewed items page ✅ COMPLETED 2026-11-07
+**Priority:** Low
+
+**Description:**
+The home page shows only a few of the most viewed items from the last 7 days. A longer list and other periods would show which items members are interested in over time, for example to decide what deserves a better place or a second copy.
+
+**Acceptance Criteria:**
+- [x] The home page shows the 10 most viewed items
+- [x] A dedicated page lists the most viewed items, reachable from the home page
+- [x] The page can switch between the last 7 days, the last 30 days and all time
+
+**Implementation Notes:**
+- New page `/most-viewed?period=7|30|all` lists up to 50 items; the front page shows 10 and links to it with "Alle anzeigen"
+- `fetchMostViewedItems` takes the period and whether it's the front page preview; `viewPeriodStart` gives no start day for all time
+- Front page and page share `components/stats/MostViewedList.tsx`
+
+---
+
+
 ## Access Control
 
 Who may do what in the inventory.

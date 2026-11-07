@@ -7,7 +7,9 @@ import {
   type ActivityStats,
   lastDays,
   parsePeriod,
+  parseViewPeriod,
   summarizeActivity,
+  viewPeriodStart,
 } from "@/src/lib/activityStats"
 import { authMiddleware } from "@/src/middleware/authMiddleware"
 import { StatsRepository } from "@/src/repositories/StatsRepository"
@@ -97,9 +99,19 @@ export const fetchActivityStats = createServerFn()
 
 export type MostViewedItem = { item: Item; views: number }
 
-/** The five items viewed most in the last 7 days, for the front page */
-export const fetchMostViewedItems = createServerFn().handler(
-  async (): Promise<MostViewedItem[]> => {
-    return new StatsRepository().mostViewedSince(lastDays(7)[0], 5)
-  },
-)
+/** The front page shows this many, the page of its own up to MOST_VIEWED_LIST */
+const MOST_VIEWED_PREVIEW = 10
+const MOST_VIEWED_LIST = 50
+
+/** The items viewed most in a period, either a preview or the full list */
+export const fetchMostViewedItems = createServerFn()
+  .validator((input: { period?: unknown; preview?: boolean }) => ({
+    period: parseViewPeriod(input.period),
+    preview: input.preview === true,
+  }))
+  .handler(async ({ data }): Promise<MostViewedItem[]> => {
+    return new StatsRepository().mostViewedSince(
+      viewPeriodStart(data.period),
+      data.preview ? MOST_VIEWED_PREVIEW : MOST_VIEWED_LIST,
+    )
+  })

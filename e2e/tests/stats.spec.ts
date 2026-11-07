@@ -158,5 +158,26 @@ test.describe("Activity statistics", () => {
       .getByRole("listitem")
       .filter({ has: page.getByRole("link", { name }) })
     await expect(entry).toContainText("5 Aufrufe")
+
+    // The page of its own, for the same period and for all time
+    await page.getByRole("link", { name: "Alle anzeigen" }).click()
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Meistgesehen" }),
+    ).toBeVisible()
+    const period = page.getByRole("navigation", { name: "Zeitraum" })
+    await expect(period.getByRole("link", { name: "7 Tage" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    )
+    const entryIn = (label: string) =>
+      page
+        .getByRole("list", { name: `Meistgesehen (${label})` })
+        .getByRole("listitem")
+        .filter({ has: page.getByRole("link", { name }) })
+    await expect(entryIn("7 Tage")).toContainText("5 Aufrufe")
+
+    await period.getByRole("link", { name: "Gesamt" }).click()
+    await expect(page).toHaveURL(/period=all/)
+    await expect(entryIn("Gesamt")).toContainText("5 Aufrufe")
   })
 })

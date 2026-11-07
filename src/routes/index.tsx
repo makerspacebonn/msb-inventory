@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Clock, Image, MapPin, Package } from "lucide-react"
-import { ItemCard } from "@/components/ItemCard"
+import { MostViewedList } from "@/components/stats/MostViewedList"
 import {
   Card,
   CardContent,
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
   loader: async () => {
     const [stats, mostViewed] = await Promise.all([
       fetchInventoryStats(),
-      fetchMostViewedItems(),
+      fetchMostViewedItems({ data: { period: "7", preview: true } }),
     ])
     return { stats, mostViewed }
   },
@@ -132,21 +132,17 @@ function MostViewed({ items }: { items: MostViewedItem[] }) {
   if (items.length === 0) return null
   return (
     <section className="mx-auto mt-10 w-full max-w-4xl text-left">
-      <h2 className="mb-3 text-lg font-semibold">Meistgesehen (7 Tage)</h2>
-      <ol
-        aria-label="Meistgesehen (7 Tage)"
-        className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5"
-      >
-        {items.map(({ item, views }) => (
-          <li key={item.id}>
-            <ItemCard item={item} />
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {views.toLocaleString("de-DE")}{" "}
-              {views === 1 ? "Aufruf" : "Aufrufe"}
-            </p>
-          </li>
-        ))}
-      </ol>
+      <div className="mb-3 flex items-baseline justify-between gap-4">
+        <h2 className="text-lg font-semibold">Meistgesehen (7 Tage)</h2>
+        <Link
+          to="/most-viewed"
+          search={{ period: "7" }}
+          className="text-sm underline underline-offset-4"
+        >
+          Alle anzeigen
+        </Link>
+      </div>
+      <MostViewedList items={items} label="Meistgesehen (7 Tage)" />
     </section>
   )
 }

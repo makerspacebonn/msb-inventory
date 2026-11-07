@@ -4,7 +4,9 @@ import {
   dailyCounts,
   lastDays,
   parsePeriod,
+  parseViewPeriod,
   summarizeActivity,
+  viewPeriodStart,
 } from "./activityStats"
 
 describe("berlinDay", () => {
@@ -51,6 +53,26 @@ describe("parsePeriod", () => {
     expect(parsePeriod("90")).toBe(90)
     expect(parsePeriod(12)).toBe(30)
     expect(parsePeriod(undefined)).toBe(30)
+  })
+})
+
+describe("view periods", () => {
+  it("reads the period from the URL, also when it arrives as a number", () => {
+    expect(parseViewPeriod("30")).toBe("30")
+    expect(parseViewPeriod(30)).toBe("30")
+    expect(parseViewPeriod("all")).toBe("all")
+  })
+
+  it("falls back to the last 7 days", () => {
+    expect(parseViewPeriod(undefined)).toBe("7")
+    expect(parseViewPeriod("90")).toBe("7")
+  })
+
+  it("starts counting on the first day of the period, or never", () => {
+    const now = new Date("2026-11-07T10:00:00Z")
+    expect(viewPeriodStart("7", now)).toBe("2026-11-01")
+    expect(viewPeriodStart("30", now)).toBe("2026-10-09")
+    expect(viewPeriodStart("all", now)).toBeNull()
   })
 })
 

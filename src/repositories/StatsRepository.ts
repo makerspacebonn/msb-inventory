@@ -47,9 +47,12 @@ export class StatsRepository {
       })
   }
 
-  /** The items with the most views since the given day, most viewed first */
+  /**
+   * The items with the most views since the given day, or ever without one,
+   * most viewed first
+   */
   async mostViewedSince(
-    firstDay: string,
+    firstDay: string | null,
     limit: number,
   ): Promise<{ item: Item; views: number }[]> {
     const views = sum(ItemViewTable.count).mapWith(Number)
@@ -58,7 +61,7 @@ export class StatsRepository {
       .from(ItemViewTable)
       .innerJoin(ItemTable, eq(ItemTable.id, ItemViewTable.itemId))
       .leftJoin(LocationTable, eq(LocationTable.id, ItemTable.locationId))
-      .where(gte(ItemViewTable.day, firstDay))
+      .where(firstDay ? gte(ItemViewTable.day, firstDay) : undefined)
       .groupBy(ItemTable.id, LocationTable.name)
       .orderBy(desc(views), ItemTable.name)
       .limit(limit)

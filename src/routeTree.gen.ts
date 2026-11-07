@@ -15,6 +15,7 @@ import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as LabelsRouteImport } from './routes/labels'
 import { Route as LocationsRouteImport } from './routes/locations'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MostViewedRouteImport } from './routes/most-viewed'
 import { Route as PrintersRouteImport } from './routes/printers'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as ApiItemsRouteImport } from './routes/api/items'
@@ -61,6 +62,11 @@ const LocationsRoute = LocationsRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MostViewedRoute = MostViewedRouteImport.update({
+  id: '/most-viewed',
+  path: '/most-viewed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrintersRoute = PrintersRouteImport.update({
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/labels': typeof LabelsRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
+  '/most-viewed': typeof MostViewedRoute
   '/printers': typeof PrintersRoute
   '/stats': typeof StatsRoute
   '/api/items': typeof ApiItemsRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/labels': typeof LabelsRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
+  '/most-viewed': typeof MostViewedRoute
   '/printers': typeof PrintersRoute
   '/stats': typeof StatsRoute
   '/api/items': typeof ApiItemsRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/labels': typeof LabelsRoute
   '/locations': typeof LocationsRoute
   '/login': typeof LoginRoute
+  '/most-viewed': typeof MostViewedRoute
   '/printers': typeof PrintersRoute
   '/stats': typeof StatsRoute
   '/api/items': typeof ApiItemsRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/labels'
     | '/locations'
     | '/login'
+    | '/most-viewed'
     | '/printers'
     | '/stats'
     | '/api/items'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/labels'
     | '/locations'
     | '/login'
+    | '/most-viewed'
     | '/printers'
     | '/stats'
     | '/api/items'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/labels'
     | '/locations'
     | '/login'
+    | '/most-viewed'
     | '/printers'
     | '/stats'
     | '/api/items'
@@ -311,6 +323,7 @@ export interface RootRouteChildren {
   LabelsRoute: typeof LabelsRoute
   LocationsRoute: typeof LocationsRoute
   LoginRoute: typeof LoginRoute
+  MostViewedRoute: typeof MostViewedRoute
   PrintersRoute: typeof PrintersRoute
   StatsRoute: typeof StatsRoute
   ApiItemsRoute: typeof ApiItemsRoute
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/most-viewed': {
+      id: '/most-viewed'
+      path: '/most-viewed'
+      fullPath: '/most-viewed'
+      preLoaderRoute: typeof MostViewedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/printers': {
@@ -513,6 +533,7 @@ const rootRouteChildren: RootRouteChildren = {
   LabelsRoute: LabelsRoute,
   LocationsRoute: LocationsRoute,
   LoginRoute: LoginRoute,
+  MostViewedRoute: MostViewedRoute,
   PrintersRoute: PrintersRoute,
   StatsRoute: StatsRoute,
   ApiItemsRoute: ApiItemsRoute,

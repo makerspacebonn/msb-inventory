@@ -180,19 +180,6 @@ An item has only one picture, but many items need more than one view to be recog
 
 ---
 
-### UX-030: Most viewed items page
-**Priority:** Low
-
-**Description:**
-The home page shows only a few of the most viewed items from the last 7 days. A longer list and other periods would show which items members are interested in over time, for example to decide what deserves a better place or a second copy.
-
-**Acceptance Criteria:**
-- [ ] The home page shows the 10 most viewed items
-- [ ] A dedicated page lists the most viewed items, reachable from the home page
-- [ ] The page can switch between the last 7 days, the last 30 days and all time
-
----
-
 ## AI Features
 
 Item recognition and suggestions with generative AI.

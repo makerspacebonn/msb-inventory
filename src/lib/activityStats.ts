@@ -45,6 +45,22 @@ export function parsePeriod(value: unknown): StatsPeriod {
   return STATS_PERIODS.find((period) => period === days) ?? 30
 }
 
+/** Periods for the most viewed items: the last 7 or 30 days, or all time */
+export const VIEW_PERIODS = ["7", "30", "all"] as const
+export type ViewPeriod = (typeof VIEW_PERIODS)[number]
+
+export function parseViewPeriod(value: unknown): ViewPeriod {
+  return VIEW_PERIODS.find((period) => period === String(value)) ?? "7"
+}
+
+/** The first day a period counts views from; null counts all of them */
+export function viewPeriodStart(
+  period: ViewPeriod,
+  now: Date = new Date(),
+): string | null {
+  return period === "all" ? null : lastDays(Number(period), now)[0]
+}
+
 export type ChangeKind = "create" | "update" | "delete"
 
 export type PersonActivity = {
