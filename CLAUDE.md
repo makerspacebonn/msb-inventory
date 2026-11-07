@@ -68,6 +68,7 @@ Requires Docker. Create `.env` from `.env_example` before running.
 - E2E tests follow the guidelines in `e2e/README.md` (find elements by role/label, never let checks pass silently)
 - Server functions that change data use `{ method: "POST" }`: the default is GET, which browsers and proxies may repeat on their own
 - After changing `docs/Backlog.md`, run `bun run backlog:summary` to update `docs/BacklogSummary.md`; for a short backlog list, show that file
+- Run `bun run security:scan` (Trivy on the production image, `bun audit` on all dependencies) after changing dependencies or the Dockerfile, and whenever the last entry in `docs/SecurityScans.md` is older than 30 days; report what it finds
 - Server functions fail with `AppError` (`src/lib/errors.ts`); the client shows errors with `showError`/`errorMessage`, never a raw `error.message`
 
 **Commands:**
