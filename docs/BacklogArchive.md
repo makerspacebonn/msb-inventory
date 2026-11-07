@@ -738,6 +738,42 @@ The home page shows only a few of the most viewed items from the last 7 days. A 
 ---
 
 
+### UX-011: Latest items on the front page ❌ DROPPED 2026-11-07
+**Priority:** Medium
+
+**Description:**
+The front page shows statistics only. Showing the most recently added items lets users see what's new in the inventory and quickly get back to items they just added.
+
+**Acceptance Criteria:**
+- [ ] The front page shows the most recently added items, newest first
+- [ ] Each entry leads to the item's page
+- [ ] The list stays short and doesn't push the rest of the front page away
+
+**Reason:**
+Not needed: the items list already shows the newest items first, so it covers what's new and items just added.
+
+---
+
+### AI-003: Suggest new categories ✅ COMPLETED 2026-11-07
+**Priority:** Low
+
+**Description:**
+Items can only be put into the curated categories. When the AI recognizes an item that fits none of them well, it should be able to suggest a new category, which the user accepts or rejects, so the category list grows with the inventory without becoming cluttered.
+
+**Acceptance Criteria:**
+- [x] When no existing category fits, the AI can suggest a new one
+- [x] A suggested category is clearly marked as new
+- [x] The user can accept the suggestion, which adds the category, or reject it
+- [x] Rejected suggestions don't create a category
+- [x] Only authorized users can add categories this way
+
+**Implementation Notes:**
+- Already built with AI-001/AI-002: the AI returns `kategorie_neu` when no category fits, and a "new" one matching an existing category (ignoring case) is mapped back to it
+- The item form shows it as "Neue Kategorie: …" with use and dismiss; saving the item creates it via `CategoryRepository.ensure`
+- Categories are only created by saving an item, which requires a login
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.

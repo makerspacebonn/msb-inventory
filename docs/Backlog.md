@@ -77,19 +77,6 @@ Items without a photo are hard to recognize and should be completed over time. T
 
 ---
 
-### UX-011: Latest items on the front page
-**Priority:** Medium
-
-**Description:**
-The front page shows statistics only. Showing the most recently added items lets users see what's new in the inventory and quickly get back to items they just added.
-
-**Acceptance Criteria:**
-- [ ] The front page shows the most recently added items, newest first
-- [ ] Each entry leads to the item's page
-- [ ] The list stays short and doesn't push the rest of the front page away
-
----
-
 ### UX-016: Report an item as missing
 **Priority:** Medium
 
@@ -183,21 +170,6 @@ An item has only one picture, but many items need more than one view to be recog
 ## AI Features
 
 Item recognition and suggestions with generative AI.
-
-### AI-003: Suggest new categories
-**Priority:** Low
-
-**Description:**
-Items can only be put into the curated categories. When the AI recognizes an item that fits none of them well, it should be able to suggest a new category, which the user accepts or rejects, so the category list grows with the inventory without becoming cluttered.
-
-**Acceptance Criteria:**
-- [ ] When no existing category fits, the AI can suggest a new one
-- [ ] A suggested category is clearly marked as new
-- [ ] The user can accept the suggestion, which adds the category, or reject it
-- [ ] Rejected suggestions don't create a category
-- [ ] Only authorized users can add categories this way
-
----
 
 ### AI-004: Choose the AI provider
 **Priority:** Low
