@@ -232,8 +232,9 @@ export class ChangelogRepository {
     return entries.map((e) => {
       // Try to get name from current entity, fall back to stored values
       const entityMap = e.entityType === "item" ? itemMap : locationMap
+      const currentName = entityMap.get(e.entityId)
       const entityName =
-        entityMap.get(e.entityId) ||
+        currentName ||
         (e.afterValues?.name as string) ||
         (e.beforeValues?.name as string) ||
         null
@@ -252,6 +253,7 @@ export class ChangelogRepository {
         groupSize: e.groupId ? (groupSizes.get(e.groupId) ?? 1) : 1,
         user: e.userName ? { name: e.userName } : null,
         entityName,
+        entityExists: currentName !== undefined,
       }
     })
   }

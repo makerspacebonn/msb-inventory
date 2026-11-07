@@ -12,6 +12,26 @@ async function expandEntry(page: Page, entityName: string) {
   return entry
 }
 
+const escapeRegExp = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+/** The entry for one change, found by its summary, e.g. "Geändert Item X" */
+function changeEntry(page: Page, change: string, kind: string, name: string) {
+  return page.getByTestId("changelog-entry").filter({
+    has: page.getByRole("button", {
+      name: new RegExp(`${change}\\s*${kind}\\s*${escapeRegExp(name)}\\b`),
+    }),
+  })
+}
+
+async function createItem(page: Page, name: string) {
+  await page.goto("/items/add")
+  await page.getByLabel("Name", { exact: true }).fill(name)
+  await page.getByRole("button", { name: "Erstellen" }).click()
+  await expect(page).toHaveURL(/\/i\/\d+$/)
+  return new URL(page.url()).pathname
+}
+
 test.describe("Changelog / Audit Log", () => {
   test("shows the total number of entries", async ({
     authenticatedPage: page,
@@ -81,20 +101,67 @@ test.describe("Changelog / Audit Log", () => {
   })
 })
 
+test.describe("Changelog: links", () => {
+  test("opens the page of the changed item or location", async ({
+    authenticatedPage: page,
+  }) => {
+    const itemEntry = await gotoSeededEntry(page, "Bohrmaschine Makita")
+    await itemEntry
+      .getByRole("link", { name: "Bohrmaschine Makita öffnen" })
+      .click()
+    await expect(page).toHaveURL(/\/i\/\d+$/)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Bohrmaschine Makita" }),
+    ).toBeVisible()
+
+    const locationEntry = await gotoSeededEntry(page, "Werkstatt")
+    await locationEntry.getByRole("link", { name: "Werkstatt öffnen" }).click()
+    await expect(
+      page.getByRole("heading", { name: "Werkstatt", exact: true }),
+    ).toBeVisible()
+  })
+
+  test("links every change of an item until it is deleted", async ({
+    authenticatedPage: page,
+  }) => {
+    const name = `Link ${Date.now()}`
+    const itemPath = await createItem(page, name)
+    const id = itemPath.split("/").at(-1)
+
+    // Move it into "Werkbank 2", which has no image to place it on
+    await page.goto(`/items/${id}/location/add?at=11`)
+    await page.getByRole("button", { name: "Hier ablegen" }).click()
+    await expect(page).toHaveURL(itemPath)
+
+    await page.goto("/changelog")
+    const created = changeEntry(page, "Erstellt", "Item", name)
+    const moved = changeEntry(page, "Geändert", "Item", name)
+    for (const entry of [created, moved]) {
+      await expect(
+        entry.getByRole("link", { name: `${name} öffnen` }),
+      ).toHaveAttribute("href", itemPath)
+    }
+
+    await page.goto(itemPath)
+    await page.getByRole("button", { name: "Item löschen" }).click()
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Löschen" })
+      .click()
+    await expect(page).toHaveURL("/items")
+
+    // Still named, but no longer linked to a page that doesn't exist
+    await page.goto("/changelog")
+    const deleted = changeEntry(page, "Gelöscht", "Item", name)
+    for (const entry of [created, moved, deleted]) {
+      await expect(entry.getByText(name, { exact: true })).toBeVisible()
+      await expect(entry.getByRole("link")).toHaveCount(0)
+    }
+  })
+})
+
 // These tests change data they create themselves, so the seed stays as it is
 test.describe("Changelog: undo", () => {
-  const escapeRegExp = (text: string) =>
-    text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-
-  /** The entry for one change, found by its summary, e.g. "Geändert Item X" */
-  function changeEntry(page: Page, change: string, kind: string, name: string) {
-    return page.getByTestId("changelog-entry").filter({
-      has: page.getByRole("button", {
-        name: new RegExp(`${change}\\s*${kind}\\s*${escapeRegExp(name)}\\b`),
-      }),
-    })
-  }
-
   async function undo(page: Page, entry: ReturnType<typeof changeEntry>) {
     await entry.getByRole("button", { expanded: false }).click()
     await entry.getByRole("button", { name: "Rückgängig" }).click()
@@ -102,14 +169,6 @@ test.describe("Changelog: undo", () => {
       .getByRole("dialog", { name: "Änderung rückgängig machen?" })
       .getByRole("button", { name: "Ja, rückgängig machen" })
       .click()
-  }
-
-  async function createItem(page: Page, name: string) {
-    await page.goto("/items/add")
-    await page.getByLabel("Name", { exact: true }).fill(name)
-    await page.getByRole("button", { name: "Erstellen" }).click()
-    await expect(page).toHaveURL(/\/i\/\d+$/)
-    return new URL(page.url()).pathname
   }
 
   test("undoing an edit restores the item's old values", async ({

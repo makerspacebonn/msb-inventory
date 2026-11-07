@@ -14,6 +14,7 @@ import {
   ArrowRightIcon,
   BoxIcon,
   ChevronDownIcon,
+  ExternalLinkIcon,
   Loader2Icon,
   MapPinIcon,
   MinusIcon,
@@ -262,38 +263,46 @@ function ChangelogEntryCard({
         id={`changelog-${entry.id}`}
         data-testid="changelog-entry"
       >
-        <button
-          type="button"
-          className="flex w-full items-center gap-1.5 py-1.5 px-2 text-left cursor-pointer hover:bg-muted/50"
-          onClick={() => hasDiffData && setShowDiff(!showDiff)}
-          aria-expanded={hasDiffData ? showDiff : undefined}
-          aria-controls={hasDiffData ? `changelog-${entry.id}-diff` : undefined}
-        >
-          <ChangeTypeBadge type={entry.changeType} />
-          <EntityTypeBadge type={entry.entityType} />
-          <span className="font-medium text-sm truncate">
-            {entry.entityName || `#${entry.entityId}`}
-          </span>
+        <div className="flex items-center hover:bg-muted/50">
+          <button
+            type="button"
+            className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 px-2 text-left cursor-pointer"
+            onClick={() => hasDiffData && setShowDiff(!showDiff)}
+            aria-expanded={hasDiffData ? showDiff : undefined}
+            aria-controls={
+              hasDiffData ? `changelog-${entry.id}-diff` : undefined
+            }
+          >
+            <ChangeTypeBadge type={entry.changeType} />
+            <EntityTypeBadge type={entry.entityType} />
+            <span className="font-medium text-sm truncate">
+              {entry.entityName || `#${entry.entityId}`}
+            </span>
 
-          <span className="text-xs text-muted-foreground ml-auto shrink-0">
-            {formattedDate}, {formattedTime}
-            {entry.user && <> · {entry.user.name || "?"}</>}
-            {!entry.user && entry.userId === "admin" && <> · Admin</>}
-            {!entry.user && entry.userId === "migration" && <> · Migration</>}
-            {!entry.user &&
-              entry.userId &&
-              entry.userId !== "admin" &&
-              entry.userId !== "migration" && (
-                <span title={entry.userId}> · {entry.userId.slice(0, 6)}…</span>
-              )}
-          </span>
+            <span className="text-xs text-muted-foreground ml-auto shrink-0">
+              {formattedDate}, {formattedTime}
+              {entry.user && <> · {entry.user.name || "?"}</>}
+              {!entry.user && entry.userId === "admin" && <> · Admin</>}
+              {!entry.user && entry.userId === "migration" && <> · Migration</>}
+              {!entry.user &&
+                entry.userId &&
+                entry.userId !== "admin" &&
+                entry.userId !== "migration" && (
+                  <span title={entry.userId}>
+                    {" "}
+                    · {entry.userId.slice(0, 6)}…
+                  </span>
+                )}
+            </span>
 
-          {hasDiffData && (
-            <ChevronDownIcon
-              className={`w-3 h-3 text-muted-foreground transition-transform ${showDiff ? "rotate-180" : ""}`}
-            />
-          )}
-        </button>
+            {hasDiffData && (
+              <ChevronDownIcon
+                className={`w-3 h-3 text-muted-foreground transition-transform ${showDiff ? "rotate-180" : ""}`}
+              />
+            )}
+          </button>
+          {entry.entityExists && <EntityLink entry={entry} />}
+        </div>
 
         {showDiff && hasDiffData && (
           <div
@@ -359,6 +368,36 @@ function ChangelogEntryCard({
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+/** An icon that opens the page of the changed item or location */
+function EntityLink({ entry }: { entry: ChangelogEntryWithUser }) {
+  const id = String(entry.entityId)
+  const className =
+    "shrink-0 p-1.5 mr-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+  const label = `${entry.entityName || `#${id}`} öffnen`
+  const icon = <ExternalLinkIcon className="w-3.5 h-3.5" aria-hidden="true" />
+  return entry.entityType === "item" ? (
+    <Link
+      to="/i/$itemId"
+      params={{ itemId: id }}
+      className={className}
+      aria-label={label}
+      title={label}
+    >
+      {icon}
+    </Link>
+  ) : (
+    <Link
+      to="/l/$locationId"
+      params={{ locationId: id }}
+      className={className}
+      aria-label={label}
+      title={label}
+    >
+      {icon}
+    </Link>
   )
 }
 

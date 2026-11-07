@@ -166,19 +166,6 @@ The app already shows the status of every label printer, but labels are always s
 
 ---
 
-### UX-026: Link items and locations in the changelog
-**Priority:** Medium
-
-**Description:**
-The changelog names the items and locations that were changed, but they can't be opened from there. Users who see a change often want to look at the item or location right away, for example to check where something was moved.
-
-**Acceptance Criteria:**
-- [ ] Items and locations in changelog entries link to their page
-- [ ] Entries of deleted items or locations show the name without a broken link
-- [ ] Links work for all kinds of changes (created, edited, moved, deleted)
-
----
-
 ### UX-027: Several pictures per item
 **Priority:** Medium
 

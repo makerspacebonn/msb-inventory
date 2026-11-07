@@ -701,6 +701,24 @@ Labelling a whole shelf one label at a time is slow. Users should be able to pri
 
 ---
 
+### UX-026: Link items and locations in the changelog ✅ COMPLETED 2026-11-07
+**Priority:** Medium
+
+**Description:**
+The changelog names the items and locations that were changed, but they can't be opened from there. Users who see a change often want to look at the item or location right away, for example to check where something was moved.
+
+**Acceptance Criteria:**
+- [x] Items and locations in changelog entries link to their page
+- [x] Entries of deleted items or locations show the name without a broken link
+- [x] Links work for all kinds of changes (created, edited, moved, deleted)
+
+**Implementation Notes:**
+- Each summary row ends with an icon that opens the item or location page, next to the toggle button rather than inside it
+- The changelog reports per entry whether the item or location still exists (`entityExists`); deleted ones get no icon
+
+---
+
+
 ## Access Control
 
 Who may do what in the inventory.

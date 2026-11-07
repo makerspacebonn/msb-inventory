@@ -87,6 +87,8 @@ export type ChangelogEntry = {
 export type ChangelogEntryWithUser = ChangelogEntry & {
   user: { name: string | null } | null
   entityName: string | null
+  /** Whether the item or location still exists, so its page can be opened */
+  entityExists: boolean
   /** How many entries are undone together with this one, itself included */
   groupSize: number
 }
