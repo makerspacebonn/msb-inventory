@@ -35,6 +35,8 @@ export const EXCLUDED_TABLES = {
   sessions: "Login sessions are short-lived and tied to the running instance",
   accounts: "OAuth credentials are recreated on the next login",
   verifications: "Short-lived email verification tokens",
+  maintenance_tasks:
+    "Which one-off data tasks ran on this installation; a restored server runs them itself",
 } as const
 
 export interface BackupTables {

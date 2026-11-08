@@ -1,6 +1,7 @@
 import { badgeVariants } from "@components/ui/badge"
 import { Link } from "@tanstack/react-router"
 import { cn } from "@/lib/utils"
+import { countSearch } from "@/src/actions/statsActions"
 import { tagSearchTerm } from "@/src/lib/searchQuery"
 
 export function Tags(props: { tags: string[] | null }) {
@@ -16,6 +17,8 @@ export function Tags(props: { tags: string[] | null }) {
                 to="/items"
                 search={{ q: tagSearchTerm(tag) }}
                 title="Alle Items mit diesem Schlagwort anzeigen"
+                // A search a person starts; the results page itself doesn't count
+                onClick={() => void countSearch()}
                 className={cn(
                   badgeVariants({ variant: "outline" }),
                   "text-gray-600 hover:border-brand hover:bg-brand hover:text-white",

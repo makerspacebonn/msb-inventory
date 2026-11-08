@@ -166,20 +166,6 @@ A photo taken for the search often shows more than the item that's being looked 
 
 ---
 
-### STATS-001: Implausible search counts
-**Priority:** High
-
-**Description:**
-The activity statistics show far more searches than people can have made: over 200 on a normal day and about 21,000 on one day. Numbers like these make the statistics useless. The cause should be found, and only searches made by people should be counted.
-
-**Acceptance Criteria:**
-- [ ] The cause of the high numbers is known
-- [ ] A search made by a person counts once
-- [ ] Automatic requests (e.g. preloading pages, bots, repeated loading of the same results) don't count as searches
-- [ ] It is decided what happens to the wrong numbers already counted
-
----
-
 ### UX-032: Light mode
 **Priority:** Low
 

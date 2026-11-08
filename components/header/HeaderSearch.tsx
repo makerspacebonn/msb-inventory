@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router"
 import { PackageIcon, SearchIcon } from "lucide-react"
 import { useEffect, useId, useRef, useState } from "react"
 import { searchItems } from "@/src/actions/itemActions"
+import { countSearch } from "@/src/actions/statsActions"
 import type { Item } from "@/src/app/types"
 import { useDebounce } from "@/src/hooks/useDebounce"
 
@@ -55,6 +56,7 @@ export function HeaderSearch() {
     const q = query.trim()
     if (!q) return
     reset()
+    void countSearch()
     await navigate({ to: "/items", search: { q } })
   }
 

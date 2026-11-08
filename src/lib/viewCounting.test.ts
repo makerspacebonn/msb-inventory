@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { RecentViews, viewerKey } from "./viewCounting"
+import { isCrawler, RecentViews, viewerKey } from "./viewCounting"
 
 const HOUR = 60 * 60 * 1000
 
@@ -58,5 +58,33 @@ describe("viewerKey", () => {
     expect(viewerKey({ ...visitor, day: "2026-11-07" })).not.toBe(
       viewerKey(visitor),
     )
+  })
+})
+
+describe("isCrawler", () => {
+  it("recognizes crawlers, link previews and scripts", () => {
+    for (const agent of [
+      "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+      "Mozilla/5.0 (compatible; bingbot/2.0)",
+      "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2)",
+      "Discordbot/2.0",
+      "facebookexternalhit/1.1",
+      "curl/8.7.1",
+      "python-requests/2.32",
+      "",
+      null,
+    ]) {
+      expect(isCrawler(agent), String(agent)).toBe(true)
+    }
+  })
+
+  it("lets browsers through, also headless ones in tests", () => {
+    for (const agent of [
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+    ]) {
+      expect(isCrawler(agent), agent).toBe(false)
+    }
   })
 })

@@ -11,8 +11,12 @@ import {
   summarizeActivity,
   viewPeriodStart,
 } from "@/src/lib/activityStats"
+import { isCrawler } from "@/src/lib/viewCounting"
 import { authMiddleware } from "@/src/middleware/authMiddleware"
-import { StatsRepository } from "@/src/repositories/StatsRepository"
+import {
+  recordSearch,
+  StatsRepository,
+} from "@/src/repositories/StatsRepository"
 
 export interface InventoryStats {
   totalItems: number
@@ -115,3 +119,16 @@ export const fetchMostViewedItems = createServerFn()
       data.preview ? MOST_VIEWED_PREVIEW : MOST_VIEWED_LIST,
     )
   })
+
+/**
+ * Counts one search that a person started: submitting the header search or
+ * clicking an item's tag. Opening a results page doesn't count, as crawlers,
+ * reloading and going back open them too (STATS-001)
+ */
+export const countSearch = createServerFn({ method: "POST" }).handler(
+  async () => {
+    const { getRequest } = await import("@tanstack/react-start/server")
+    if (isCrawler(getRequest().headers.get("user-agent"))) return
+    await recordSearch()
+  },
+)

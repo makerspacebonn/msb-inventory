@@ -10,7 +10,9 @@ import {
   useRouter,
 } from "@tanstack/react-router"
 import { PencilIcon } from "lucide-react"
+import { useEffect } from "react"
 import {
+  countItemView,
   deleteItem,
   fetchItemWithLocation,
   removeItemLocation,
@@ -39,6 +41,12 @@ function RouteComponent() {
   const router = useRouter()
   const navigate = useNavigate()
   const { isLoggedIn } = useAuth()
+
+  // A view counts once a browser shows the page, not when it's loaded
+  const itemId = item?.id
+  useEffect(() => {
+    if (itemId) void countItemView({ data: { itemId } })
+  }, [itemId])
 
   const handleDeleteLocation = async () => {
     if (!item) return

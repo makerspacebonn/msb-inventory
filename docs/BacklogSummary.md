@@ -2,11 +2,7 @@
 
 Generated from [Backlog.md](./Backlog.md) with `bun run backlog:summary`; don't edit by hand.
 
-**23 open items**
-
-## High (1)
-
-- STATS-001: Implausible search counts
+**22 open items**
 
 ## Medium (11)
 

@@ -216,6 +216,12 @@ export const SearchCountTable = pgTable("search_counts", {
   count: integer("count").notNull().default(0),
 })
 
+/** One-off data tasks that ran at startup, so each runs only once */
+export const MaintenanceTaskTable = pgTable("maintenance_tasks", {
+  name: varchar("name").primaryKey(),
+  doneAt: timestamp("done_at").defaultNow().notNull(),
+})
+
 export type SearchCountSelect = InferSelectModel<typeof SearchCountTable>
 export type SearchCountInsert = InferInsertModel<typeof SearchCountTable>
 

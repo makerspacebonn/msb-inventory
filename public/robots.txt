@@ -1,0 +1,5 @@
+# Search results are endless combinations of terms and tags: crawlers would
+# run thousands of searches without finding anything new
+User-agent: *
+Disallow: /items?q=
+Disallow: /api/

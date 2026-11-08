@@ -5,7 +5,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { PlusIcon, XIcon } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
-import { fetchPaginatedItems, searchInventory } from "@/src/actions/itemActions"
+import { fetchPaginatedItems, searchItems } from "@/src/actions/itemActions"
 import type { Item, PaginatedResult } from "@/src/app/types"
 import {
   buildSearchQuery,
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/items/")({
   loaderDeps: ({ search: { q } }) => ({ q }),
   loader: async ({ deps: { q } }) => {
     if (q) {
-      return { q, results: await searchInventory({ data: q }) }
+      return { q, results: await searchItems({ data: q }) }
     }
     return {
       q: undefined,

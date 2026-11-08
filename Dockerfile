@@ -43,6 +43,11 @@ RUN chmod +x run.sh
 # Copy drizzle migrations if they exist
 COPY src/drizzle ./src/drizzle
 
+# One-off data tasks, run by run.sh at startup
+COPY src/db.ts ./src/db.ts
+COPY src/lib/maintenance.ts ./src/lib/maintenance.ts
+COPY scripts/maintenance.ts ./scripts/maintenance.ts
+
 EXPOSE 80
 
 CMD ["run.sh"]

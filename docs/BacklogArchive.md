@@ -836,6 +836,30 @@ After adding a new item, the user lands on the item detail page and has to start
 
 ---
 
+### STATS-001: Implausible search counts ✅ COMPLETED 2026-11-08
+**Priority:** High
+
+**Description:**
+The activity statistics show far more searches than people can have made: over 200 on a normal day and about 21,000 on one day. Numbers like these make the statistics useless. The cause should be found, and only searches made by people should be counted.
+
+**Acceptance Criteria:**
+- [x] The cause of the high numbers is known
+- [x] A search made by a person counts once
+- [x] Automatic requests (e.g. preloading pages, bots, repeated loading of the same results) don't count as searches
+- [x] It is decided what happens to the wrong numbers already counted
+
+**Implementation Notes:**
+- Cause (found in the code, not confirmed in production logs): searches were counted whenever `/items?q=` loaded, and there was no robots.txt. Every item page links its tags to a search, and every results page links further tag combinations, so crawlers found thousands of search addresses; reloading and going back counted as well
+- Now `countSearch` (POST) is called where a person searches: submitting the header search and clicking a tag on an item page. Narrowing or removing filters refines a search and isn't counted; the photo search stays counted
+- `public/robots.txt` keeps crawlers away from `/items?q=` and `/api/`
+- Decided: the old counts are deleted once at startup. `run.sh` runs `scripts/maintenance.ts` after the schema update; tasks in `src/lib/maintenance.ts` run once each, recorded in `maintenance_tasks` (not in backups). Restoring an older backup brings its search counts back
+- E2E: exact counts in `search-counting.spec.ts`, its own Playwright project after the parallel tests
+- Item views had the same flaw (counted in the item page loader): now the page sends `countItemView` (POST) once a browser shows it, still deduplicated per visitor and hour
+- Both counters ignore known crawlers by their user agent (`isCrawler`), for crawlers that run pages in a browser
+- The old item views are deleted once as well (`stats-001-reset-item-views`), so "most viewed" starts fresh
+
+---
+
 ## Access Control
 
 Who may do what in the inventory.

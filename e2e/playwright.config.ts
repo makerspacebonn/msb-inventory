@@ -29,7 +29,14 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: /backup\.spec\.ts/,
+      testIgnore: /(backup|search-counting)\.spec\.ts/,
+    },
+    // Compares exact numbers, so no other test may search at the same time
+    {
+      name: "counting",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /search-counting\.spec\.ts/,
+      dependencies: ["chromium"],
     },
     // Restoring replaces the whole database, so it must not run alongside
     // other tests
@@ -37,7 +44,7 @@ export default defineConfig({
       name: "backup",
       use: { ...devices["Desktop Chrome"] },
       testMatch: /backup\.spec\.ts/,
-      dependencies: ["chromium"],
+      dependencies: ["counting"],
     },
   ],
 

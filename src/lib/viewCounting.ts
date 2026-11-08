@@ -61,3 +61,16 @@ export function viewerKey(viewer: {
     .digest("hex")
   return `visitor:${hash}`
 }
+
+// Words that crawlers, link previews and monitoring put in their user agent.
+// Browsers driven by tests ("HeadlessChrome") are not crawlers
+const CRAWLER =
+  /bot\b|bot\/|crawl|spider|slurp|preview|facebookexternalhit|curl|wget|python-requests|httpclient|monitor/i
+
+/**
+ * Whether a request comes from a crawler rather than a person's browser.
+ * Searches and views of crawlers aren't counted
+ */
+export function isCrawler(userAgent: string | null | undefined): boolean {
+  return !userAgent || CRAWLER.test(userAgent)
+}
