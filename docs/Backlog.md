@@ -126,6 +126,19 @@ Items are sometimes added twice because nobody knows one already exists. When ad
 
 ---
 
+### PRINT-004: Keep the label printer status
+**Priority:** Low
+
+**Description:**
+The server only knows a label printer's status from the messages it receives while running. After a restart of the app, the status is unknown until the printer reports again. The last known status of the printers and of the connection should be kept, so it is shown right away after a restart.
+
+**Acceptance Criteria:**
+- [ ] The last known status of each label printer is kept across restarts
+- [ ] The state of the connection to the message broker is kept as well
+- [ ] A kept status shows how old it is, so an outdated one isn't taken as current
+
+---
+
 ### PRINT-001: Choose the label printer
 **Priority:** Low
 
@@ -150,6 +163,34 @@ A photo taken for the search often shows more than the item that's being looked 
 - [ ] The photo for the search can be cropped before searching
 - [ ] Cropping works the same way as for item pictures
 - [ ] Searching with the whole photo stays possible without an extra step
+
+---
+
+### STATS-001: Implausible search counts
+**Priority:** High
+
+**Description:**
+The activity statistics show far more searches than people can have made: over 200 on a normal day and about 21,000 on one day. Numbers like these make the statistics useless. The cause should be found, and only searches made by people should be counted.
+
+**Acceptance Criteria:**
+- [ ] The cause of the high numbers is known
+- [ ] A search made by a person counts once
+- [ ] Automatic requests (e.g. preloading pages, bots, repeated loading of the same results) don't count as searches
+- [ ] It is decided what happens to the wrong numbers already counted
+
+---
+
+### UX-032: Light mode
+**Priority:** Low
+
+**Description:**
+The app is always dark. In bright rooms, such as the workshop in daylight, or for people who prefer it, a light look is easier to read. The app should offer a light mode as well.
+
+**Acceptance Criteria:**
+- [ ] The app has a light and a dark look
+- [ ] By default it follows the device's setting
+- [ ] Users can switch between light and dark, and the choice is remembered
+- [ ] All pages, including charts and location images with markers, are readable in both
 
 ---
 
@@ -266,6 +307,42 @@ Consumables and small parts (screws, filament, …) exist in quantities. Items s
 
 ---
 
+## Promotion
+
+Pointing members to interesting items.
+
+### PROMO-001: Promote items
+**Priority:** Low
+
+**Description:**
+Some items are worth knowing about, but members don't find them unless they look for them. Users should be able to promote an item they find really cool, with a short text why. A Discord bot can then pick up the promoted items and tell the members about them.
+
+**Acceptance Criteria:**
+- [ ] Logged-in users can promote an item with a free text explaining why
+- [ ] Promoted items can be read through an API secured with an API key
+- [ ] Each promotion is picked up once, so the bot doesn't announce the same item again and again
+- [ ] Promotions can be withdrawn
+
+---
+
+## Privacy
+
+What the app stores about people.
+
+### PRIV-001: Information for the privacy notice
+**Priority:** Medium
+
+**Description:**
+The makerspace has to tell its members what personal data it processes (DSGVO). The app stores data about people, for example from the login and in the changelog. The makerspace needs a list of what the app stores, why and for how long, to add it to its privacy document.
+
+**Acceptance Criteria:**
+- [ ] All personal data the app stores is listed, including in backups and logs
+- [ ] For each, the purpose and how long it is kept is described
+- [ ] Data that is deliberately not stored is named (e.g. no IP addresses for view counting)
+- [ ] The list is written so it can be taken into the makerspace's privacy document
+
+---
+
 ## Operations
 
 Backups, releases and running the app.
@@ -295,18 +372,3 @@ Images of deleted items and locations, and images that were replaced, stay on th
 - [ ] Images that are shown or can be restored via undo are never removed
 - [ ] The admin sees how many images and how much space would be freed before confirming
 - [ ] Backups and restores keep working as before
-
----
-
-### OPS-006: Small image updates
-**Priority:** Medium
-
-**Description:**
-Every new version of the Docker image has to be downloaded by the server. When only a little code changed, the update should be small too, so deployments are fast and don't download the same unchanged parts again and again.
-
-**Acceptance Criteria:**
-- [ ] A change to the app's code only changes a small part of the image
-- [ ] Parts that rarely change, like the base image and dependencies, are reused between versions
-- [ ] The size of a typical update is known before and after the change
-
----

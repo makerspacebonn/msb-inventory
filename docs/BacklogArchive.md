@@ -934,6 +934,30 @@ A backup should contain everything needed to restore the inventory completely. T
 
 ---
 
+### OPS-006: Small image updates ❌ DROPPED 2026-11-07
+**Priority:** Medium
+
+**Description:**
+Every new version of the Docker image has to be downloaded by the server. When only a little code changed, the update should be small too, so deployments are fast and don't download the same unchanged parts again and again.
+
+**Acceptance Criteria:**
+- [ ] A change to the app's code only changes a small part of the image
+- [ ] Parts that rarely change, like the base image and dependencies, are reused between versions
+- [ ] The size of a typical update is known before and after the change
+
+**Reason:**
+Not needed for now: deployments mostly use `build.sh`, where a code-only update is already small.
+
+**Findings (2026-11-07):**
+- Image 444 MB (uncompressed): base image ~115 MB, production dependencies ~325 MB, app code (`dist`) ~3 MB
+- `build.sh` builds with the local build cache: after a code change only 3.2 MB of layers changed, so push and pull stay small
+- Still large: every `bun.lock` change rebuilds the whole dependency layer; so does a lost local build cache. CI builds (version tags) run without a cache, so every layer after the base image changes each time
+- The dependency layer is large because `@tanstack/react-start` brings its build tools (vite, rolldown, babel, prettier, lightningcss) into production; bundling the server's packages into `dist` would shrink it
+- If needed later: bundle the server's packages, and enable the registry build cache in `.github/workflows/main.yml`
+
+---
+
+
 ## Architecture Improvements
 
 ### ARCH-002: Standardize error handling ✅ COMPLETED 2026-11-05

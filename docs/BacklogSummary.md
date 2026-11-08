@@ -2,7 +2,11 @@
 
 Generated from [Backlog.md](./Backlog.md) with `bun run backlog:summary`; don't edit by hand.
 
-**19 open items**
+**23 open items**
+
+## High (1)
+
+- STATS-001: Implausible search counts
 
 ## Medium (11)
 
@@ -15,16 +19,19 @@ Generated from [Backlog.md](./Backlog.md) with `bun run backlog:summary`; don't 
 - BRIEF-001: Items that require a briefing
 - INV-001: Inventory check
 - STOCK-001: Track stock of consumables
+- PRIV-001: Information for the privacy notice
 - OPS-002: New version with every deployment
-- OPS-006: Small image updates
 
-## Low (8)
+## Low (11)
 
 - ARCH-006: Provider-neutral login naming
 - ARCH-007: Single level of abstraction
 - UX-010: Filter items by photo
 - UX-018: Group identical items in the search
+- PRINT-004: Keep the label printer status
 - PRINT-001: Choose the label printer
+- UX-032: Light mode
 - AI-004: Choose the AI provider
 - LEND-001: Lend out items
+- PROMO-001: Promote items
 - OPS-004: Clean up unused images
