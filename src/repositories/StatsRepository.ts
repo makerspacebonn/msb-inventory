@@ -80,6 +80,20 @@ export class StatsRepository {
       .where(gte(SearchCountTable.day, firstDay))
   }
 
+  /** Views of all item pages together, per day */
+  async viewsSince(
+    firstDay: string,
+  ): Promise<{ day: string; count: number }[]> {
+    return db
+      .select({
+        day: ItemViewTable.day,
+        count: sum(ItemViewTable.count).mapWith(Number),
+      })
+      .from(ItemViewTable)
+      .where(gte(ItemViewTable.day, firstDay))
+      .groupBy(ItemViewTable.day)
+  }
+
   /** Changes per day and kind (created, updated, deleted) */
   async changesSince(firstDay: string): Promise<ChangeCount[]> {
     const rows = await db

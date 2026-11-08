@@ -80,18 +80,22 @@ describe("summarizeActivity", () => {
   const days = ["2026-11-05", "2026-11-06"]
 
   it("makes one series per kind of change over the period", () => {
-    const stats = summarizeActivity(
-      days,
-      [{ day: "2026-11-06", count: 7 }],
-      [
+    const stats = summarizeActivity(days, {
+      searches: [{ day: "2026-11-06", count: 7 }],
+      views: [
+        { day: "2026-11-05", count: 12 },
+        { day: "2026-11-06", count: 4 },
+      ],
+      changes: [
         { day: "2026-11-05", changeType: "create", count: 2 },
         { day: "2026-11-06", changeType: "update", count: 3 },
         { day: "2026-11-06", changeType: "create", count: 1 },
       ],
-      [],
-    )
+      perUser: [],
+    })
 
     expect(stats.searches).toEqual([0, 7])
+    expect(stats.views).toEqual([12, 4])
     expect(stats.changes).toEqual({
       create: [2, 1],
       update: [0, 3],
@@ -100,17 +104,17 @@ describe("summarizeActivity", () => {
   })
 
   it("lists people by activity, with unknown authors grouped", () => {
-    const stats = summarizeActivity(
-      days,
-      [],
-      [],
-      [
+    const stats = summarizeActivity(days, {
+      searches: [],
+      views: [],
+      changes: [],
+      perUser: [
         { userId: "u1", name: "Anna", changeType: "create", count: 2 },
         { userId: "u2", name: "Ben", changeType: "update", count: 5 },
         { userId: "u1", name: "Anna", changeType: "delete", count: 1 },
         { userId: null, name: null, changeType: "update", count: 1 },
       ],
-    )
+    })
 
     expect(stats.people).toEqual([
       { name: "Ben", create: 0, update: 5, delete: 0, total: 5 },
@@ -120,6 +124,13 @@ describe("summarizeActivity", () => {
   })
 
   it("leaves out who did what when it wasn't loaded", () => {
-    expect(summarizeActivity(days, [], [], null).people).toBeNull()
+    expect(
+      summarizeActivity(days, {
+        searches: [],
+        views: [],
+        changes: [],
+        perUser: null,
+      }).people,
+    ).toBeNull()
   })
 })

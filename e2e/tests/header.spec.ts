@@ -69,6 +69,12 @@ test.describe("Header: menu", () => {
     await expect(menu.getByRole("link", { name: "Changelog" })).toBeVisible()
     await expect(menu.getByRole("link", { name: "Drucker" })).toHaveCount(0)
     await expect(menu.getByRole("link", { name: "Backup" })).toHaveCount(0)
+
+    // The statistics are public
+    await menu.getByRole("link", { name: "Statistik" }).click()
+    await expect(page).toHaveURL(/\/stats\?days=30/)
+    await expect(page.getByRole("heading", { name: "Aktivität" })).toBeVisible()
+    await expect(menu).toBeHidden()
   })
 
   test.describe("on a phone", () => {

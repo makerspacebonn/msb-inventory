@@ -189,6 +189,30 @@ test.describe("Activity statistics", () => {
     await expect(entryIn("Gesamt")).toContainText("5 Aufrufe")
   })
 
+  test("shows item views over time", async ({ authenticatedPage: page }) => {
+    await page.goto("/stats?days=7")
+    const before = await total(page, "Aufrufe")
+    expect(Number.isNaN(before)).toBe(false)
+
+    // A new item, so its view is a new one for this person
+    await page.goto("/items/add")
+    await page.getByLabel("Name", { exact: true }).fill(`Seen ${Date.now()}`)
+    await page.getByRole("button", { name: "Ohne Ort erstellen" }).click()
+    await expect(page).toHaveURL(/\/i\/\d+$/)
+    const counted = viewRequest(page)
+    await page.reload()
+    await counted
+
+    await page.goto("/stats?days=7")
+    expect(await total(page, "Aufrufe")).toBeGreaterThanOrEqual(before + 1)
+    const chart = page.getByRole("figure", { name: "Aufrufe pro Tag" })
+    await chart.getByText("Als Tabelle anzeigen").click()
+    // A header row and one row per day
+    await expect(
+      chart.getByRole("table", { name: "Aufrufe pro Tag" }).getByRole("row"),
+    ).toHaveCount(8)
+  })
+
   test("doesn't count views of crawlers", async ({
     authenticatedPage: page,
     browser,

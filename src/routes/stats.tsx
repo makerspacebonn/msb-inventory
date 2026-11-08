@@ -29,7 +29,8 @@ const CHANGE_LINES: { kind: ChangeKind; label: string; color: string }[] = [
   { kind: "update", label: "Geändert", color: "#3987e5" },
   { kind: "delete", label: "Gelöscht", color: "#e66767" },
 ]
-const SEARCH_COLOR = "#3987e5"
+// Charts with a single line use one color
+const SINGLE_LINE_COLOR = "#3987e5"
 
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0)
 
@@ -71,9 +72,10 @@ function StatsPage() {
 
       <ul
         aria-label={`Summen der letzten ${days} Tage`}
-        className="grid grid-cols-2 gap-3 md:grid-cols-4"
+        className="grid grid-cols-2 gap-3 md:grid-cols-5"
       >
         <Total label="Suchen" value={sum(stats.searches)} />
+        <Total label="Aufrufe" value={sum(stats.views)} />
         {CHANGE_LINES.map((line) => (
           <Total
             key={line.kind}
@@ -90,14 +92,31 @@ function StatsPage() {
           {
             key: "searches",
             label: "Suchen",
-            color: SEARCH_COLOR,
+            color: SINGLE_LINE_COLOR,
             values: stats.searches,
           },
         ]}
       />
       <p className="-mt-6 text-xs text-muted-foreground">
-        Gezählt werden Suchen auf der Ergebnisseite und Fotosuchen, ohne
-        Suchbegriff und ohne Person.
+        Gezählt werden Suchen über die Suchleiste, Klicks auf Schlagworte und
+        Fotosuchen, ohne Suchbegriff und ohne Person. Crawler zählen nicht.
+      </p>
+
+      <LineChart
+        title="Aufrufe pro Tag"
+        days={stats.days}
+        series={[
+          {
+            key: "views",
+            label: "Aufrufe",
+            color: SINGLE_LINE_COLOR,
+            values: stats.views,
+          },
+        ]}
+      />
+      <p className="-mt-6 text-xs text-muted-foreground">
+        Aufrufe von Item-Seiten, alle Items zusammen. Wer ein Item mehrmals in
+        einer Stunde öffnet, zählt einmal; Crawler zählen nicht.
       </p>
 
       <LineChart

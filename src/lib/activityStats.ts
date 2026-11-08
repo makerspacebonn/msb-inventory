@@ -74,6 +74,8 @@ export type PersonActivity = {
 export type ActivityStats = {
   days: string[]
   searches: number[]
+  /** Views of item pages, all items together */
+  views: number[]
   changes: Record<ChangeKind, number[]>
   /** Most active first; null for visitors, who don't see who did what */
   people: PersonActivity[] | null
@@ -86,16 +88,24 @@ export type ActivityStats = {
  */
 export function summarizeActivity(
   days: string[],
-  searches: { day: string; count: number }[],
-  changes: { day: string; changeType: ChangeKind; count: number }[],
-  perUser:
-    | {
-        userId: string | null
-        name: string | null
-        changeType: ChangeKind
-        count: number
-      }[]
-    | null,
+  {
+    searches,
+    views,
+    changes,
+    perUser,
+  }: {
+    searches: { day: string; count: number }[]
+    views: { day: string; count: number }[]
+    changes: { day: string; changeType: ChangeKind; count: number }[]
+    perUser:
+      | {
+          userId: string | null
+          name: string | null
+          changeType: ChangeKind
+          count: number
+        }[]
+      | null
+  },
 ): ActivityStats {
   const kinds: ChangeKind[] = ["create", "update", "delete"]
   const series = Object.fromEntries(
@@ -127,6 +137,7 @@ export function summarizeActivity(
   return {
     days,
     searches: dailyCounts(days, searches),
+    views: dailyCounts(days, views),
     changes: series,
     people: perUser
       ? [...people.values()].sort(

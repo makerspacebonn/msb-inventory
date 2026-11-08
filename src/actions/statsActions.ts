@@ -83,7 +83,7 @@ export const fetchInventoryStats = createServerFn().handler(
 )
 
 /**
- * Searches and changes per day over the last 7, 30 or 90 days, for
+ * Searches, item views and changes per day over the last 7, 30 or 90 days, for
  * everyone. Who changed what is only for logged-in users, like the
  * changelog it comes from: visitors get no per-person rows at all
  */
@@ -93,12 +93,13 @@ export const fetchActivityStats = createServerFn()
   .handler(async ({ data: period, context }): Promise<ActivityStats> => {
     const days = lastDays(period)
     const stats = new StatsRepository()
-    const [searches, changes, perUser] = await Promise.all([
+    const [searches, views, changes, perUser] = await Promise.all([
       stats.searchesSince(days[0]),
+      stats.viewsSince(days[0]),
       stats.changesSince(days[0]),
       context.isLoggedIn ? stats.changesPerUserSince(days[0]) : null,
     ])
-    return summarizeActivity(days, searches, changes, perUser)
+    return summarizeActivity(days, { searches, views, changes, perUser })
   })
 
 export type MostViewedItem = { item: Item; views: number }

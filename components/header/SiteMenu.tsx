@@ -64,6 +64,14 @@ export function SiteMenu({
           >
             Changelog
           </Link>
+          <Link
+            to="/stats"
+            search={{ days: 30 }}
+            className={linkClass}
+            onClick={close}
+          >
+            Statistik
+          </Link>
           {isAdmin && (
             <Link to="/backup" className={linkClass} onClick={close}>
               Backup
