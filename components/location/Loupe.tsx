@@ -61,6 +61,7 @@ function FineCross() {
   ]
   return (
     <svg
+      aria-hidden="true"
       viewBox="0 0 24 24"
       className="absolute top-1/2 left-1/2 size-6 -translate-x-1/2 -translate-y-1/2"
     >
