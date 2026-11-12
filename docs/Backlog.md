@@ -180,6 +180,20 @@ The app is always dark. In bright rooms, such as the workshop in daylight, or fo
 
 ---
 
+### UX-033: Notice when the login has ended
+**Priority:** Medium
+
+**Description:**
+When the login has expired, pages that are already open still show the editing options. It only becomes clear on saving, when the change fails with an error and the input may be lost. Users should notice early that they are logged out, and not lose what they entered.
+
+**Acceptance Criteria:**
+- [ ] When the login has ended, the open page shows it without a reload
+- [ ] Editing options are not offered while logged out
+- [ ] Logging in again is one step away and returns to the same page
+- [ ] Input that could not be saved because of the logout is not lost
+
+---
+
 ## AI Features
 
 Item recognition and suggestions with generative AI.
@@ -427,3 +441,17 @@ Images of deleted items and locations, and images that were replaced, stay on th
 - [ ] Images that are shown or can be restored via undo are never removed
 - [ ] The admin sees how many images and how much space would be freed before confirming
 - [ ] Backups and restores keep working as before
+
+---
+
+### OPS-007: Store smaller images
+**Priority:** Low
+
+**Description:**
+Photos taken with a phone are stored in full size, although the app never shows them that large. They fill the server, make backups bigger and take longer to load and process. Images should be stored in a size that is enough for everything the app shows.
+
+**Acceptance Criteria:**
+- [ ] New item and location photos are stored no larger than the app needs to show them sharply
+- [ ] Photos still look sharp in the largest view, also on high-density screens
+- [ ] Uploading from a phone gets faster, not slower
+- [ ] Existing images keep working; shrinking them is optional
