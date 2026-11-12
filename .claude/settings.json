@@ -1,0 +1,38 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [
+      "Bash(bun run:*)",
+      "Bash(bun audit:*)",
+      "Bash(bunx biome check:*)",
+      "Bash(bun biome check:*)",
+      "Bash(bunx tsc:*)",
+      "Bash(bunx shadcn@latest add:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git describe:*)",
+      "Bash(git pull:*)",
+      "Bash(git tag:*)",
+      "Bash(npm version:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(test:*)",
+      "Bash(curl:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.better-auth.com)",
+      "WebFetch(domain:www.shadcn.io)",
+      "mcp__MCP_DOCKER__resolve-library-id",
+      "mcp__MCP_DOCKER__get-library-docs",
+      "mcp__MCP_DOCKER__mcp-find",
+      "Skill(SessionWrapup)"
+    ]
+  },
+  "enabledMcpjsonServers": ["shadcn"]
+}

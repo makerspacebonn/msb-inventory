@@ -4,28 +4,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MSB Inventory is a full-stack TypeScript inventory management system for Makerspace Bonn. It tracks items, and locations (hierarchical) with features like image upload, AI-powered item description (via Google Gemini), and Discord OAuth.
+MSB Inventory is a full-stack TypeScript inventory management system for Makerspace Bonn. It tracks items and locations (hierarchical) with image upload, AI-powered item description (Google Gemini), and login via better-auth with Kanidm (OIDC).
 
-## Development Commands
-**Always use bun, not npm.**
+## Gate
+
+Run the fast check first; run the full gate only once it is clean. Both must pass before "done" or a commit.
 
 ```bash
-bun dev          # Start app + postgres in Docker with hot reload (http://localhost:3000)
-bun dev:stop     # Stop Docker containers
-bun dev:tests    # Run tests in watch mode
-bun test         # Run tests once
-bun typecheck    # Type check the whole project (tsc --noEmit)
-bun build        # Production build
-bun db:push      # update the db to the expected drizzle format
-bun dev:bg       # Restart dev server in background with logging (logs/dev.log)
-bun dev:logs     # Tail the dev server log file
+# Fast check (lint + format)
+bunx biome check .
+
+# Full gate
+bun run typecheck && bun run test && bun run build && bun run test:e2e
 ```
 
-Requires Docker. Create `.env` from `.env_example` before running.
+Evidence: biome "No fixes applied", vitest and Playwright pass counts. E2E runs in Docker (`scripts/e2e-test.sh`); its report is in `e2e/playwright-report`.
+
+## Development Commands
+**Always use bun, not npm.** Use `bun run <script>` for `test` and `build`: `bun test` and `bun build` are Bun built-ins (Bun's test runner and bundler), not this project's scripts.
+
+```bash
+bun dev               # Start app + postgres in Docker with hot reload (http://localhost:3000)
+bun dev:stop          # Stop Docker containers
+bun dev:bg            # Restart dev server in background with logging (logs/dev.log)
+bun dev:logs          # Tail the dev server log file
+bun run test          # Unit tests once (vitest)
+bun run test:e2e      # E2E tests (Playwright in Docker)
+bun run typecheck     # tsc --noEmit
+bun run build         # Production build
+bun db:push --force   # Update the dev db to the Drizzle schema (non-interactive)
+```
+
+Requires Docker. Create `.env` from `.env_example` before running. More setup notes: [docs/Development.md](docs/Development.md).
 
 ## Architecture
 
-**Runtime:** Bun with TanStack Start (React 19 + file-based routing)
+**Runtime:** Bun with TanStack Start (React 19 + file-based routing). Library choices: [docs/stack.md](docs/stack.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 **Key Patterns:**
 
@@ -42,7 +56,7 @@ Requires Docker. Create `.env` from `.env_example` before running.
    - `ItemRepository` - Item CRUD
    - `LocationRepository` - Location hierarchy management
 
-3. **File-based Routing** - Routes in `/src/routes/`, auto-generated to `routeTree.gen.ts`
+3. **File-based Routing** - Routes in `/src/routes/`, auto-generated to `routeTree.gen.ts`. API routes and `/api/auth/*`: see runtime traps.
 
 **Directory Structure:**
 - `src/routes/` - TanStack Router pages
@@ -62,122 +76,30 @@ Requires Docker. Create `.env` from `.env_example` before running.
 
 **Image Handling:** Client-side compression (`browser-image-compression`) + cropping (`react-easy-crop`) before upload as base64.
 
+## Runtime traps
+
+Read [docs/runtime-traps.md](docs/runtime-traps.md) before touching these areas; add new traps there (dated, with library version), not here:
+- **Server/client boundary:** server-only modules (`src/lib/auth.ts`, anything reading `process.env`) are imported dynamically inside a `createServerFn` handler, never statically in route files or components.
+- **better-auth:** `tanstackStartCookies()` stays the last plugin; generic OAuth uses `signIn.social`; the callback URI is `/api/auth/callback/{providerId}`.
+- **Request access:** `getRequest()` from `@tanstack/react-start/server`, not `getWebRequest()`.
+- **E2E auth:** sessions are pre-seeded and the cookie is HMAC-signed with `BETTER_AUTH_SECRET`.
+
 ## Development Rules
-**Rules:**
-- use biome to check and autoformat the code
+- Use biome to check and autoformat the code
 - E2E tests follow the guidelines in `e2e/README.md` (find elements by role/label, never let checks pass silently)
 - Server functions that change data use `{ method: "POST" }`: the default is GET, which browsers and proxies may repeat on their own
 - After changing `docs/Backlog.md`, run `bun run backlog:summary` to update `docs/BacklogSummary.md`; for a short backlog list, show that file
 - Run `bun run security:scan` (Trivy on the production image, `bun audit` on all dependencies) after changing dependencies or the Dockerfile, and whenever the last entry in `docs/SecurityScans.md` is older than 30 days; report what it finds
 - Server functions fail with `AppError` (`src/lib/errors.ts`); the client shows errors with `showError`/`errorMessage`, never a raw `error.message`
-
-**Commands:**
-- ```bun dev``` starts the dev server.
+- Releases go through the `/release` command (`.claude/commands/release.md`); CI (`.github/workflows/main.yml`) builds and pushes the image to Docker Hub
 
 ## Commit Messages
 
-Use conventional commits format: `type(scope): description`
+Conventional commits: `type(scope): description`, imperative mood, first line under 72 characters, backlog ID (e.g. `UX-033`) in scope or subject.
 
 **Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `revert`
 
-**Rules:**
-- ONLY COMMIT, WHEN REQUESTED BY USER OR YOU HAVE ASKED FOR PERMISSION
-- Use imperative mood ("add" not "added")
-- Keep first line under 72 characters
-- Scope is optional but recommended
-- Do not include Claude Code mentions, attribution, or "Generated with" footers
+- ONLY COMMIT WHEN REQUESTED BY THE USER OR AFTER ASKING FOR PERMISSION
+- No Claude Code mentions, attribution, or "Generated with" footers
 
-**Examples:**
-- `feat(items): add image upload functionality`
-- `fix(locations): correct sorting order`
-- `chore(deps): update dependencies`
-
-## Session Learnings
-
-### 2026-01-17 - better-auth Migration Setup
-- **drizzle-kit push:** Use `bun db:push --force` for non-interactive schema updates (interactive prompts don't accept piped input)
-- **better-auth schema:** Requires 4 tables - `users`, `sessions`, `accounts`, `verifications` with specific column names
-- **Cascade deletes:** Sessions and accounts have FK to users with `ON DELETE CASCADE` - cleanup is automatic
-- **Admin plugin fields:** Include `role`, `banned`, `banReason`, `banExpires` in users table for future RBAC (AUTH-005)
-
-### 2026-01-17 - better-auth Implementation Patterns
-- **API route pattern:** TanStack Start uses `createFileRoute` with `server.handlers` for API routes, NOT `createAPIFileRoute`. Export must be `Route`, not `APIRoute`
-- **Catch-all auth route:** `src/routes/api/auth/$.ts` handles all `/api/auth/*` endpoints via `auth.handler(request)`
-- **Generic OAuth sign-in (better-auth ≥1.7):** `genericOAuth` providers are registered as social providers — call `signIn.social({ provider: "<providerId>" })`. `genericOAuthClient()` / `signIn.oauth2()` no longer exist
-- **Conditional plugins:** Check env vars and conditionally add plugins: `plugins: kanidmConfigured ? [genericOAuth({...})] : []`
-- **useSession hook:** better-auth's `useSession` returns `{ data: session, isPending, refetch }` - replaces all manual JWT/cookie logic
-- **OIDC discovery:** `discoveryUrl` auto-configures authorization, token, and userinfo endpoints from `.well-known/openid-configuration`
-- **E2E auth testing:** Use unique timestamped emails (e.g., `test-${Date.now()}@example.com`) to avoid conflicts between test runs
-
-### 2026-01-17 - OAuth Configuration & Server Code Bundling
-- **Server code in client:** Importing server-only code (like `auth.ts` with `process.env`) directly into client components causes "Buffer is not defined" errors. Use `createServerFn` with dynamic imports instead:
-  ```typescript
-  const getAuthConfig = createServerFn().handler(async () => {
-    const { kanidmConfigured } = await import("@/src/lib/auth")
-    return { kanidmConfigured }
-  })
-  ```
-- **OAuth redirect URIs:** better-auth's `genericOAuth` plugin uses callback pattern `/api/auth/callback/{providerId}` (was `/api/auth/oauth2/callback/{providerId}` before 1.7). This exact URI must be whitelisted in the OAuth provider (e.g., Kanidm)
-- **Dev server logging:** Use `bun run dev:bg` to restart dev server in background with logging to `logs/dev.log`
-
-### 2026-01-17 - TanStack Start Server/Client Boundary & Authorization
-- **getRequest() not getWebRequest():** In TanStack Start v1.150+, the function is `getRequest()` from `@tanstack/react-start/server`, NOT `getWebRequest()`. Research docs may be outdated.
-- **Dynamic imports in route files:** Route files are bundled for both server and client. Use dynamic `await import()` inside server function handlers for server-only modules:
-  ```typescript
-  const getAuthContext = createServerFn().handler(async () => {
-    const { getRequest } = await import("@tanstack/react-start/server")
-    const { auth } = await import("@/src/lib/auth")
-    const request = getRequest()
-    const session = await auth.api.getSession({ headers: request.headers })
-    return { isLoggedIn: !!session?.user, userId: session?.user?.id ?? null }
-  })
-  ```
-- **tanstackStartCookies plugin:** Required for TanStack Start cookie handling - MUST be the LAST plugin in the array:
-  ```typescript
-  plugins: [
-    ...(kanidmConfigured ? [genericOAuth({...})] : []),
-    tanstackStartCookies(), // MUST be last
-  ]
-  ```
-- **Root route auth context:** Use `createRootRouteWithContext<RouterContext>()` with `beforeLoad` calling a server function to provide auth state to child routes
-
-### 2026-01-17 - Post-Migration Cleanup
-- **Schema migration side effects:** After migrating auth systems, audit codebase for references to removed schema fields. Example: `discordName` was removed from UserTable but `ChangelogRepository` still selected it, breaking the `/changelog` route.
-- **Inline types vs schema types:** Inline type definitions like `{ name: string; discordName: string }` don't track schema changes. Consider deriving types from actual schema to catch mismatches at compile time.
-
-### 2026-01-17 - E2E Testing with better-auth
-- **Session tokens must be signed:** better-auth validates cookies using HMAC-SHA256. Token format: `{token}.{base64Signature}` signed with `BETTER_AUTH_SECRET`:
-  ```typescript
-  const signature = crypto.createHmac("sha256", BETTER_AUTH_SECRET).update(token).digest("base64")
-  const signedToken = `${token}.${signature}`
-  ```
-- **Cookie settings for E2E:** Set `secure: false` for HTTP test environments, URL-encode the signed token value
-- **Pre-seed sessions for fast auth:** Insert user + session in seed script (`scripts/seed-e2e-data.ts`), then set cookie in Playwright fixture - much faster than UI login
-- **Port mapping for local debugging:** Add `ports: "3001:3000"` to `docker-compose.e2e.yml` to access app from host during debugging
-- **Auth verification:** Check for user name in header (`text=${TEST_USER.name}`) instead of feature-specific buttons that may not exist on all pages
-- **Test commands:** Use `bun run test` (Vitest) for unit tests, `bun run test:e2e` (Playwright) for E2E tests. Note: `bun test` uses Bun's native runner which conflicts with Playwright
-
-### 2026-01-18 - OIDC Claims & Role Mapping
-- **better-auth mapProfileToUser:** Receives full OIDC profile including custom claims. Use with `overrideUserInfo: true` to update user on each login
-- **Session cache gotcha:** With `session.cookieCache.enabled: true`, role changes from OAuth may require 2 logins to take effect ([Issue #5772](https://github.com/better-auth/better-auth/issues/5772))
-- **Account linking:** Enable with `account.accountLinking.enabled: true` and `trustedProviders: ["kanidm"]` to link OAuth accounts to existing email users
-- **Debugging OIDC claims:** Add `console.log(JSON.stringify(profile, null, 2))` in `mapProfileToUser` to see all claims from provider
-
-### 2026-02-05 - Recent Locations Feature (UX-002)
-- **localStorage pattern:** For client-side persistence, create utilities in `lib/` with SSR guards (`if (typeof window === "undefined") return`)
-- **React hook for localStorage:** Use `useState` + `useEffect` for SSR-safe loading, with `isLoaded` flag to prevent hydration mismatch
-- **Composing location paths:** When storing location hierarchy, compute path at save time from `locationPath.map(l => l.name).join(" → ")`
-- **Lazy validation pattern:** When selecting from cached data (like recent locations), validate existence before using:
-  ```typescript
-  const location = await fetchLocationById({ data: recent.id })
-  if (!location) {
-    removeFromCache(recent.id)
-    toast.error("Location nicht mehr vorhanden")
-    return
-  }
-  ```
-- **Extending component props:** Add optional props with defaults (`showRecentLocations = false`) for backward compatibility
-
-### 2026-02-05 - Navigation Button & E2E Test Updates (UX-003)
-- **Global UI elements break selectors:** When adding UI elements that appear on every page (like navbar buttons), existing E2E selectors may match multiple elements. Use `.first()` or more specific selectors.
-- **Auth test assumptions:** Tests that check for button visibility to verify auth state need updating when buttons become globally visible. Prefer checking for login button presence or error messages instead.
+**Examples:** `feat(items): add image upload functionality`, `fix(locations): correct sorting order`, `chore(deps): update dependencies`
