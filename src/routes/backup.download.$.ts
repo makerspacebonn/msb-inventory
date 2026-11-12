@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { createFileRoute } from "@tanstack/react-router"
 import { isAdmin } from "@/src/lib/roles"
+import { resolveInside } from "@/src/lib/safePath"
 
 const SAVE_PATH = process.env.SAVE_PATH || ""
 const BACKUPS_DIR = path.join(SAVE_PATH, "backups")
@@ -23,21 +24,21 @@ export const Route = createFileRoute("/backup/download/$")({
 
         const filename = params._splat
 
-        // Security: only allow .zip files and prevent directory traversal
-        if (!filename?.endsWith(".zip") || filename.includes("..")) {
+        // Security: only allow .zip files
+        if (!filename?.endsWith(".zip")) {
           return new Response("Invalid filename", { status: 400 })
         }
 
-        const filePath = path.join(BACKUPS_DIR, filename)
-
-        if (!fs.existsSync(filePath)) {
+        // Missing files and paths outside the backups directory look the same
+        const filePath = resolveInside(BACKUPS_DIR, filename)
+        if (!filePath || !fs.statSync(filePath).isFile()) {
           return new Response("Not found", { status: 404 })
         }
 
         return new Response(Bun.file(filePath), {
           headers: {
             "Content-Type": "application/zip",
-            "Content-Disposition": `attachment; filename="${filename}"`,
+            "Content-Disposition": `attachment; filename="${path.basename(filePath)}"`,
           },
         })
       },
