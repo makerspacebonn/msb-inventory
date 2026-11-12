@@ -9,7 +9,9 @@ Moved here from the CLAUDE.md "Session Learnings" log on 2026-11-12. Where the o
 
 | When you… | Check… | Why / source | Version · date |
 |---|---|---|---|
-| run `drizzle-kit push` from a script or agent | use `bun db:push --force` | interactive prompts don't accept piped input | drizzle-kit ≤0.31.11 · 2026-01-17 |
+| run `drizzle-kit push` from a script or agent | use `bun db:push --force` (dev only) | interactive prompts don't accept piped input | drizzle-kit ≤0.31.11 · 2026-01-17 |
+| change `src/drizzle/schema.ts` | run `bun db:generate` and commit the migration; production applies migrations only (`scripts/migrate.ts`) | production ran `push --force` until 0.3.0, and the old migration chain could no longer build a fresh db (`searchable_text` typed `tsvector`, a file missing from the journal), so it was replaced by `0000_baseline.sql` | drizzle-kit 0.31.11 · 2026-11-12 |
+| generate a migration non-interactively | `drizzle-kit generate` stops with "Interactive prompts require a TTY" when it must ask about a rename; run it in a real terminal | migration switch | drizzle-kit 0.31.11 · 2026-11-12 |
 | change the auth schema | better-auth needs 4 tables: `users`, `sessions`, `accounts`, `verifications`, with its column names | better-auth migration | better-auth ≤1.7.18 · 2026-01-17 |
 | delete users | sessions and accounts FK to users with `ON DELETE CASCADE`; no manual cleanup | better-auth migration | better-auth ≤1.7.18 · 2026-01-17 |
 | touch the users table | keep `role`, `banned`, `banReason`, `banExpires` (admin plugin, RBAC, AUTH-005) | better-auth migration | better-auth ≤1.7.18 · 2026-01-17 |

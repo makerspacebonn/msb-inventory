@@ -1,6 +1,6 @@
 /**
  * Runs the one-off data tasks that haven't run yet (src/lib/maintenance.ts).
- * Called by run.sh at every start, after the schema update
+ * Called by run.sh at every start, after the schema migrations (scripts/migrate.ts)
  */
 import { runMaintenance } from "../src/lib/maintenance"
 

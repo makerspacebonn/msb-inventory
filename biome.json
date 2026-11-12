@@ -11,6 +11,7 @@
     "includes": [
       "**",
       "!src/routeTree.gen.ts",
+      "!src/drizzle/migrations/meta",
       "!**/*.md",
       "!**/*.yml",
       "!**/*.yaml"

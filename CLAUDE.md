@@ -32,7 +32,8 @@ bun run test          # Unit tests once (vitest)
 bun run test:e2e      # E2E tests (Playwright in Docker)
 bun run typecheck     # tsc --noEmit
 bun run build         # Production build
-bun db:push --force   # Update the dev db to the Drizzle schema (non-interactive)
+bun db:generate       # After a schema change: write the migration (commit it with the change)
+bun db:push --force   # Dev only: sync the local db to the schema without a migration
 ```
 
 Requires Docker. Create `.env` from `.env_example` before running. More setup notes: [docs/Development.md](docs/Development.md).
@@ -90,6 +91,7 @@ Read [docs/runtime-traps.md](docs/runtime-traps.md) before touching these areas;
 - Server functions that change data use `{ method: "POST" }`: the default is GET, which browsers and proxies may repeat on their own
 - After changing `docs/Backlog.md`, run `bun run backlog:summary` to update `docs/BacklogSummary.md`; for a short backlog list, show that file
 - Run `bun run security:scan` (Trivy on the production image, `bun audit` on all dependencies) after changing dependencies or the Dockerfile, and whenever the last entry in `docs/SecurityScans.md` is older than 30 days; report what it finds
+- Schema changes ship as a migration from `bun db:generate`; production runs `scripts/migrate.ts` at start (via `run.sh`) and never `push`
 - Server functions fail with `AppError` (`src/lib/errors.ts`); the client shows errors with `showError`/`errorMessage`, never a raw `error.message`
 - Releases go through the `/release` command (`.claude/commands/release.md`); CI (`.github/workflows/main.yml`) builds and pushes the image to Docker Hub
 
