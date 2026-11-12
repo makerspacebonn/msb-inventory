@@ -313,19 +313,88 @@ Some items are worth knowing about, but members don't find them unless they look
 
 ## Privacy
 
-What the app stores about people.
+What the app stores about people. Background: [Datenschutz.md](./Datenschutz.md)
 
-### PRIV-001: Information for the privacy notice
+### PRIV-002: Delete an account
 **Priority:** Medium
 
 **Description:**
-The makerspace has to tell its members what personal data it processes (DSGVO). The app stores data about people, for example from the login and in the changelog. The makerspace needs a list of what the app stores, why and for how long, to add it to its privacy document.
+Members can ask to see or delete what the makerspace stores about them (Art. 15 and 17 DSGVO). The app has no way to delete an account; today it's only possible directly in the database. Admins should be able to handle such a request in the app.
 
 **Acceptance Criteria:**
-- [ ] All personal data the app stores is listed, including in backups and logs
-- [ ] For each, the purpose and how long it is kept is described
-- [ ] Data that is deliberately not stored is named (e.g. no IP addresses for view counting)
-- [ ] The list is written so it can be taken into the makerspace's privacy document
+- [ ] An admin can see what the app stores about a person
+- [ ] An admin can delete an account, after a confirmation
+- [ ] The person's sessions and login connections are removed with it
+- [ ] Changes the person made stay in the changelog, shown as "Gelöschter Benutzer"
+- [ ] It is clear what happens with backups that still contain the account
+
+---
+
+### PRIV-003: Remove expired sessions
+**Priority:** Medium
+
+**Description:**
+Login sessions store the IP address and browser of a member. When a session expires, it stays in the database forever, so these details pile up without any use. Expired sessions should be removed after a while.
+
+**Acceptance Criteria:**
+- [ ] Sessions are removed some time after they expired
+- [ ] Active sessions are never affected
+- [ ] The time they are kept is written down in the privacy information
+
+---
+
+### PRIV-004: Check the terms for the AI service
+**Priority:** Medium
+
+**Description:**
+Photos are sent to Google Gemini for the AI description and the photo search. Depending on the kind of access, Google may use what is sent to improve its services, and the data leaves the EU. The makerspace needs to know the terms that apply, to decide whether they are acceptable and what the privacy notice has to say.
+
+**Acceptance Criteria:**
+- [ ] It is known which kind of access and which terms the app uses
+- [ ] It is decided whether a data processing agreement is needed and, if so, it exists
+- [ ] The privacy notice names the transfer and where the data goes
+- [ ] If the terms aren't acceptable, a way to change them is decided (e.g. a different access or provider, see AI-004)
+
+---
+
+### PRIV-005: Keep server logs only as long as needed
+**Priority:** Low
+
+**Description:**
+The server keeps the app's output and access logs, which can contain IP addresses. Until recently, the app's output also contained names, email addresses and session tokens. How long logs are kept should be decided and set up, and the old logs with personal data removed.
+
+**Acceptance Criteria:**
+- [ ] The logs written before the logging fix are deleted
+- [ ] It is decided how long logs are kept, and the server keeps them only that long
+- [ ] The privacy notice states how long logs are kept
+
+---
+
+### PRIV-006: Keep backups only as long as needed
+**Priority:** Low
+
+**Description:**
+Backups contain accounts and the changelog, and they stay until an admin deletes them. Deleting an account doesn't reach older backups, and restoring one brings deleted accounts back. How long backups are kept should be decided, and backups older than that should go away.
+
+**Acceptance Criteria:**
+- [ ] It is decided how long backups are kept
+- [ ] Older backups are removed, or admins are reminded to remove them
+- [ ] Restoring a backup doesn't silently bring back accounts that were deleted on purpose
+- [ ] The privacy notice states how long backups are kept
+
+---
+
+### PRIV-007: Names in the changelog
+**Priority:** Low
+
+**Description:**
+The changelog stores who changed what and shows it to all logged-in members, without a time limit. The makerspace should decide on what basis this is done and whether old entries, or the names in them, should be removed after some time, so the changelog keeps its purpose without storing more than needed.
+
+**Acceptance Criteria:**
+- [ ] The legal basis for storing and showing names in the changelog is decided
+- [ ] It is decided whether and when old entries or the names in them are removed
+- [ ] The app follows that decision
+- [ ] The privacy notice describes it
 
 ---
 

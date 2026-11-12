@@ -24,6 +24,7 @@ import {
   type BackupData,
   parseBackupData,
 } from "../lib/backupFormat"
+import { resolveInside } from "../lib/safePath"
 import { shareWhileRunning } from "../lib/shareWhileRunning"
 
 const SAVE_PATH = process.env.SAVE_PATH || ""
@@ -149,10 +150,9 @@ export const deleteBackup = createServerFn({ method: "POST" })
   .middleware([adminGuardMiddleware])
   .validator((filename: string) => filename)
   .handler(async ({ data: filename }): Promise<{ success: boolean }> => {
-    const filePath = path.join(BACKUPS_DIR, filename)
-
-    // Security: ensure the file is within the backups directory
-    if (!filePath.startsWith(BACKUPS_DIR) || !filename.endsWith(".zip")) {
+    // Security: the file must be a .zip inside the backups directory
+    const filePath = resolveInside(BACKUPS_DIR, filename)
+    if (!filePath || !filename.endsWith(".zip")) {
       throw new AppError("INVALID_INPUT", "Ungültiger Backup-Dateiname")
     }
 
@@ -193,10 +193,9 @@ export const restoreBackup = createServerFn({ method: "POST" })
   .middleware([adminGuardMiddleware])
   .validator((filename: string) => filename)
   .handler(async ({ data: filename }): Promise<RestoreResult> => {
-    const filePath = path.join(BACKUPS_DIR, filename)
-
-    // Security: ensure the file is within the backups directory
-    if (!filePath.startsWith(BACKUPS_DIR) || !filename.endsWith(".zip")) {
+    // Security: the file must be a .zip inside the backups directory
+    const filePath = resolveInside(BACKUPS_DIR, filename)
+    if (!filePath || !filename.endsWith(".zip")) {
       throw new AppError("INVALID_INPUT", "Ungültiger Backup-Dateiname")
     }
 

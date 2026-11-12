@@ -982,6 +982,30 @@ Not needed for now: deployments mostly use `build.sh`, where a code-only update 
 ---
 
 
+## Privacy
+
+What the app stores about people.
+
+### PRIV-001: Information for the privacy notice ✅ COMPLETED 2026-11-08
+**Priority:** Medium
+
+**Description:**
+The makerspace has to tell its members what personal data it processes (DSGVO). The app stores data about people, for example from the login and in the changelog. The makerspace needs a list of what the app stores, why and for how long, to add it to its privacy document.
+
+**Acceptance Criteria:**
+- [x] All personal data the app stores is listed, including in backups and logs
+- [x] For each, the purpose and how long it is kept is described
+- [x] Data that is deliberately not stored is named (e.g. no IP addresses for view counting)
+- [x] The list is written so it can be taken into the makerspace's privacy document
+
+**Implementation Notes:**
+- The list is `docs/Datenschutz.md`, in German for the makerspace's privacy document: what is stored, why, who sees it, how long; recipients (Google Gemini, Kanidm); cookies and browser storage; what is deliberately not stored; open points for the makerspace; a text proposal
+- Found while listing: all database queries were logged with their values (names, emails, session tokens), and every login printed the login service's claims. Query logging is now off unless `DB_QUERY_LOG=1`, and the claims are no longer printed
+- Open points for the makerspace (in the document): no way to delete an account in the app, expired sessions are never removed, Gemini terms, how long server logs and backups are kept, legal basis for names in the changelog
+
+---
+
+
 ## Architecture Improvements
 
 ### ARCH-002: Standardize error handling ✅ COMPLETED 2026-11-05

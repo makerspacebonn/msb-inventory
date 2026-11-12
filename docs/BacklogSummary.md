@@ -2,9 +2,9 @@
 
 Generated from [Backlog.md](./Backlog.md) with `bun run backlog:summary`; don't edit by hand.
 
-**22 open items**
+**27 open items**
 
-## Medium (11)
+## Medium (13)
 
 - UX-007: Filter items without a location
 - UX-016: Report an item as missing
@@ -15,10 +15,12 @@ Generated from [Backlog.md](./Backlog.md) with `bun run backlog:summary`; don't 
 - BRIEF-001: Items that require a briefing
 - INV-001: Inventory check
 - STOCK-001: Track stock of consumables
-- PRIV-001: Information for the privacy notice
+- PRIV-002: Delete an account
+- PRIV-003: Remove expired sessions
+- PRIV-004: Check the terms for the AI service
 - OPS-002: New version with every deployment
 
-## Low (11)
+## Low (14)
 
 - ARCH-006: Provider-neutral login naming
 - ARCH-007: Single level of abstraction
@@ -30,4 +32,7 @@ Generated from [Backlog.md](./Backlog.md) with `bun run backlog:summary`; don't 
 - AI-004: Choose the AI provider
 - LEND-001: Lend out items
 - PROMO-001: Promote items
+- PRIV-005: Keep server logs only as long as needed
+- PRIV-006: Keep backups only as long as needed
+- PRIV-007: Names in the changelog
 - OPS-004: Clean up unused images

@@ -56,14 +56,6 @@ async function syncKanidmRole(account: {
   try {
     const claims = decodeJwtPayload(account.idToken)
 
-    // DEBUG: surface exactly what Kanidm returned so group/claim-map setup is
-    // verifiable. Look for a `groups` claim here after configuring the claim-map.
-    console.log("═══════════════════════════════════════════════════════")
-    console.log("🔐 KANIDM id_token claims")
-    console.log("═══════════════════════════════════════════════════════")
-    console.log(JSON.stringify(claims, null, 2))
-    console.log("═══════════════════════════════════════════════════════")
-
     if (!claims) return
     const rawGroups = (claims as { groups?: unknown }).groups
     const groups = Array.isArray(rawGroups) ? rawGroups.map(String) : []

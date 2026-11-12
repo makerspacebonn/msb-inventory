@@ -3,6 +3,7 @@ import path from "node:path"
 import * as process from "node:process"
 import { createFileRoute } from "@tanstack/react-router"
 import sharp from "sharp"
+import { resolveInside } from "@/src/lib/safePath"
 
 const imageRootPath = process.env.SAVE_PATH || ""
 const cacheDir = path.join(imageRootPath, ".cache")
@@ -79,8 +80,9 @@ export const Route = createFileRoute("/img/$")({
           return new Response("Not found", { status: 404 })
         }
 
-        const originalPath = path.join(imageRootPath, imagePath)
-        if (!fs.existsSync(originalPath)) {
+        // The router has already decoded %2f / %2e, so the splat can hold "../"
+        const originalPath = resolveInside(imageRootPath, imagePath)
+        if (!originalPath || !fs.statSync(originalPath).isFile()) {
           return new Response("Not found", { status: 404 })
         }
 
@@ -92,7 +94,13 @@ export const Route = createFileRoute("/img/$")({
             ? SIZE_CONFIG[sizeParam]
             : SIZE_CONFIG.default
 
-        const cachePath = path.join(cacheDir, config.cacheSubDir, imagePath)
+        // Built from the resolved path: a raw splat with ".." would put the
+        // cache file in a stray folder, and one image would get many entries
+        const relativePath = path.relative(
+          fs.realpathSync(imageRootPath),
+          originalPath,
+        )
+        const cachePath = path.join(cacheDir, config.cacheSubDir, relativePath)
 
         try {
           const buffer = await getResizedImage(
