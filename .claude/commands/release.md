@@ -47,7 +47,7 @@ This updates the version in package.json without creating a git tag (we'll do th
 ### Step 3: Create Commit
 
 If there are changes:
-1. Run `git add -A` to stage all changes
+1. Stage `package.json` plus the changed files the user confirms, by path (`git add <paths>`). Never `git add -A`: it is blocked globally and can sweep in another session's work
 2. Run `git diff --cached` to see what's being committed
 3. Analyze the changes and create a meaningful commit message following conventional commits format
 4. Create the commit using:
