@@ -2,10 +2,11 @@
 
 Generated from [Backlog.md](./Backlog.md) with `bun run backlog:summary`; don't edit by hand.
 
-**29 open items**
+**32 open items**
 
-## Medium (14)
+## Medium (15)
 
+- ARCH-009: One command for the quality gate
 - UX-007: Filter items without a location
 - UX-016: Report an item as missing
 - UX-017: Report an item as used up
@@ -21,10 +22,12 @@ Generated from [Backlog.md](./Backlog.md) with `bun run backlog:summary`; don't 
 - PRIV-004: Check the terms for the AI service
 - OPS-002: New version with every deployment
 
-## Low (15)
+## Low (17)
 
 - ARCH-006: Provider-neutral login naming
 - ARCH-007: Single level of abstraction
+- ARCH-010: Catch problems before they are committed
+- ARCH-011: Readable server logs
 - UX-010: Filter items by photo
 - UX-018: Group identical items in the search
 - PRINT-004: Keep the label printer status

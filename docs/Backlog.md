@@ -32,6 +32,44 @@ Some functions and components mix high-level steps with low-level details, for e
 - [ ] The app works as before
 - [ ] The principle is documented in the development rules, so new code follows it
 
+### ARCH-009: One command for the quality gate
+**Priority:** Medium
+
+**Description:**
+Checking that a change is ready means running lint, type check, unit tests, build and e2e tests one by one, and the results end up scattered across the terminal. One command should run the whole gate and leave a short summary that shows what passed, so "ready" can be shown rather than claimed. The watch-mode test command for development should run the same unit tests as the gate.
+
+**Acceptance Criteria:**
+- [ ] A single command runs every check of the gate in order and stops at the first failure
+- [ ] It leaves a summary with the result and counts of each check
+- [ ] The watch-mode test command runs the same unit tests as the gate
+- [ ] The development docs name this command as the gate
+
+### ARCH-010: Catch problems before they are committed
+**Priority:** Low
+
+**Description:**
+Formatting and lint problems are only noticed when someone runs the checks by hand, and some classes of bugs (such as reading past the end of a list) are not reported by the type checker at all. Newly published package versions are installed right away, before the community has had a chance to spot a compromised release. These problems should be caught before code is committed or a dependency is installed.
+
+**Acceptance Criteria:**
+- [ ] A commit with lint or formatting problems is stopped, with a message saying what to fix
+- [ ] Setting this up on a new clone takes one documented command
+- [ ] The type checker reports possibly missing values when reading from lists and maps
+- [ ] Package versions younger than one day are not installed
+- [ ] The app works as before
+
+### ARCH-011: Readable server logs
+**Priority:** Low
+
+**Description:**
+The server writes plain console messages from many places, in different styles and without context, which makes problems in production hard to trace. Logs should have a consistent structure, levels and enough context to follow one request, without containing secrets or personal data.
+
+**Acceptance Criteria:**
+- [ ] Server logs share one format with a level and a timestamp
+- [ ] Messages that belong to a request can be found together
+- [ ] The log level can be set without changing code
+- [ ] No secrets or personal data appear in the logs
+- [ ] Server code no longer writes to the console directly
+
 ---
 
 ## UX Improvements
